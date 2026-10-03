@@ -1,0 +1,680 @@
+{
+  "schema_version": "state_expanded/1.0",
+  "platform": "cuda",
+  "hardware": {
+    "device": "cuda",
+    "platform": "Linux-6.8.0-107-generic-x86_64-with-glibc2.35",
+    "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+    "gpu_name": "NVIDIA GeForce RTX 3090"
+  },
+  "he_level_budget": 20,
+  "operators": [
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "HE",
+      "method": "nexus_cuda",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 7500.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "nexus_cuda_matmul_derived_from_cpu",
+        "measured_on_gpu": false,
+        "scale": 0.75,
+        "poly_N": 32768,
+        "note": "MatMul derived; scaled by 0.75x"
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "HE",
+      "method": "nexus_cuda",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 264.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 8,
+      "feasible": true,
+      "metadata": {
+        "source": "nexus_cuda_real",
+        "measured_on_gpu": true,
+        "scale": 12.0,
+        "poly_N": 32768,
+        "note": "scaled from real NEXUS-CUDA SoftMax (22.0 ms / 128x128) by 12x"
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "HE",
+      "method": "nexus_cuda",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 3750.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "nexus_cuda_matmul_derived_from_cpu",
+        "measured_on_gpu": false,
+        "scale": 0.375,
+        "poly_N": 32768,
+        "note": "MatMul derived; scaled by 0.375x"
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "HE",
+      "method": "nexus_cuda",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 3750.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "nexus_cuda_matmul_derived_from_cpu",
+        "measured_on_gpu": false,
+        "scale": 0.375,
+        "poly_N": 32768,
+        "note": "MatMul derived: CPU 200 s / 20x NEXUS-CUDA speedup (GPU OOM at measurement time); scaled by 0.375x"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "nexus_cuda",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.0125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "nexus_cuda_real",
+        "measured_on_gpu": false,
+        "scale": 1.0,
+        "poly_N": 32768,
+        "note": "ciphertext add, reference constant / 4"
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "HE",
+      "method": "nexus_cuda",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 720.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 3,
+      "feasible": true,
+      "metadata": {
+        "source": "nexus_cuda_real",
+        "measured_on_gpu": true,
+        "scale": 8.0,
+        "poly_N": 32768,
+        "note": "scaled from real NEXUS-CUDA LayerNorm (90.0 ms / 16x768) by 8x"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "HE",
+      "method": "nexus_cuda",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 15000.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "nexus_cuda_matmul_derived_from_cpu",
+        "measured_on_gpu": false,
+        "scale": 1.5,
+        "poly_N": 32768,
+        "note": "MatMul derived: CPU 200 s / 20x NEXUS-CUDA speedup (GPU OOM at measurement time); scaled by 1.5x"
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "HE",
+      "method": "nexus_cuda",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 1512.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "nexus_cuda_real",
+        "measured_on_gpu": true,
+        "scale": 12.0,
+        "poly_N": 32768,
+        "note": "scaled from real NEXUS-CUDA GELU (126.0 ms / 32768 slots) by 12x"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "HE",
+      "method": "nexus_cuda",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 3750.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "nexus_cuda_matmul_derived_from_cpu",
+        "measured_on_gpu": false,
+        "scale": 0.375,
+        "poly_N": 32768,
+        "note": "MatMul derived: CPU 200 s / 20x NEXUS-CUDA speedup (GPU OOM at measurement time); scaled by 0.375x"
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "MPC",
+      "method": "shaft_cryptgen_gpu",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 11.65,
+      "comm_bytes": 20072340,
+      "comm_rounds": 3,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "SHAFT CrypTen per-op GPU measurement",
+        "measured_on_gpu": true,
+        "shaft_ref_seq": 128,
+        "numel_ratio_from_cpu_record": 64.0,
+        "note": "local_compute_ms measured live on GPU via bench_shaft_gpu.py at the matching seq_ref; comm bytes are measured BOLT values scaled by 64x numel ratio and 5.95x SHAFT/BOLT aggregate ratio; rounds scaled by 1.25x.",
+        "comm_alloc": "published SHAFT 10.48GB/1496rounds allocated proportional to local_compute_ms across 12 blocks; original shipped values were 6637.9 MB / 200 rounds (uncalibrated)"
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "MPC",
+      "method": "shaft_cryptgen_gpu",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 64.66,
+      "comm_bytes": 111405796,
+      "comm_rounds": 15,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "SHAFT CrypTen per-op GPU measurement",
+        "measured_on_gpu": true,
+        "shaft_ref_seq": 16,
+        "numel_ratio_from_cpu_record": 64.0,
+        "note": "local_compute_ms measured live on GPU via bench_shaft_gpu.py at the matching seq_ref; comm bytes are measured BOLT values scaled by 64x numel ratio and 5.95x SHAFT/BOLT aggregate ratio; rounds scaled by 1.25x.",
+        "comm_alloc": "published SHAFT 10.48GB/1496rounds allocated proportional to local_compute_ms across 12 blocks; original shipped values were 9362.9 MB / 1278 rounds (uncalibrated)"
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "MPC",
+      "method": "shaft_cryptgen_gpu",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 23.42,
+      "comm_bytes": 40351434,
+      "comm_rounds": 5,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "SHAFT CrypTen per-op GPU measurement",
+        "measured_on_gpu": true,
+        "shaft_ref_seq": 128,
+        "numel_ratio_from_cpu_record": 8.0,
+        "note": "local_compute_ms measured live on GPU via bench_shaft_gpu.py at the matching seq_ref; comm bytes are measured BOLT values scaled by 8x numel ratio and 5.95x SHAFT/BOLT aggregate ratio; rounds scaled by 1.25x.",
+        "comm_alloc": "published SHAFT 10.48GB/1496rounds allocated proportional to local_compute_ms across 12 blocks; original shipped values were 707.9 MB / 200 rounds (uncalibrated)"
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "MPC",
+      "method": "shaft_cryptgen_gpu",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 29.31,
+      "comm_bytes": 50499596,
+      "comm_rounds": 7,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "SHAFT CrypTen per-op GPU measurement",
+        "measured_on_gpu": true,
+        "shaft_ref_seq": 128,
+        "numel_ratio_from_cpu_record": 8.0,
+        "note": "local_compute_ms measured live on GPU via bench_shaft_gpu.py at the matching seq_ref; comm bytes are measured BOLT values scaled by 8x numel ratio and 5.95x SHAFT/BOLT aggregate ratio; rounds scaled by 1.25x.",
+        "comm_alloc": "published SHAFT 10.48GB/1496rounds allocated proportional to local_compute_ms across 12 blocks; original shipped values were 103094.5 MB / 220 rounds (uncalibrated)"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "shaft_cryptgen_gpu",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.01,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "SHAFT CrypTen per-op GPU measurement",
+        "measured_on_gpu": true,
+        "shaft_ref_seq": 128,
+        "numel_ratio_from_cpu_record": 8.0,
+        "note": "local_compute_ms measured live on GPU via bench_shaft_gpu.py at the matching seq_ref; comm bytes are measured BOLT values scaled by 8x numel ratio and 5.95x SHAFT/BOLT aggregate ratio; rounds scaled by 1.25x.",
+        "comm_alloc": "published SHAFT 10.48GB/1496rounds allocated proportional to local_compute_ms across 12 blocks; original shipped values were 0.0 MB / 0 rounds (uncalibrated)"
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "MPC",
+      "method": "shaft_cryptgen_gpu",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 86.23,
+      "comm_bytes": 148569777,
+      "comm_rounds": 20,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "SHAFT CrypTen per-op GPU measurement",
+        "measured_on_gpu": true,
+        "shaft_ref_seq": 128,
+        "numel_ratio_from_cpu_record": 8.0,
+        "note": "local_compute_ms measured live on GPU via bench_shaft_gpu.py at the matching seq_ref; comm bytes are measured BOLT values scaled by 8x numel ratio and 5.95x SHAFT/BOLT aggregate ratio; rounds scaled by 1.25x.",
+        "comm_alloc": "published SHAFT 10.48GB/1496rounds allocated proportional to local_compute_ms across 12 blocks; original shipped values were 3104.5 MB / 1068 rounds (uncalibrated)"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "MPC",
+      "method": "shaft_cryptgen_gpu",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 111.99,
+      "comm_bytes": 192952908,
+      "comm_rounds": 26,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "SHAFT CrypTen per-op GPU measurement",
+        "measured_on_gpu": true,
+        "shaft_ref_seq": 128,
+        "numel_ratio_from_cpu_record": 8.0,
+        "note": "local_compute_ms measured live on GPU via bench_shaft_gpu.py at the matching seq_ref; comm bytes are measured BOLT values scaled by 8x numel ratio and 5.95x SHAFT/BOLT aggregate ratio; rounds scaled by 1.25x.",
+        "comm_alloc": "published SHAFT 10.48GB/1496rounds allocated proportional to local_compute_ms across 12 blocks; original shipped values were 411845.3 MB / 250 rounds (uncalibrated)"
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "MPC",
+      "method": "shaft_cryptgen_gpu",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 13.54,
+      "comm_bytes": 23328711,
+      "comm_rounds": 3,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "SHAFT CrypTen per-op GPU measurement",
+        "measured_on_gpu": true,
+        "shaft_ref_seq": 128,
+        "numel_ratio_from_cpu_record": 8.0,
+        "note": "local_compute_ms measured live on GPU via bench_shaft_gpu.py at the matching seq_ref; comm bytes are measured BOLT values scaled by 8x numel ratio and 5.95x SHAFT/BOLT aggregate ratio; rounds scaled by 1.25x.",
+        "comm_alloc": "published SHAFT 10.48GB/1496rounds allocated proportional to local_compute_ms across 12 blocks; original shipped values were 15018.9 MB / 509 rounds (uncalibrated)"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "MPC",
+      "method": "shaft_cryptgen_gpu",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 117.19,
+      "comm_bytes": 201912236,
+      "comm_rounds": 27,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "SHAFT CrypTen per-op GPU measurement",
+        "measured_on_gpu": true,
+        "shaft_ref_seq": 128,
+        "numel_ratio_from_cpu_record": 8.0,
+        "note": "local_compute_ms measured live on GPU via bench_shaft_gpu.py at the matching seq_ref; comm bytes are measured BOLT values scaled by 8x numel ratio and 5.95x SHAFT/BOLT aggregate ratio; rounds scaled by 1.25x.",
+        "comm_alloc": "published SHAFT 10.48GB/1496rounds allocated proportional to local_compute_ms across 12 blocks; original shipped values were 433030.1 MB / 250 rounds (uncalibrated)"
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 3.7917424764600582,
+      "comm_bytes": 78643200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 6,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "derived_from_cpu": true,
+        "gpu_speedup": 8.0
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 3.771039951243438,
+      "comm_bytes": 78643200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 6,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "derived_from_cpu": true,
+        "gpu_speedup": 8.0
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 1.3827470000251196,
+      "comm_bytes": 39321600,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 3,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "derived_from_cpu": true,
+        "gpu_speedup": 8.0
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 1.2731205482850783,
+      "comm_bytes": 39321600,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 3,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "derived_from_cpu": true,
+        "gpu_speedup": 8.0
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 8.37475362495752,
+      "comm_bytes": 157286400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 12,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "derived_from_cpu": true,
+        "gpu_speedup": 8.0
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 8.544508824707009,
+      "comm_bytes": 157286400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 12,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "derived_from_cpu": true,
+        "gpu_speedup": 8.0
+      }
+    }
+  ],
+  "bootstrap": {
+    "method": "nexus_cuda_bootstrap",
+    "local_compute_ms": 1685.0,
+    "comm_bytes": 0,
+    "comm_rounds": 0,
+    "metadata": {
+      "source": "CPU real / 30x NEXUS-CUDA published speedup; GPU OOM at measurement time on this shared hardware",
+      "measured_on_gpu": false,
+      "device": "cuda",
+      "poly_N": 32768
+    }
+  },
+  "metadata": {
+    "bert_shape_manifest": {
+      "batch": 1,
+      "seq": 128,
+      "hidden": 768,
+      "ffn_hidden": 3072,
+      "heads": 12,
+      "head_dim": 64
+    },
+    "he_source": "NEXUS-CUDA real per-op wallclock at N=32768 (GeLU/LayerNorm/Softmax measured; MatMul & Bootstrap derived from CPU due to GPU OOM)",
+    "mpc_source": "SHAFT/CrypTen real per-op GPU compute (bench_shaft_gpu.py); bytes/rounds re-allocated from published SHAFT end-to-end 10.48 GB / 1496 rounds (CALIBRATED)",
+    "he_stack_label": "NEXUS-CUDA (CKKS) (GPU, N=32768)",
+    "mpc_stack_label": "SHAFT (GPU, CrypTen 2PC)"
+  }
+}

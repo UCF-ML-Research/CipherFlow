@@ -1,0 +1,620 @@
+{
+  "schema_version": "state_expanded/1.0",
+  "platform": "cpu",
+  "hardware": {
+    "device": "cpu",
+    "machine": "x86_64",
+    "platform": "Linux-6.8.0-107-generic-x86_64-with-glibc2.35",
+    "python": "3.10.12",
+    "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores"
+  },
+  "he_level_budget": 20,
+  "operators": [
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "HE",
+      "method": "method_he_nexus",
+      "input_shape": [
+        3,
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.7017197960522026,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "device": "cpu",
+        "warmups": 2,
+        "repeats": 5,
+        "stdev_ms": 0.09297871900107704,
+        "note": ""
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "HE",
+      "method": "method_he_nexus",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.9133092011325061,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 8,
+      "feasible": true,
+      "metadata": {
+        "device": "cpu",
+        "warmups": 2,
+        "repeats": 5,
+        "stdev_ms": 0.12548260853003254,
+        "note": ""
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "HE",
+      "method": "method_he_nexus",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 1.1504692025482655,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "device": "cpu",
+        "warmups": 2,
+        "repeats": 5,
+        "stdev_ms": 0.49302539160004966,
+        "note": ""
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "HE",
+      "method": "method_he_nexus",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 677.2215110016987,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "device": "cpu",
+        "warmups": 2,
+        "repeats": 5,
+        "stdev_ms": 89.6788257268681,
+        "note": "ffn1 profiled as 12 calls of the 768->64 row-pack adapter"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "method_he_nexus",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.028102798387408257,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "device": "cpu",
+        "warmups": 2,
+        "repeats": 5,
+        "stdev_ms": 0.0065369469453930955,
+        "note": ""
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "HE",
+      "method": "method_he_nexus",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.15225561219267547,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 3,
+      "feasible": true,
+      "metadata": {
+        "device": "cpu",
+        "warmups": 2,
+        "repeats": 5,
+        "stdev_ms": 0.06775293686149761,
+        "note": ""
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "HE",
+      "method": "method_he_nexus",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 1478.4324217995163,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "device": "cpu",
+        "warmups": 2,
+        "repeats": 5,
+        "stdev_ms": 48.36483946871862,
+        "note": "ffn1 profiled as 48 calls of the 768->64 row-pack adapter"
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "HE",
+      "method": "method_he_nexus",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 3.311437997035682,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "device": "cpu",
+        "warmups": 2,
+        "repeats": 5,
+        "stdev_ms": 0.05271764292215428,
+        "note": ""
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "HE",
+      "method": "method_he_nexus",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 1413.3028648036998,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "device": "cpu",
+        "warmups": 2,
+        "repeats": 5,
+        "stdev_ms": 22.85282700469354,
+        "note": "ffn2 profiled as 4*12 calls of the 768->64 row-pack adapter"
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        3,
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": false,
+      "metadata": {
+        "reason": "skipped by --skip-mpc"
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": false,
+      "metadata": {
+        "reason": "skipped by --skip-mpc"
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": false,
+      "metadata": {
+        "reason": "skipped by --skip-mpc"
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": false,
+      "metadata": {
+        "reason": "skipped by --skip-mpc"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": false,
+      "metadata": {
+        "reason": "skipped by --skip-mpc"
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": false,
+      "metadata": {
+        "reason": "skipped by --skip-mpc"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": false,
+      "metadata": {
+        "reason": "skipped by --skip-mpc"
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": false,
+      "metadata": {
+        "reason": "skipped by --skip-mpc"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": false,
+      "metadata": {
+        "reason": "skipped by --skip-mpc"
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.16099620843306184,
+      "comm_bytes": 13107200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 1,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.16048020333983004,
+      "comm_bytes": 13107200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 1,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 1.337088004220277,
+      "comm_bytes": 13107200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 1,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 1.3386478007305413,
+      "comm_bytes": 13107200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 1,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 6.948351993924007,
+      "comm_bytes": 26214400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 2,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 5.66271340358071,
+      "comm_bytes": 26214400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 2,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    }
+  ],
+  "bootstrap": {
+    "method": "nexus_ckks_bootstrap",
+    "local_compute_ms": 1500.0,
+    "comm_bytes": 0,
+    "comm_rounds": 0,
+    "metadata": {
+      "source": "NEXUS CKKS bootstrapping reference timing",
+      "device": "cpu",
+      "poly_N": 65536
+    }
+  },
+  "metadata": {
+    "bert_shape_manifest": {
+      "batch": 1,
+      "seq": 16,
+      "hidden": 768,
+      "ffn_hidden": 3072,
+      "heads": 12,
+      "head_dim": 64
+    },
+    "skip_mpc": true
+  }
+}

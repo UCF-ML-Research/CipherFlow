@@ -1,0 +1,608 @@
+{
+  "schema_version": "state_expanded/1.0",
+  "platform": "cpu",
+  "hardware": {
+    "device": "cpu",
+    "platform": "Linux-6.8.0-107-generic-x86_64-with-glibc2.35",
+    "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores"
+  },
+  "he_level_budget": 20,
+  "operators": [
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 154886.25,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.75,
+        "note": "scaled from NEXUS MatMul ref by 0.75x"
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 59799.36,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 8,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 12.0,
+        "note": "scaled from NEXUS Softmax ref (4983.3 ms / 128x128) by 12x"
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 77443.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x"
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 77443.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.05,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.0,
+        "note": "ciphertext add (SEAL Evaluator::add), reference constant"
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 72739.04,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 3,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 8.0,
+        "note": "scaled from NEXUS LayerNorm ref (9092.4 ms / 16x768) by 8x"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 309772.5,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.5,
+        "note": "scaled from NEXUS MatMul ref (206515.0 ms / 4096x768x64) by 1.5x"
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 152294.40000000002,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 12.0,
+        "note": "scaled from NEXUS GELU ref (12691.2 ms / 32768 slots) by 12x"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 77443.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x (ffn2 lowered to matmul)"
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 1325.18,
+      "comm_bytes": 315294052,
+      "comm_rounds": 408,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "measured": "localhost SCI bridge"
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 256.9,
+      "comm_bytes": 24569708,
+      "comm_rounds": 1024,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "measured": "localhost SCI bridge"
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 368.8,
+      "comm_bytes": 65174148,
+      "comm_rounds": 856,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "measured": "localhost SCI bridge"
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        3,
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 164.0,
+      "comm_bytes": 17418916,
+      "comm_rounds": 160,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "measured": "localhost SCI bridge"
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 175.2,
+      "comm_bytes": 14860644,
+      "comm_rounds": 160,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "measured": "localhost SCI bridge"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 146870.0,
+      "comm_bytes": 8645952356,
+      "comm_rounds": 200,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "measured": "localhost SCI bridge"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 127431.0,
+      "comm_bytes": 9090688804,
+      "comm_rounds": 200,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "measured": "localhost SCI bridge"
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "MPC",
+      "method": "method_mpc_bolt_as_ffn1",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 34426.0,
+      "comm_bytes": 2164284964,
+      "comm_rounds": 176,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "measured": "localhost SCI bridge"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "method_runtime_default",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "note": "semantic add is local share addition"
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 30.728568404447287,
+      "comm_bytes": 78643200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 6,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 30.26692640269175,
+      "comm_bytes": 78643200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 6,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 10.653264599386603,
+      "comm_bytes": 39321600,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 3,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 10.49734060652554,
+      "comm_bytes": 39321600,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 3,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 65.30778979649767,
+      "comm_bytes": 157286400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 12,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 66.31480439100415,
+      "comm_bytes": 157286400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 12,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200
+      }
+    }
+  ],
+  "bootstrap": {
+    "method": "nexus_ckks_bootstrap",
+    "local_compute_ms": 51608.5,
+    "comm_bytes": 0,
+    "comm_rounds": 0,
+    "metadata": {
+      "source": "NEXUS build/bin/bootstrapping (real CKKS)"
+    }
+  },
+  "metadata": {
+    "bert_shape_manifest": {
+      "batch": 1,
+      "seq": 128,
+      "hidden": 768,
+      "ffn_hidden": 3072,
+      "heads": 12,
+      "head_dim": 64
+    },
+    "mpc_source": "measured live via instrumented SCI BOLT bridges",
+    "he_stack_label": "NEXUS (CKKS) (CPU)",
+    "mpc_stack_label": "BOLT (CPU, 2PC SCI BOLT)"
+  }
+}

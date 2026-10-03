@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cipherflow"
+version = "0.1.1"
+description = "Deployment-aware planning of hybrid HE-MPC secure inference (NeurIPS 2026)"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+readme = "README.md"
+authors = [{name = "Hedong Zhang"}, {name = "Mengxin Zheng"}, {name = "Qian Lou"}]
+
+dependencies = ["numpy"]
+
+[project.urls]
+Homepage = "https://github.com/HD-ZHANG-HD/CipherFlow"
+Demo = "https://hd-zhang-hd.github.io/CipherFlow/"
+
+[project.optional-dependencies]
+torch = ["torch"]
+
+[project.scripts]
+cipherflow = "cipherflow.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["cipherflow*", "compiler*", "ir*", "backends*"]
+
+[tool.setuptools.package-data]
+"compiler.state_expanded" = ["profiles/*.json"]

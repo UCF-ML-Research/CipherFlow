@@ -1,0 +1,342 @@
+<title>CipherFlow Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+/* Layout: one working column — model input, deployment profile, then the plan; diagrams scroll sideways in their own frame. */
+:root {
+  --bg: #f4f5f2; --surface: #fcfcfb; --surface-2: #eef0ec; --ink: #16181b; --muted: #5a5f66;
+  --line: #d6d9d3; --line-strong: #a9aea6;
+  --he: #2a78d6; --mpc: #eb6834; --focus: #2a78d6;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111214; --surface: #1a1a19; --surface-2: #232422; --ink: #f1f2ee; --muted: #a2a7ad;
+    --line: #34363a; --line-strong: #5b5f64; --he: #3987e5; --mpc: #d95926; --focus: #3987e5; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111214; --surface: #1a1a19; --surface-2: #232422; --ink: #f1f2ee; --muted: #a2a7ad;
+  --line: #34363a; --line-strong: #5b5f64; --he: #3987e5; --mpc: #d95926; --focus: #3987e5; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: grid; gap: 22px; }
+header h1 { font-family: var(--font-display); font-size: 30px; line-height: 1.1; margin: 0; letter-spacing: 0.01em; }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 70ch; text-wrap: pretty; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.panel > *, #in-view, #out-view { min-width: 0; }
+.diagram { max-width: 100%; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.panel-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-end; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > label, .field > .lbl { font-size: 12px; color: var(--muted); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line-strong); border-radius: var(--r); overflow: hidden; }
+.seg button { font: 500 13px var(--font-body); background: var(--surface); color: var(--ink); border: 0; border-right: 1px solid var(--line); padding: 7px 12px; cursor: pointer; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.seg button:focus-visible, .toggle:focus-visible, input[type=range]:focus-visible, .copy:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.slider { display: grid; gap: 4px; width: min(100%, 340px); }
+.slider .val { font-family: var(--font-mono); font-size: 15px; font-variant-numeric: tabular-nums; }
+.slider input { width: 100%; accent-color: var(--ink); }
+.ticks { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); }
+.note { font-size: 12.5px; color: var(--muted); max-width: 72ch; margin: 0; }
+.toggle { display: inline-flex; align-items: center; gap: 10px; font: 500 13px var(--font-body); color: var(--ink); background: none; border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 12px 5px 6px; cursor: pointer; }
+.toggle .knob { width: 30px; height: 18px; border-radius: 999px; background: var(--line); position: relative; transition: background .15s; }
+.toggle .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
+.toggle[aria-pressed="true"] .knob { background: var(--ink); }
+.toggle[aria-pressed="true"] .knob::after { transform: translateX(12px); }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13px; }
+.facts b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.diagram { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); }
+.diagram svg { display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--muted); align-items: center; }
+.sw { display: inline-block; width: 14px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; border: 1.5px solid; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.stat { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.stat .v { font-family: var(--font-mono); font-size: 20px; font-variant-numeric: tabular-nums; line-height: 1.25; }
+.stat .s { font-size: 12px; color: var(--muted); }
+.two { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+.chart svg text { font-family: var(--font-mono); font-size: 11px; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; }
+td.n, th.n { text-align: right; font-family: var(--font-mono); }
+.cmd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cmd code { font-family: var(--font-mono); font-size: 12.5px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 10px; overflow-x: auto; max-width: 100%; white-space: nowrap; }
+.copy { font: 500 12px var(--font-body); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); border-radius: var(--r); padding: 5px 10px; cursor: pointer; }
+.badge { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 5px; color: var(--muted); }
+#tip { position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: var(--surface); font-size: 12px; line-height: 1.45; padding: 7px 9px; border-radius: 5px; max-width: 280px; }
+#tip b { font-weight: 600; }
+.hint { font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">CipherFlow v0.1 · demo</div>
+    <h1>CipherFlow Planner</h1>
+    <p>Pick a model and a deployment profile; CipherFlow decides, operator by operator, whether to run in homomorphic encryption (HE) or secure multi-party computation (MPC), and where to convert between them or refresh a ciphertext. Every plan shown here was computed by <code>cipherflow.compile</code>.</p>
+    <p class="hint" style="margin-top:6px"><a href="https://github.com/HD-ZHANG-HD/CipherFlow#where-cipherflow-fits" style="color:inherit">Where CipherFlow fits in the private-inference stack, and its inputs and outputs</a> · <a href="https://github.com/HD-ZHANG-HD/CipherFlow" style="color:inherit">Code on GitHub</a></p>
+  </header>
+
+  <section class="panel" aria-labelledby="h-in">
+    <div class="panel-head">
+      <div><div class="eyebrow">① Input</div><h2 id="h-in">Model graph</h2></div>
+      <button class="toggle" id="tg-in" aria-pressed="true"><span class="knob"></span>Visualize input</button>
+    </div>
+    <div class="row">
+      <div class="field"><span class="lbl">Model</span><div class="seg" id="seg-model" role="group" aria-label="Model"></div></div>
+    </div>
+    <div class="facts" id="model-facts"></div>
+    <div id="in-view">
+      <div class="diagram" id="dg-in"></div>
+      <div class="legend" style="margin-top:8px"><span>Each column is one encoder block (ViT adds a patch-embedding column and a final LayerNorm); arcs and cross-column links are residual connections. Hover an operator for its tensor shapes.</span></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-prof">
+    <div class="panel-head">
+      <div><div class="eyebrow">② Profile</div><h2 id="h-prof">Deployment</h2></div>
+    </div>
+    <div class="row">
+      <div class="field"><span class="lbl">Hardware</span><div class="seg" id="seg-hw" role="group" aria-label="Hardware"></div></div>
+    </div>
+    <p class="note" id="hw-note"></p>
+    <div class="row">
+      <div class="field slider">
+        <label for="bw">Bandwidth</label>
+        <div class="val" id="bw-val"></div>
+        <input type="range" id="bw" min="0" max="6" step="1" value="0">
+        <div class="ticks" id="bw-ticks"></div>
+      </div>
+      <div class="field slider">
+        <label for="rtt">Round-trip time</label>
+        <div class="val" id="rtt-val"></div>
+        <input type="range" id="rtt" min="0" max="4" step="1" value="0">
+        <div class="ticks" id="rtt-ticks"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-out">
+    <div class="panel-head">
+      <div><div class="eyebrow">③ Output</div><h2 id="h-out">CipherFlow plan</h2></div>
+      <button class="toggle" id="tg-out" aria-pressed="true"><span class="knob"></span>Visualize output</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div id="out-view" style="display:grid; gap:10px">
+      <div class="legend">
+        <span><span class="sw" style="background:color-mix(in oklab, var(--he) 30%, var(--surface)); border-color:var(--he)"></span>HE (H)</span>
+        <span><span class="sw" style="background:color-mix(in oklab, var(--mpc) 30%, var(--surface)); border-color:var(--mpc)"></span>MPC (M)</span>
+        <span><svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 2"/></svg> domain change on an edge</span>
+        <span><span class="badge">⇄</span> conversion before this operator</span>
+        <span><span class="badge">↻</span> bootstrap before this operator</span>
+      </div>
+      <div class="diagram" id="dg-out"></div>
+    </div>
+    <div class="two">
+      <div class="chart" id="chart" aria-label="Latency compared with static placements"></div>
+      <div style="min-width:0; display:grid; gap:10px; align-content:start">
+        <table id="optable" aria-label="Placement by operator type"></table>
+        <div class="field">
+          <span class="lbl">Reproduce this plan</span>
+          <div class="cmd"><code id="cmd"></code><button class="copy" id="copy">Copy</button></div>
+          <span class="hint" id="cmd-hint"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<div id="tip" hidden></div>
+
+<script type="application/json" id="data">__DEMO_DATA__</script>
+<script>
+(() => {
+  const D = JSON.parse(document.getElementById('data').textContent);
+  const TYPE_LABEL = {Attention_QK_MatMul:'Attention QKᵀ', Softmax:'Softmax', Attention_V_MatMul:'Attention ·V', Out_Projection:'Output projection', Residual_Add:'Residual add', LayerNorm:'LayerNorm', FFN_Linear_1:'FFN linear 1', GeLU:'GeLU', FFN_Linear_2:'FFN linear 2'};
+  const state = { model: 'bert', hw: 'gpu', bw: 4, rtt: 3, showIn: true, showOut: true };
+  try { const s = JSON.parse(localStorage.getItem('cf-demo') || '{}'); Object.assign(state, s); } catch (e) {}
+  const save = () => { try { localStorage.setItem('cf-demo', JSON.stringify(state)); } catch (e) {} };
+  const $ = (id) => document.getElementById(id);
+  const tip = $('tip');
+
+  const fmtS = (ms) => { const s = ms / 1000; return s >= 1000 ? (s / 1000).toFixed(s >= 1e4 ? 1 : 2) + ' ks' : s >= 100 ? s.toFixed(0) + ' s' : s.toFixed(1) + ' s'; };
+  const fmtShape = (a) => '[' + a.join(', ') + ']';
+  const bwText = (b) => b.replace('Mbps', ' Mbps').replace('Gbps', ' Gbps');
+
+  function seg(el, items, cur, onPick) {
+    el.innerHTML = '';
+    for (const [k, label] of items) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = label; b.setAttribute('aria-pressed', String(k === cur));
+      b.addEventListener('click', () => onPick(k));
+      el.appendChild(b);
+    }
+  }
+
+  // Geometry for the column diagram: one column per encoder block (plus embed / output columns).
+  const G = { bw: 78, bh: 24, gapY: 10, colW: 118, top: 30, left: 18 };
+  const nodeXY = (n) => ({ x: G.left + n.col * G.colW, y: G.top + n.row * (G.bh + G.gapY) });
+
+  function drawGraph(container, model, plan) {
+    const nodes = model.nodes, byId = new Map(nodes.map((n, i) => [n.id, i]));
+    const ncol = 1 + Math.max(...nodes.map(n => n.col)), nrow = 1 + Math.max(...nodes.map(n => n.row));
+    const W = G.left * 2 + ncol * G.colW - (G.colW - G.bw) + 22, H = G.top + nrow * (G.bh + G.gapY) + 14;
+    const dom = plan ? plan.dom : null;
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', plan ? 'Network colored by CipherFlow placement' : 'Network graph');
+    const mk = (tag, attrs, parent = svg) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+    const gE = mk('g', {}), gN = mk('g', {});
+    const colGroup = new Map(); nodes.forEach(n => { if (!colGroup.has(n.col)) colGroup.set(n.col, n.group); });
+    for (const [c, label] of colGroup) {
+      const t = mk('text', { x: G.left + c * G.colW + G.bw / 2, y: 16, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11, 'font-family': 'var(--font-mono)' }, gN);
+      t.textContent = label;
+    }
+    for (const [s, d] of model.edges) {
+      const ns_ = nodes[byId.get(s)], nd = nodes[byId.get(d)], a = nodeXY(ns_), z = nodeXY(nd);
+      let path;
+      if (ns_.col === nd.col && nd.row === ns_.row + 1) path = `M${a.x + G.bw / 2},${a.y + G.bh} L${z.x + G.bw / 2},${z.y}`;
+      else if (ns_.col === nd.col) { const xr = a.x + G.bw, bend = xr + 16; path = `M${xr},${a.y + G.bh / 2} C${bend},${a.y + G.bh / 2} ${bend},${z.y + G.bh / 2} ${xr},${z.y + G.bh / 2}`; }
+      else { const x1 = a.x + G.bw, y1 = a.y + G.bh / 2, x2 = z.x, y2 = z.y + G.bh / 2; path = `M${x1},${y1} C${x1 + 22},${y1} ${x2 - 22},${y2} ${x2},${y2}`; }
+      let stroke = 'var(--line-strong)', dash = '';
+      if (dom) { const ds = dom[byId.get(s)], dd = dom[byId.get(d)]; if (ds !== dd) { stroke = 'var(--ink)'; dash = '4 3'; } else stroke = ds === 'H' ? 'var(--he)' : 'var(--mpc)'; }
+      mk('path', { d: path, fill: 'none', stroke, 'stroke-width': dom ? 1.6 : 1.3, 'stroke-dasharray': dash, opacity: dom && !dash ? 0.55 : 1 }, gE);
+    }
+    const conv = new Map(), boot = new Map();
+    if (plan) for (const [k, i] of plan.act) { if (i < 0) continue; const m = k === 'c' ? conv : boot; m.set(i, (m.get(i) || 0) + 1); }
+    nodes.forEach((n, i) => {
+      const { x, y } = nodeXY(n);
+      const g = mk('g', { tabindex: 0, 'data-i': i }, gN);
+      let fill = 'var(--surface)', stroke = 'var(--line-strong)';
+      if (dom) { const c = dom[i] === 'H' ? 'var(--he)' : 'var(--mpc)'; stroke = c; fill = `color-mix(in oklab, ${c} 30%, var(--surface))`; }
+      mk('rect', { x, y, width: G.bw, height: G.bh, rx: 4, fill, stroke, 'stroke-width': dom ? 1.6 : 1 }, g);
+      const t = mk('text', { x: x + 7, y: y + G.bh / 2 + 4, fill: 'var(--ink)', 'font-size': 11.5, 'font-family': 'var(--font-body)' }, g);
+      t.textContent = n.label;
+      if (dom) { const l = mk('text', { x: x + G.bw - 6, y: y + G.bh / 2 + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 10, 'font-family': 'var(--font-mono)' }, g); l.textContent = dom[i]; }
+      const chips = [];
+      if (conv.get(i)) chips.push('⇄' + (conv.get(i) > 1 ? conv.get(i) : ''));
+      if (boot.get(i)) chips.push('↻' + (boot.get(i) > 1 ? boot.get(i) : ''));
+      chips.forEach((c, k) => {
+        const cx = x + G.bw + 3, cy = y - 3 + k * 13;
+        mk('rect', { x: cx - 1, y: cy - 1, width: 18, height: 12, rx: 3, fill: 'var(--surface)', stroke: 'var(--ink)', 'stroke-width': 1 }, g);
+        const ct = mk('text', { x: cx + 8, y: cy + 8.5, 'text-anchor': 'middle', fill: 'var(--ink)', 'font-size': 9, 'font-family': 'var(--font-mono)' }, g);
+        ct.textContent = c;
+      });
+      const show = (ev) => {
+        const lines = [`<b>${TYPE_LABEL[n.op] || n.op}</b> · ${n.group}`, `in ${fmtShape(n.in)} → out ${fmtShape(n.out)}`];
+        if (dom) {
+          lines.push(`runs in <b>${dom[i] === 'H' ? 'HE' : 'MPC'}</b>`);
+          if (dom[i] === 'H' && plan.lv[i] >= 0) lines.push(`CKKS level after: ${plan.lv[i]} / ${D.he_level_budget}`);
+          if (conv.get(i)) lines.push(`${conv.get(i)} conversion(s) before it`);
+          if (boot.get(i)) lines.push(`${boot.get(i)} bootstrap(s) before it`);
+        }
+        tip.innerHTML = lines.join('<br>'); tip.hidden = false;
+        const r = (ev.currentTarget || g).getBoundingClientRect();
+        tip.style.left = Math.min(window.innerWidth - 290, r.right + 8) + 'px'; tip.style.top = Math.max(8, r.top - 6) + 'px';
+      };
+      g.addEventListener('mouseenter', show); g.addEventListener('focus', show);
+      g.addEventListener('mouseleave', () => tip.hidden = true); g.addEventListener('blur', () => tip.hidden = true);
+    });
+    container.innerHTML = ''; container.appendChild(svg);
+  }
+
+  function drawChart(plan) {
+    const rows = [['CipherFlow', plan.cost.total_ms, true], ...Object.entries(plan.base).map(([k, v]) => [k, v, false])];
+    const W = 460, rowH = 26, padL = 92, padR = 70, top = 22, H = top + rows.length * rowH + 26;
+    const vals = rows.map(r => r[1]);
+    const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...vals)))), hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...vals))));
+    const X = (v) => padL + (Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo)) * (W - padL - padR);
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="End-to-end latency, log scale">`;
+    s += `<text x="0" y="12" fill="var(--muted)">End-to-end latency (log scale)</text>`;
+    for (let e = Math.log10(lo); e <= Math.log10(hi) + 1e-9; e++) {
+      const x = X(Math.pow(10, e)), lab = Math.pow(10, e) / 1000;
+      s += `<line x1="${x}" x2="${x}" y1="${top}" y2="${H - 20}" stroke="var(--line)"/>`;
+      s += `<text x="${x}" y="${H - 6}" text-anchor="middle" fill="var(--muted)">${lab >= 1 ? lab.toLocaleString('en-US') + ' s' : (lab * 1000) + ' ms'}</text>`;
+    }
+    rows.forEach(([name, v, me], i) => {
+      const y = top + i * rowH + 4, w = Math.max(2, X(v) - padL);
+      s += `<g><title>${name}: ${fmtS(v)}</title>`;
+      s += `<text x="${padL - 8}" y="${y + 12}" text-anchor="end" fill="var(--ink)" font-weight="${me ? 600 : 400}">${name}</text>`;
+      s += `<rect x="${padL}" y="${y}" width="${w}" height="16" rx="3" fill="${me ? 'var(--ink)' : 'var(--line-strong)'}"/>`;
+      s += `<text x="${padL + w + 6}" y="${y + 12}" fill="var(--ink)">${fmtS(v)}</text></g>`;
+    });
+    s += '</svg>';
+    $('chart').innerHTML = s;
+  }
+
+  function render() {
+    const model = D.models[state.model];
+    const bwL = D.bandwidths[state.bw], rtt = D.rtts[state.rtt];
+    const plan = D.plans[`${state.model}|${state.hw}|${bwL}|${rtt}`];
+    seg($('seg-model'), Object.entries(D.models).map(([k, v]) => [k, v.label]), state.model, (k) => { state.model = k; save(); render(); });
+    seg($('seg-hw'), Object.entries(D.hardware).map(([k, v]) => [k, v.label]), state.hw, (k) => { state.hw = k; save(); render(); });
+    const hw = D.hardware[state.hw];
+    $('hw-note').textContent = hw.detail + (state.hw.includes('_x') ? '. Projected profiles scale local compute only; communication bytes and rounds stay the same.' : '.');
+    $('bw').value = state.bw; $('rtt').value = state.rtt;
+    $('bw-val').textContent = bwText(bwL); $('rtt-val').textContent = rtt + ' ms';
+    const nOps = model.nodes.length, nRes = model.residual_regions;
+    $('model-facts').innerHTML = `<span>${model.detail}</span><span><b>${nOps}</b> operators</span><span><b>${nRes}</b> residual connections</span><span>token tensor <b>${fmtShape(model.nodes.find(n => n.op === 'LayerNorm').in)}</b></span>`;
+    $('in-view').hidden = !state.showIn; $('tg-in').setAttribute('aria-pressed', String(state.showIn));
+    $('out-view').hidden = !state.showOut; $('tg-out').setAttribute('aria-pressed', String(state.showOut));
+    if (state.showIn) drawGraph($('dg-in'), model, null);
+    if (!plan) { $('stats').textContent = 'No plan computed for this setting.'; return; }
+    if (state.showOut) drawGraph($('dg-out'), model, plan);
+
+    const he = [...plan.dom].filter(c => c === 'H').length, conv = plan.act.filter(a => a[0] === 'c').length, boot = plan.act.filter(a => a[0] === 'b').length;
+    const hybrid = Math.min(plan.base.BumbleBee, plan.base.BOLT, plan.base.BLB);
+    const bestStatic = Math.min(...Object.values(plan.base));
+    const spH = hybrid / plan.cost.total_ms, spS = bestStatic / plan.cost.total_ms;
+    const gib = plan.cost.comm_bytes / 2 ** 30;
+    $('stats').innerHTML = [
+      ['Latency', fmtS(plan.cost.total_ms), `ops ${fmtS(plan.cost.node_ms)} · conv ${fmtS(plan.cost.conversion_ms)} · boot ${fmtS(plan.cost.bootstrap_ms)}`],
+      ['vs best static hybrid', spH.toFixed(2) + '×', 'BumbleBee / BOLT / BLB placement'],
+      ['vs best static plan', spS.toFixed(2) + '×', plan.strategy === 'compiler' ? 'includes all-HE and all-MPC' : 'a static placement is already optimal here'],
+      ['Placement', `${he} HE · ${nOps - he} MPC`, `${conv} conversions · ${boot} bootstraps`],
+      ['Online HE–MPC traffic', gib < 0.01 ? '0 GiB' : gib.toFixed(1) + ' GiB', `${plan.cost.comm_rounds.toLocaleString('en-US')} protocol rounds`],
+    ].map(([k, v, s]) => `<div class="stat"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
+
+    drawChart(plan);
+    const byType = {};
+    model.nodes.forEach((n, i) => { const t = byType[n.op] || (byType[n.op] = { H: 0, M: 0 }); t[plan.dom[i]]++; });
+    $('optable').innerHTML = `<thead><tr><th>Operator type</th><th class="n">HE</th><th class="n">MPC</th></tr></thead><tbody>` +
+      Object.entries(byType).map(([k, v]) => `<tr><td>${TYPE_LABEL[k] || k}</td><td class="n">${v.H}</td><td class="n">${v.M}</td></tr>`).join('') + '</tbody>';
+    const net = `${bwL}/${rtt}ms`;
+    if (state.hw === 'cpu' || state.hw === 'gpu') {
+      $('cmd').textContent = `cipherflow compile --model ${state.model} --hardware ${state.hw} --network ${net} -o plan.json`;
+      $('cmd-hint').textContent = 'Runs the same planner on the built-in profile.';
+    } else {
+      const f = state.hw.split('_x')[1];
+      $('cmd').textContent = `cf.compile(cf.models.${state.model}(), cf.Deployment.of("gpu", "${net}"), profile=cf.profiles.scale_compute(cf.load_profile("gpu"), ${f}))`;
+      $('cmd-hint').textContent = 'Python API: projected profiles are built with profiles.scale_compute.';
+    }
+  }
+
+  function ticks(el, labels) { el.innerHTML = labels.map(l => `<span>${l}</span>`).join(''); }
+  ticks($('bw-ticks'), ['10M', '', '100M', '', '1G', '', '10G']);
+  ticks($('rtt-ticks'), D.rtts.map(r => r + ''));
+  $('bw').addEventListener('input', (e) => { state.bw = +e.target.value; save(); render(); });
+  $('rtt').addEventListener('input', (e) => { state.rtt = +e.target.value; save(); render(); });
+  $('tg-in').addEventListener('click', () => { state.showIn = !state.showIn; save(); render(); });
+  $('tg-out').addEventListener('click', () => { state.showOut = !state.showOut; save(); render(); });
+  $('copy').addEventListener('click', () => {
+    const t = $('cmd').textContent;
+    navigator.clipboard?.writeText(t).then(() => { $('copy').textContent = 'Copied'; setTimeout(() => $('copy').textContent = 'Copy', 1400); })
+      .catch(() => { const r = document.createRange(); r.selectNodeContents($('cmd')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+  });
+  if (!D.models[state.model]) state.model = 'bert';
+  if (!D.hardware[state.hw]) state.hw = 'gpu';
+  render();
+})();
+</script>

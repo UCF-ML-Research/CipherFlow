@@ -1,0 +1,907 @@
+{
+  "schema_version": "state_expanded/1.0",
+  "platform": "gpu",
+  "hardware": {
+    "device": "cuda",
+    "platform": "B200 (synthetic)"
+  },
+  "he_level_budget": 20,
+  "operators": [
+    {
+      "op_type": "Conv2D",
+      "domain": "HE",
+      "method": "synthetic_he_conv",
+      "input_shape": [
+        1,
+        3,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 11.25,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from 3000 ms @ 16x32x32 ref by FLOPs ratio",
+        "gpu_speedup": 50.0,
+        "feasibility_rule": "channels<=64 AND spatial<=32"
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "MPC",
+      "method": "synthetic_mpc_conv_im2col",
+      "input_shape": [
+        1,
+        3,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 344.2265625,
+      "comm_bytes": 101319754,
+      "comm_rounds": 22,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from BOLT FFN_Linear_1@MPC by FLOPs ratio",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "ReLU",
+      "domain": "HE",
+      "method": "synthetic_he_relu_poly",
+      "input_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 100.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; degree-6 polynomial CKKS ReLU at ~5000 ms / eval (CPU)",
+        "gpu_speedup": 50.0,
+        "feasibility_rule": "input volume <= 16384"
+      }
+    },
+    {
+      "op_type": "ReLU",
+      "domain": "MPC",
+      "method": "synthetic_mpc_drelu",
+      "input_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 8.834533333333335,
+      "comm_bytes": 10509801,
+      "comm_rounds": 4,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; ~1/10 BOLT GeLU per-element costs, 4 DReLU rounds",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "HE",
+      "method": "synthetic_he_conv",
+      "input_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 60.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from 3000 ms @ 16x32x32 ref by FLOPs ratio",
+        "gpu_speedup": 50.0,
+        "feasibility_rule": "channels<=64 AND spatial<=32"
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "MPC",
+      "method": "synthetic_mpc_conv_im2col",
+      "input_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 1835.875,
+      "comm_bytes": 540372022,
+      "comm_rounds": 50,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from BOLT FFN_Linear_1@MPC by FLOPs ratio",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "synthetic_he_add",
+      "input_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 0.05,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "matches BERT profile ciphertext-add constant"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "synthetic_mpc_add",
+      "input_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "share-only addition; no comm"
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "HE",
+      "method": "synthetic_he_conv",
+      "input_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 30.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from 3000 ms @ 16x32x32 ref by FLOPs ratio",
+        "gpu_speedup": 50.0,
+        "feasibility_rule": "channels<=64 AND spatial<=32"
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "MPC",
+      "method": "synthetic_mpc_conv_im2col",
+      "input_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "output_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 917.9375,
+      "comm_bytes": 270186011,
+      "comm_rounds": 35,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from BOLT FFN_Linear_1@MPC by FLOPs ratio",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "HE",
+      "method": "synthetic_he_conv",
+      "input_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 60.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from 3000 ms @ 16x32x32 ref by FLOPs ratio",
+        "gpu_speedup": 50.0,
+        "feasibility_rule": "channels<=64 AND spatial<=32"
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "MPC",
+      "method": "synthetic_mpc_conv_im2col",
+      "input_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 1835.875,
+      "comm_bytes": 540372022,
+      "comm_rounds": 50,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from BOLT FFN_Linear_1@MPC by FLOPs ratio",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "ReLU",
+      "domain": "HE",
+      "method": "synthetic_he_relu_poly",
+      "input_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 100.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; degree-6 polynomial CKKS ReLU at ~5000 ms / eval (CPU)",
+        "gpu_speedup": 50.0,
+        "feasibility_rule": "input volume <= 16384"
+      }
+    },
+    {
+      "op_type": "ReLU",
+      "domain": "MPC",
+      "method": "synthetic_mpc_drelu",
+      "input_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 4.417266666666667,
+      "comm_bytes": 5254900,
+      "comm_rounds": 4,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; ~1/10 BOLT GeLU per-element costs, 4 DReLU rounds",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "synthetic_he_add",
+      "input_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.05,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "matches BERT profile ciphertext-add constant"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "synthetic_mpc_add",
+      "input_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "share-only addition; no comm"
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "HE",
+      "method": "synthetic_he_conv",
+      "input_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 30.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from 3000 ms @ 16x32x32 ref by FLOPs ratio",
+        "gpu_speedup": 50.0,
+        "feasibility_rule": "channels<=64 AND spatial<=32"
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "MPC",
+      "method": "synthetic_mpc_conv_im2col",
+      "input_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 917.9375,
+      "comm_bytes": 270186011,
+      "comm_rounds": 35,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from BOLT FFN_Linear_1@MPC by FLOPs ratio",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "HE",
+      "method": "synthetic_he_conv",
+      "input_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "output_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 60.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from 3000 ms @ 16x32x32 ref by FLOPs ratio",
+        "gpu_speedup": 50.0,
+        "feasibility_rule": "channels<=64 AND spatial<=32"
+      }
+    },
+    {
+      "op_type": "Conv2D",
+      "domain": "MPC",
+      "method": "synthetic_mpc_conv_im2col",
+      "input_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "output_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 1835.875,
+      "comm_bytes": 540372022,
+      "comm_rounds": 50,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; scaled from BOLT FFN_Linear_1@MPC by FLOPs ratio",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "ReLU",
+      "domain": "HE",
+      "method": "synthetic_he_relu_poly",
+      "input_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "output_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 100.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; degree-6 polynomial CKKS ReLU at ~5000 ms / eval (CPU)",
+        "gpu_speedup": 50.0,
+        "feasibility_rule": "input volume <= 16384"
+      }
+    },
+    {
+      "op_type": "ReLU",
+      "domain": "MPC",
+      "method": "synthetic_mpc_drelu",
+      "input_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "output_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 2.2086333333333337,
+      "comm_bytes": 2627450,
+      "comm_rounds": 4,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; ~1/10 BOLT GeLU per-element costs, 4 DReLU rounds",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "synthetic_he_add",
+      "input_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "output_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 0.05,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "matches BERT profile ciphertext-add constant"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "synthetic_mpc_add",
+      "input_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "output_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "share-only addition; no comm"
+      }
+    },
+    {
+      "op_type": "AvgPool",
+      "domain": "HE",
+      "method": "synthetic_he_avgpool_rot",
+      "input_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "output_shape": [
+        1,
+        64,
+        1,
+        1
+      ],
+      "local_compute_ms": 0.2,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; rotation-and-sum tree, 10 ms (CPU)",
+        "gpu_speedup": 50.0
+      }
+    },
+    {
+      "op_type": "AvgPool",
+      "domain": "MPC",
+      "method": "synthetic_mpc_avgpool",
+      "input_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "output_shape": [
+        1,
+        64,
+        1,
+        1
+      ],
+      "local_compute_ms": 1.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; share sum + truncation, no comm",
+        "gpu_speedup": 5.0
+      }
+    },
+    {
+      "op_type": "FC",
+      "domain": "HE",
+      "method": "synthetic_he_fc",
+      "input_shape": [
+        1,
+        64,
+        1,
+        1
+      ],
+      "output_shape": [
+        1,
+        10
+      ],
+      "local_compute_ms": 0.02,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; 64x10 packed dot product",
+        "gpu_speedup": 50.0
+      }
+    },
+    {
+      "op_type": "FC",
+      "domain": "MPC",
+      "method": "synthetic_mpc_fc",
+      "input_shape": [
+        1,
+        64,
+        1,
+        1
+      ],
+      "output_shape": [
+        1,
+        10
+      ],
+      "local_compute_ms": 0.1,
+      "comm_bytes": 5000,
+      "comm_rounds": 1,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "synthetic; tiny 64x10 SS matmul",
+        "gpu_speedup": 5.0
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 0.035,
+      "comm_bytes": 6553600,
+      "comm_rounds": 1,
+      "metadata": {
+        "derived_from": "BERT [1,128,768] reference, scaled by numel",
+        "gpu_speedup": 50.0
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        16,
+        32,
+        32
+      ],
+      "local_compute_ms": 0.035,
+      "comm_bytes": 6553600,
+      "comm_rounds": 1,
+      "metadata": {
+        "derived_from": "BERT [1,128,768] reference, scaled by numel",
+        "gpu_speedup": 50.0
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.0175,
+      "comm_bytes": 3276800,
+      "comm_rounds": 1,
+      "metadata": {
+        "derived_from": "BERT [1,128,768] reference, scaled by numel",
+        "gpu_speedup": 50.0
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        32,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.0175,
+      "comm_bytes": 3276800,
+      "comm_rounds": 1,
+      "metadata": {
+        "derived_from": "BERT [1,128,768] reference, scaled by numel",
+        "gpu_speedup": 50.0
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 0.00875,
+      "comm_bytes": 1638400,
+      "comm_rounds": 1,
+      "metadata": {
+        "derived_from": "BERT [1,128,768] reference, scaled by numel",
+        "gpu_speedup": 50.0
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        64,
+        8,
+        8
+      ],
+      "local_compute_ms": 0.00875,
+      "comm_bytes": 1638400,
+      "comm_rounds": 1,
+      "metadata": {
+        "derived_from": "BERT [1,128,768] reference, scaled by numel",
+        "gpu_speedup": 50.0
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        64,
+        1,
+        1
+      ],
+      "local_compute_ms": 0.00013671875,
+      "comm_bytes": 25600,
+      "comm_rounds": 1,
+      "metadata": {
+        "derived_from": "BERT [1,128,768] reference, scaled by numel",
+        "gpu_speedup": 50.0
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        64,
+        1,
+        1
+      ],
+      "local_compute_ms": 0.00013671875,
+      "comm_bytes": 25600,
+      "comm_rounds": 1,
+      "metadata": {
+        "derived_from": "BERT [1,128,768] reference, scaled by numel",
+        "gpu_speedup": 50.0
+      }
+    }
+  ],
+  "bootstrap": {
+    "method": "nexus_cuda_bootstrap",
+    "local_compute_ms": 1685.0,
+    "comm_bytes": 0,
+    "comm_rounds": 0,
+    "metadata": {
+      "source": "reused from BERT full-model profile (shape-independent at fixed N)"
+    }
+  },
+  "metadata": {
+    "model": "ResNet-20 (CIFAR-10)",
+    "synthetic": true,
+    "he_stack_label": "Synthetic HE (NEXUS-CUDA-style)",
+    "mpc_stack_label": "Synthetic MPC (SHAFT/CrypTen-style, GPU)",
+    "provenance": "see DATA_PROVENANCE.md adjacent to this file",
+    "resnet20_manifest": {
+      "batch": 1,
+      "in_channels": 3,
+      "in_spatial": 32,
+      "stem_channels": 16,
+      "num_classes": 10
+    }
+  }
+}
