@@ -18,10 +18,12 @@ from compiler.state_expanded.sese import find_sese_regions
 from ir.types import DataEdge, OperatorGraph, OperatorNode
 
 DEP = cf.Deployment.of("gpu", "100Mbps/20ms")
+PAPER = dict(profile="paper-gpu", security="2pc-dealer")   # the paper's GPU profile (SHAFT: trusted dealer)
 TOK = (1, 128, 768)
 
 
 def _compile(graph, **kw):
+    kw = kw if "methods" in kw else {**PAPER, **kw}
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", cf.CostExtrapolationWarning)
         return cf.compile(graph, DEP, verbose=False, **kw)
@@ -32,14 +34,14 @@ def _compile(graph, **kw):
 def test_profiled_shapes_are_exact():
     with warnings.catch_warnings():
         warnings.simplefilter("error", cf.CostExtrapolationWarning)
-        plan = cf.compile(cf.models.bert(2), DEP, verbose=False)
-    assert plan.warnings == []
+        plan = cf.compile(cf.models.bert_paper(2), DEP, verbose=False, **PAPER)
+    assert not any("scaled from the nearest" in w for w in plan.warnings)
     assert {n.cost_source for n in plan.nodes} == {"exact"}
 
 
 def test_scaled_entries_warn_and_are_marked():
     with pytest.warns(cf.CostExtrapolationWarning, match="scaled from the nearest profiled shape"):
-        plan = cf.compile(cf.models.vit(2), DEP, verbose=False)
+        plan = cf.compile(cf.models.vit(2, qkv_projection=False), DEP, verbose=False, **PAPER)
     assert plan.warnings and "strict=True" in plan.warnings[0]
     assert {n.cost_source for n in plan.nodes} == {"scaled"}
     assert cf.Plan.from_json(plan.to_json()).warnings == plan.warnings
@@ -47,8 +49,8 @@ def test_scaled_entries_warn_and_are_marked():
 
 def test_strict_refuses_scaled_entries():
     with pytest.raises(cf.CostExtrapolationError):
-        cf.compile(cf.models.vit(2), DEP, strict=True, verbose=False)
-    cf.compile(cf.models.bert(2), DEP, strict=True, verbose=False)
+        cf.compile(cf.models.vit(2, qkv_projection=False), DEP, strict=True, verbose=False, **PAPER)
+    cf.compile(cf.models.bert_paper(2), DEP, strict=True, verbose=False, **PAPER)
 
 
 # ------------------------------------------------------------------ 2. contracts
@@ -205,28 +207,34 @@ def _sig(g):
 
 
 def test_traced_vit_equals_builtin_vit():
-    g = cf.models.from_torch(ViT(2).eval(), torch.randn(1, 197, 768))
-    ref = cf.models.vit(2, tokens=197)
+    x = torch.randn(1, 197, 768)
+    assert _sig(cf.models.from_torch(ViT(2).eval(), x)) == _sig(cf.models.vit(2, tokens=197))
+    g = cf.models.from_torch(ViT(2).eval(), x, qkv_projection=False)        # the paper's profiles
+    ref = cf.models.vit(2, tokens=197, qkv_projection=False)
     assert _sig(g) == _sig(ref)
     assert _compile(g).cost["total_ms"] == pytest.approx(_compile(ref).cost["total_ms"])
 
 
 def test_traced_bert_keeps_both_residuals():
-    g = cf.models.from_torch(Bert(2).eval(), torch.randn(1, 128, 768))
+    x = torch.randn(1, 128, 768)
+    full = cf.models.from_torch(Bert(2).eval(), x)
+    assert sorted(n.op_type for n in full.nodes if n.op_type != "Input") == sorted(n.op_type for n in cf.models.bert(2).nodes)
+    g = cf.models.from_torch(Bert(2).eval(), x, qkv_projection=False)
     assert g.nodes[0].op_type == "Input"
-    assert len(find_sese_regions(g)) == 4
+    assert len(find_sese_regions(g)) == len(find_sese_regions(full)) == 4
     ops = sorted(n.op_type for n in g.nodes if n.op_type != "Input")
-    assert ops == sorted(n.op_type for n in cf.models.bert(2).nodes)
+    assert ops == sorted(n.op_type for n in cf.models.bert_paper(2).nodes)
     plan = _compile(g)
-    assert plan.warnings == [] and plan.input_domain() in ("HE", "MPC")
-    assert plan.cost["total_ms"] == pytest.approx(_compile(cf.models.bert(2)).cost["total_ms"])
+    assert not any("scaled from the nearest" in w for w in plan.warnings) and plan.input_domain() in ("HE", "MPC")
+    assert plan.cost["total_ms"] == pytest.approx(_compile(cf.models.bert_paper(2)).cost["total_ms"])
 
 
 def test_multihead_attention_expands():
-    g = cf.models.from_torch(MHABlock().eval(), torch.randn(1, 128, 768))
-    assert [n.op_type for n in g.nodes][:5] == ["Input", "Attention_QK_MatMul", "Softmax",
+    x = torch.randn(1, 128, 768)
+    g = cf.models.from_torch(MHABlock().eval(), x)
+    assert [n.op_type for n in g.nodes][:6] == ["Input", "Linear_QKV", "Attention_QK_MatMul", "Softmax",
                                                 "Attention_V_MatMul", "Out_Projection"]
-    _compile(g)
+    _compile(cf.models.from_torch(MHABlock().eval(), x, qkv_projection=False))
 
 
 @pytest.mark.parametrize("model,inputs,match", [
@@ -245,5 +253,8 @@ def test_huggingface_bert_encoder():
     transformers = pytest.importorskip("transformers")
     from transformers.models.bert.modeling_bert import BertEncoder
     enc = BertEncoder(transformers.BertConfig(num_hidden_layers=2)).eval()
-    g = cf.models.from_torch(enc, torch.randn(1, 128, 768))
-    assert _compile(g).cost["total_ms"] == pytest.approx(_compile(cf.models.bert(2)).cost["total_ms"])
+    x = torch.randn(1, 128, 768)
+    full = cf.models.from_torch(enc, x)
+    assert sorted(n.op_type for n in full.nodes if n.op_type != "Input") == sorted(n.op_type for n in cf.models.bert(2).nodes)
+    g = cf.models.from_torch(enc, x, qkv_projection=False)
+    assert _compile(g).cost["total_ms"] == pytest.approx(_compile(cf.models.bert_paper(2)).cost["total_ms"])

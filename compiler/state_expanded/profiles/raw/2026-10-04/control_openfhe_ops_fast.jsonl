@@ -1,0 +1,1 @@
+{"op": "Out_Projection", "shape": [1, 128, 768], "mode": "fast", "ciphertexts": 3, "ms": 15573.6, "levels_after_bootstrap": 8, "levels_used": 1, "level_out": 7, "internal_bootstraps": 0, "bootstrap_ms": 0, "max_abs_err": 6.98298e-10, "approx": "diagonal BSGS 16x16 over column blocks, 2304 plaintext mults; encode+multiply+add (parallel) 12.1073 s, rotate+bias 3.45945 s"}

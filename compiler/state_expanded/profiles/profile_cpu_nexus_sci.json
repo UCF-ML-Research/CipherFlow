@@ -1,0 +1,808 @@
+{
+  "schema_version": "state_expanded/1.0",
+  "platform": "cpu",
+  "hardware": {
+    "device": "cpu",
+    "platform": "Linux-6.8.0-107-generic-x86_64-with-glibc2.35",
+    "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores"
+  },
+  "he_level_budget": 20,
+  "operators": [
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 154886.25,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.75,
+        "note": "scaled from NEXUS MatMul ref by 0.75x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 59799.36,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 8,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 12.0,
+        "note": "scaled from NEXUS Softmax ref (4983.3 ms / 128x128) by 12x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 77443.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 77443.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.05,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.0,
+        "note": "ciphertext add (SEAL Evaluator::add), reference constant",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 72739.04,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 3,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 8.0,
+        "note": "scaled from NEXUS LayerNorm ref (9092.4 ms / 16x768) by 8x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 309772.5,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.5,
+        "note": "scaled from NEXUS MatMul ref (206515.0 ms / 4096x768x64) by 1.5x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 152294.40000000002,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 12.0,
+        "note": "scaled from NEXUS GELU ref (12691.2 ms / 32768 slots) by 12x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 77443.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x (ffn2 lowered to matmul)",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Linear_QKV",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 232329.375,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "Q/K/V projections: 3 x Out_Projection (NEXUS MatMul reference scaled to weights [H, 3H])",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 10802.1,
+      "comm_bytes": 2385918308,
+      "comm_rounds": 408,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 10802.1,
+        "party2_ms": 10794.9,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 1483.49,
+      "comm_bytes": 420429444,
+      "comm_rounds": 856,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 1483.48,
+        "party2_ms": 1483.49,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "method_runtime_default",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "note": "semantic add is local share addition",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 6753.54,
+      "comm_bytes": 1322242804,
+      "comm_rounds": 1096,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 6753.51,
+        "party2_ms": 6753.54,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 4572.09,
+      "comm_bytes": 4731164760,
+      "comm_rounds": 176,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 4572.06,
+        "party2_ms": 4572.09,
+        "note": "traffic counted on 2 of 12 connections, scaled x6",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 4536.43,
+      "comm_bytes": 4851918936,
+      "comm_rounds": 176,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 4536.4,
+        "party2_ms": 4536.43,
+        "note": "traffic counted on 2 of 12 connections, scaled x6",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 591204.0,
+      "comm_bytes": 146910366496,
+      "comm_rounds": 266,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 8,
+        "party1_ms": 73900.5,
+        "party2_ms": 73805.8,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 16-row tiles x8 (larger calls segfault in n_matrix_mul_iron)",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 624403.2,
+      "comm_bytes": 154504215328,
+      "comm_rounds": 266,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 8,
+        "party1_ms": 78050.4,
+        "party2_ms": 77946.5,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 16-row tiles x8 (larger calls segfault in n_matrix_mul_iron)",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 56934.8,
+      "comm_bytes": 32109871816,
+      "comm_rounds": 262,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 2,
+        "party1_ms": 28467.4,
+        "party2_ms": 28442.4,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 64-row tiles x2 (larger calls segfault in n_matrix_mul_iron)",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Linear_QKV",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 451988.8,
+      "comm_bytes": 110221056800,
+      "comm_rounds": 266,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 8,
+        "party1_ms": 56498.6,
+        "party2_ms": 56470.6,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 16-row tiles x8 (larger calls segfault in n_matrix_mul_iron)",
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "seal_mask_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 577.4418000000001,
+      "comm_bytes": 3054188,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 565.879,
+        "client_ms": 11.5628,
+        "ciphertexts": 3,
+        "max_abs_err": 0.000243923,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "sci"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "seal_share_encrypt",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 723.0450000000001,
+      "comm_bytes": 22900110,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 225.649,
+        "client_ms": 497.396,
+        "ciphertexts": 3,
+        "max_abs_err": 0.000243923,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "sci"
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "seal_mask_decrypt",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 1168.5719,
+      "comm_bytes": 6108450,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 1145.37,
+        "client_ms": 23.2019,
+        "ciphertexts": 6,
+        "max_abs_err": 0.000243748,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "sci"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "seal_share_encrypt",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 1432.479,
+      "comm_bytes": 45796729,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 430.769,
+        "client_ms": 1001.71,
+        "ciphertexts": 6,
+        "max_abs_err": 0.000243748,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "sci"
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "seal_mask_decrypt",
+      "tensor_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 1787.0081,
+      "comm_bytes": 9162932,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 1751.99,
+        "client_ms": 35.0181,
+        "ciphertexts": 9,
+        "max_abs_err": 0.000243903,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "sci"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "seal_share_encrypt",
+      "tensor_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 2180.066,
+      "comm_bytes": 68699522,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 654.656,
+        "client_ms": 1525.41,
+        "ciphertexts": 9,
+        "max_abs_err": 0.000243904,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "sci"
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "seal_mask_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 2336.2176,
+      "comm_bytes": 12216719,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 2290.33,
+        "client_ms": 45.8876,
+        "ciphertexts": 12,
+        "max_abs_err": 0.000243872,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "sci"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "seal_share_encrypt",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 2884.772,
+      "comm_bytes": 91596878,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 875.212,
+        "client_ms": 2009.56,
+        "ciphertexts": 12,
+        "max_abs_err": 0.000243871,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "sci"
+      }
+    }
+  ],
+  "bootstrap": {
+    "method": "nexus_ckks_bootstrap",
+    "local_compute_ms": 51608.5,
+    "comm_bytes": 0,
+    "comm_rounds": 0,
+    "metadata": {
+      "source": "NEXUS build/bin/bootstrapping (real CKKS)",
+      "slots": 8192,
+      "note": "one bootstrap refreshes 8192 values (NEXUS demo, N=2^15 sparse); priced per ciphertext. The demo's modulus exceeds the 128-bit bound for N=2^15"
+    }
+  },
+  "metadata": {
+    "he_backend": "nexus",
+    "mpc_backend": "sci",
+    "he_stack_label": "NEXUS (CKKS) (CPU)",
+    "mpc_stack_label": "SCI/BOLT (CPU, 2PC, no third party)",
+    "he_source": "NEXUS reference kernels scaled to each shape (reference-scaled, not an executable pipeline)",
+    "mpc_source": "measured, raw/2026-10-03, raw/2026-10-04",
+    "conversion_source": "measured with SEAL, raw/2026-10-03, raw/2026-10-04",
+    "bootstrap_source": "NEXUS bootstrapping demo, per ciphertext of 8192 values"
+  }
+}

@@ -21,6 +21,7 @@ class NodePlacement:
     level_in: Optional[int] = None   # HE only
     level_out: Optional[int] = None
     cost_source: Optional[str] = None  # "exact" profile record, "scaled" from the nearest shape, or "input"
+    backend: Optional[str] = None      # the HE or MPC backend name, or "client" (Input)
 
 
 @dataclass
@@ -46,6 +47,11 @@ class Plan:
     schema: str = SCHEMA
     edges: List[List[str]] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    he_backend: Optional[str] = None   # HE backend this plan uses
+    precision_bits: Optional[float] = None   # its bootstrapping precision (None: not established)
+    mpc_backend: Optional[str] = None  # MPC backend this plan uses
+    security: Optional[str] = None     # its security model: "2pc" | "2pc-dealer" | ...
+    alternatives: Dict[str, Dict] = field(default_factory=dict)   # other backends: cost or exclusion
 
     # ------------------------------------------------------------ construction
     @classmethod
@@ -154,8 +160,23 @@ class Plan:
             f"conversions {c['conversion_ms'] / 1e3:.1f} s, bootstraps {c['bootstrap_ms'] / 1e3:.1f} s)",
             f"  placement: {k['HE']} HE / {k['MPC']} MPC operators, "
             f"{k['conversions']} conversions, {k['bootstraps']} bootstraps, "
-            f"{c['comm_bytes'] / 2**30:.2f} GiB online HE-MPC communication",
+            f"{c['comm_bytes'] / 2**30:.2f} GiB online communication",
         ]
+        if self.he_backend:
+            from .backends import HE_BACKENDS
+            hb = HE_BACKENDS.get(self.he_backend)
+            prec = f"{self.precision_bits:g}-bit bootstrapping" if self.precision_bits else "precision not established"
+            lines.append(f"  HE backend: {self.he_backend}" + (f" ({hb.label}; {prec}; costs {hb.status})" if hb else ""))
+        if self.mpc_backend:
+            from .backends import MPC_BACKENDS, SECURITY_TEXT
+            b = MPC_BACKENDS.get(self.mpc_backend)
+            lines.append(f"  MPC backend: {self.mpc_backend}"
+                         + (f" ({b.label}; {SECURITY_TEXT[b.security]})" if b else f" (security {self.security})"))
+            for name, alt in self.alternatives.items():
+                if "total_ms" in alt:
+                    lines.append(f"    vs {name}: {alt['total_ms'] / 1e3:.1f} s")
+                else:
+                    lines.append(f"    {name} not used: {alt['excluded']}")
         if any(n.op_type == "Input" for n in self.nodes):
             lines.append(f"  input: {self.input_domain()} "
                          f"({'encrypted' if self.input_domain() == 'HE' else 'secret-shared'} by the client)")

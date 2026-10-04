@@ -1,0 +1,268 @@
+[
+ {
+  "op": "Attention_QK_MatMul",
+  "shape_in": [
+   3,
+   1,
+   128,
+   768
+  ],
+  "shape_out": [
+   1,
+   12,
+   128,
+   128
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 13.807417009957135,
+  "ms_parties": [
+   12.155635980889201,
+   13.807417009957135
+  ],
+  "rounds_parties": [
+   4,
+   1
+  ],
+  "logical_bytes_parties": [
+   4718904.0,
+   3145728
+  ],
+  "wire_bytes": 4731606
+ },
+ {
+  "op": "Attention_V_MatMul",
+  "shape_in": [
+   1,
+   12,
+   128,
+   128
+  ],
+  "shape_out": [
+   1,
+   128,
+   768
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 13.470558915287256,
+  "ms_parties": [
+   12.191297020763159,
+   13.470558915287256
+  ],
+  "rounds_parties": [
+   4,
+   1
+  ],
+  "logical_bytes_parties": [
+   5505336.0,
+   4718592
+  ],
+  "wire_bytes": 5518350
+ },
+ {
+  "op": "Out_Projection",
+  "shape_in": [
+   1,
+   128,
+   768
+  ],
+  "shape_out": [
+   1,
+   128,
+   768
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 33.1441389862448,
+  "ms_parties": [
+   32.618136960081756,
+   33.1441389862448
+  ],
+  "rounds_parties": [
+   4,
+   1
+  ],
+  "logical_bytes_parties": [
+   11796784.0,
+   11010048
+  ],
+  "wire_bytes": 11816831
+ },
+ {
+  "op": "FFN_Linear_1",
+  "shape_in": [
+   1,
+   128,
+   768
+  ],
+  "shape_out": [
+   1,
+   128,
+   3072
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 106.06325895059854,
+  "ms_parties": [
+   104.87770999316126,
+   106.06325895059854
+  ],
+  "rounds_parties": [
+   4,
+   1
+  ],
+  "logical_bytes_parties": [
+   42467632.0,
+   39321600
+  ],
+  "wire_bytes": 42521287
+ },
+ {
+  "op": "FFN_Linear_2",
+  "shape_in": [
+   1,
+   128,
+   3072
+  ],
+  "shape_out": [
+   1,
+   128,
+   768
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 107.72888991050422,
+  "ms_parties": [
+   106.83455702383071,
+   107.72888991050422
+  ],
+  "rounds_parties": [
+   4,
+   1
+  ],
+  "logical_bytes_parties": [
+   44826928.0,
+   44040192
+  ],
+  "wire_bytes": 44880271
+ },
+ {
+  "op": "Softmax",
+  "shape_in": [
+   1,
+   12,
+   128,
+   128
+  ],
+  "shape_out": [
+   1,
+   12,
+   128,
+   128
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 406.34424798190594,
+  "ms_parties": [
+   406.31330700125545,
+   406.34424798190594
+  ],
+  "rounds_parties": [
+   164,
+   41
+  ],
+  "logical_bytes_parties": [
+   481309280.0,
+   383778816
+  ],
+  "wire_bytes": 482064305
+ },
+ {
+  "op": "LayerNorm",
+  "shape_in": [
+   1,
+   128,
+   768
+  ],
+  "shape_out": [
+   1,
+   128,
+   768
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 259.5164040103555,
+  "ms_parties": [
+   259.428521967493,
+   259.5164040103555
+  ],
+  "rounds_parties": [
+   256,
+   64
+  ],
+  "logical_bytes_parties": [
+   6595688.0,
+   4933632
+  ],
+  "wire_bytes": 6958429
+ },
+ {
+  "op": "GeLU",
+  "shape_in": [
+   1,
+   128,
+   3072
+  ],
+  "shape_out": [
+   1,
+   128,
+   3072
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 373.8950449042022,
+  "ms_parties": [
+   373.8950449042022,
+   373.8417939748615
+  ],
+  "rounds_parties": [
+   76,
+   19
+  ],
+  "logical_bytes_parties": [
+   519051112.0,
+   371195904
+  ],
+  "wire_bytes": 519698455
+ },
+ {
+  "op": "Residual_Add",
+  "shape_in": [
+   1,
+   128,
+   768
+  ],
+  "shape_out": [
+   1,
+   128,
+   768
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 0.9726430289447308,
+  "ms_parties": [
+   0.9101820178329945,
+   0.9726430289447308
+  ],
+  "rounds_parties": [
+   0,
+   0
+  ],
+  "logical_bytes_parties": [
+   0,
+   0
+  ],
+  "wire_bytes": 652
+ }
+]

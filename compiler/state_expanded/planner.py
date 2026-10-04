@@ -39,7 +39,7 @@ from .sese import (
     find_sese_regions,
     _backtrack,
 )
-from .state_graph import ChainOp, State, TransitionEdge
+from .state_graph import level_out, ChainOp, State, TransitionEdge
 
 Domain = str
 
@@ -48,6 +48,7 @@ Domain = str
 
 
 DEFAULT_LEVEL_DELTAS: Dict[str, int] = {
+    "Linear_QKV": 1,
     "Attention_QK_MatMul": 1,
     "Softmax": 8,
     "Attention_V_MatMul": 1,
@@ -242,6 +243,7 @@ def compile_plan(
                 input_shape=node.input_shape,
                 output_shape=node.output_shape,
                 he_level_delta=level_deltas.get(node.op_type, 0),
+                he_level_out=level_out(level_deltas, node.op_type),
             )
             # Allow conversions/bootstrap at this position before exec.
             from .state_graph import outgoing as _out
@@ -459,6 +461,7 @@ def _evaluate_fixed_policy(
 POLICY_LINEAR_HE_NONLINEAR_MPC: Dict[str, Domain] = {
     # BumbleBee / BOLT / Cheetah-style: heavy linear on HE, nonlinear
     # approximations on MPC via dedicated protocols.
+    "Linear_QKV":          "HE",
     "Attention_QK_MatMul": "HE",
     "Attention_V_MatMul":  "HE",
     "Out_Projection":      "HE",
@@ -616,7 +619,7 @@ def _materialise_static_plan(
         if d == "HE":
             current_l = min(preds_levels) if preds_levels else L
             if current_l < delta:
-                bs_est = cm.estimate_bootstrap(net)
+                bs_est = cm.estimate_bootstrap(net, node.input_shape)
                 if bs_est.resolution != "infeasible":
                     bs_cost += bs_est.latency_ms
                     current_l = L
@@ -639,7 +642,8 @@ def _materialise_static_plan(
                         steps=steps,
                         strategy_used=strategy_label,
                     )
-            he_level[nid] = current_l - delta
+            reset = level_out(level_deltas, node.op_type)
+            he_level[nid] = reset if reset is not None else current_l - delta
         else:
             he_level[nid] = L
 

@@ -1,0 +1,32 @@
+[
+ {
+  "op": "Linear_QKV",
+  "shape_in": [
+   1,
+   128,
+   768
+  ],
+  "shape_out": [
+   3,
+   1,
+   128,
+   768
+  ],
+  "device": "cpu",
+  "provider": "TFP",
+  "ms": 2423.7006759503856,
+  "ms_parties": [
+   2423.7006759503856,
+   2397.16704597231
+  ],
+  "rounds_parties": [
+   1,
+   1
+  ],
+  "logical_bytes_parties": [
+   29884416,
+   29884416
+  ],
+  "wire_bytes": 29925298
+ }
+]

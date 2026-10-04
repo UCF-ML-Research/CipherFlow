@@ -1,0 +1,825 @@
+{
+  "schema_version": "state_expanded/1.0",
+  "platform": "cpu",
+  "hardware": {
+    "device": "cpu",
+    "platform": "Linux-6.8.0-107-generic-x86_64-with-glibc2.35",
+    "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores"
+  },
+  "he_level_budget": 7,
+  "operators": [
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 9.97066,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 0,
+        "bootstrap_ms": 0,
+        "max_abs_err": 1.44823e-09,
+        "approx": "",
+        "ciphertexts": 3
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 7408.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 6,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 0,
+        "bootstrap_ms": 0,
+        "max_abs_err": 0.00055997,
+        "approx": "Chebyshev degree 27 on [-8.000000,8.000000]",
+        "ciphertexts": 12
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 36321.8,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 1,
+        "bootstrap_ms": 34798.4,
+        "max_abs_err": 0.00499368,
+        "approx": "1/sqrt: Chebyshev degree 27 on [0.250000,25.000000]",
+        "ciphertexts": 3,
+        "retried_after_wrong_result": true,
+        "level_out": 0
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 13717.3,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 0,
+        "bootstrap_ms": 0,
+        "max_abs_err": 8.61934e-10,
+        "approx": "diagonal BSGS 16x16 over column blocks, 2304 plaintext mults; encode+multiply+add (parallel) 10.3986 s, rotate+bias 3.31207 s",
+        "ciphertexts": 3
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 82815.1,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 7,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 2,
+        "bootstrap_ms": 73395.9,
+        "max_abs_err": 0.00795002,
+        "approx": "exp: Chebyshev degree 13 on [-6.000000,6.000000]; 1/u: Chebyshev degree 27 on [0.020000,1]",
+        "ciphertexts": 6,
+        "retried_after_wrong_result": true,
+        "level_out": 1
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 46805.2,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 0,
+        "bootstrap_ms": 0,
+        "max_abs_err": 8.72508e-10,
+        "approx": "diagonal BSGS 16x16 over column blocks, 9216 plaintext mults; encode+multiply+add (parallel) 42.039 s, rotate+bias 4.75965 s",
+        "ciphertexts": 3
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 51059.6,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 0,
+        "bootstrap_ms": 0,
+        "max_abs_err": 8.06286e-10,
+        "approx": "diagonal BSGS 16x16 over column blocks, 9216 plaintext mults; encode+multiply+add (parallel) 41.8215 s, rotate+bias 9.23179 s",
+        "ciphertexts": 12
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 110743.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 0,
+        "bootstrap_ms": 0,
+        "max_abs_err": 4.77038e-09,
+        "approx": "diagonal method over 128 token offsets, 2 heads per ciphertext",
+        "ciphertexts": 3
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 124506.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 0,
+        "bootstrap_ms": 0,
+        "max_abs_err": 4.37466e-09,
+        "approx": "diagonal method over 128 token offsets, 2 heads per ciphertext",
+        "ciphertexts": 6
+      }
+    },
+    {
+      "op_type": "Linear_QKV",
+      "domain": "HE",
+      "method": "openfhe_ckks_precise",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 35168.8,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (precise)",
+        "internal_bootstraps": 0,
+        "bootstrap_ms": 0,
+        "max_abs_err": 7.11351e-10,
+        "approx": "diagonal BSGS 16x16 over column blocks, 6912 plaintext mults; encode+multiply+add (parallel) 31.2628 s, rotate+bias 3.89954 s",
+        "ciphertexts": 3
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 10802.1,
+      "comm_bytes": 2385918308,
+      "comm_rounds": 408,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 10802.1,
+        "party2_ms": 10794.9,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 1483.49,
+      "comm_bytes": 420429444,
+      "comm_rounds": 856,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 1483.48,
+        "party2_ms": 1483.49,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "method_runtime_default",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "note": "semantic add is local share addition",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 6753.54,
+      "comm_bytes": 1322242804,
+      "comm_rounds": 1096,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 6753.51,
+        "party2_ms": 6753.54,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 4572.09,
+      "comm_bytes": 4731164760,
+      "comm_rounds": 176,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 4572.06,
+        "party2_ms": 4572.09,
+        "note": "traffic counted on 2 of 12 connections, scaled x6",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 4536.43,
+      "comm_bytes": 4851918936,
+      "comm_rounds": 176,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 4536.4,
+        "party2_ms": 4536.43,
+        "note": "traffic counted on 2 of 12 connections, scaled x6",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 591204.0,
+      "comm_bytes": 146910366496,
+      "comm_rounds": 266,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 8,
+        "party1_ms": 73900.5,
+        "party2_ms": 73805.8,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 16-row tiles x8 (larger calls segfault in n_matrix_mul_iron)",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 624403.2,
+      "comm_bytes": 154504215328,
+      "comm_rounds": 266,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 8,
+        "party1_ms": 78050.4,
+        "party2_ms": 77946.5,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 16-row tiles x8 (larger calls segfault in n_matrix_mul_iron)",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 56934.8,
+      "comm_bytes": 32109871816,
+      "comm_rounds": 262,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 2,
+        "party1_ms": 28467.4,
+        "party2_ms": 28442.4,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 64-row tiles x2 (larger calls segfault in n_matrix_mul_iron)",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        },
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    },
+    {
+      "op_type": "Linear_QKV",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 451988.8,
+      "comm_bytes": 110221056800,
+      "comm_rounds": 266,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 8,
+        "party1_ms": 56498.6,
+        "party2_ms": 56470.6,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 16-row tiles x8 (larger calls segfault in n_matrix_mul_iron)",
+        "rounds_definition": "SCI IOPack rounds, summed over 2 threads and both parties"
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "openfhe_mask_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 493.19,
+      "comm_bytes": 3152625,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/openfhe/conv_bench",
+        "server_ms": 299.526,
+        "client_ms": 193.664,
+        "ciphertexts": 3,
+        "max_abs_err": 0.000243923,
+        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "openfhe_share_encrypt",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 457.472,
+      "comm_bytes": 25175571,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/openfhe/conv_bench",
+        "server_ms": 206.088,
+        "client_ms": 251.384,
+        "ciphertexts": 3,
+        "max_abs_err": 0.000243923,
+        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "openfhe_mask_decrypt",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 972.3489999999999,
+      "comm_bytes": 6305250,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/openfhe/conv_bench",
+        "server_ms": 589.501,
+        "client_ms": 382.848,
+        "ciphertexts": 6,
+        "max_abs_err": 0.000243748,
+        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "openfhe_share_encrypt",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 979.2049999999999,
+      "comm_bytes": 50351142,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/openfhe/conv_bench",
+        "server_ms": 431.338,
+        "client_ms": 547.867,
+        "ciphertexts": 6,
+        "max_abs_err": 0.000243748,
+        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "openfhe_mask_decrypt",
+      "tensor_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 1521.8609999999999,
+      "comm_bytes": 9457875,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/openfhe/conv_bench",
+        "server_ms": 941.569,
+        "client_ms": 580.292,
+        "ciphertexts": 9,
+        "max_abs_err": 0.000243903,
+        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "openfhe_share_encrypt",
+      "tensor_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 1380.945,
+      "comm_bytes": 75526713,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/openfhe/conv_bench",
+        "server_ms": 641.396,
+        "client_ms": 739.549,
+        "ciphertexts": 9,
+        "max_abs_err": 0.000243903,
+        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "openfhe_mask_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 1880.8890000000001,
+      "comm_bytes": 12610500,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/openfhe/conv_bench",
+        "server_ms": 1120.69,
+        "client_ms": 760.199,
+        "ciphertexts": 12,
+        "max_abs_err": 0.000244003,
+        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "openfhe_share_encrypt",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 1765.473,
+      "comm_bytes": 100702284,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/openfhe/conv_bench",
+        "server_ms": 857.611,
+        "client_ms": 907.862,
+        "ciphertexts": 12,
+        "max_abs_err": 0.000244003,
+        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+      }
+    }
+  ],
+  "bootstrap": {
+    "method": "openfhe_bootstrap_precise",
+    "local_compute_ms": 34845.7,
+    "comm_bytes": 0,
+    "comm_rounds": 0,
+    "metadata": {
+      "source": "native/openfhe/he_ops (precise)",
+      "slots": 32768,
+      "levels_after": 7,
+      "max_abs_err": 8.35751e-08,
+      "approx": "two passes (iterative)"
+    }
+  },
+  "metadata": {
+    "he_backend": "openfhe-precise",
+    "mpc_backend": "sci",
+    "he_stack_label": "OpenFHE CKKS (CPU, N=2^16, 128-bit, precise bootstrapping)",
+    "mpc_stack_label": "SCI/BOLT (CPU, 2PC, no third party)",
+    "he_source": "measured with native/openfhe/he_ops, raw/2026-10-04",
+    "mpc_source": "measured, raw/2026-10-03, raw/2026-10-04",
+    "conversion_source": "measured with native/openfhe/conv_bench, raw/2026-10-04"
+  }
+}

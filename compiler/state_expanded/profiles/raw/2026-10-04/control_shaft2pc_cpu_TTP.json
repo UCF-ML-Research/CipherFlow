@@ -1,0 +1,31 @@
+[
+ {
+  "op": "Out_Projection",
+  "shape_in": [
+   1,
+   128,
+   768
+  ],
+  "shape_out": [
+   1,
+   128,
+   768
+  ],
+  "device": "cpu",
+  "provider": "TTP",
+  "ms": 595.2695170417428,
+  "ms_parties": [
+   590.7816690159962,
+   595.2695170417428
+  ],
+  "rounds_parties": [
+   4,
+   1
+  ],
+  "logical_bytes_parties": [
+   11796784.0,
+   11010048
+  ],
+  "wire_bytes": 11816976
+ }
+]

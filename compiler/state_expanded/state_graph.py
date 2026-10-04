@@ -37,7 +37,7 @@ a source state and an operator context. The planner uses Dijkstra.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterable, List, Optional, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from .cost_model import CostEstimate, NetworkSetting, StateExpandedCostModel
 from .profile_schema import LatencyProfile
@@ -64,6 +64,20 @@ class TransitionEdge:
     detail: str = ""       # op_type / tensor_shape / ...
 
 
+class LevelRules(dict):
+    """op_type -> HE levels the method needs on input (a plain dict works too).
+    ``out`` maps op_types whose HE method bootstraps internally to the level its
+    output is at (independent of the input level)."""
+
+    def __init__(self, deltas=None, out=None):
+        super().__init__(deltas or {})
+        self.out: Dict[str, int] = dict(out or {})
+
+
+def level_out(rules, op_type: str) -> Optional[int]:
+    return getattr(rules, "out", {}).get(op_type)
+
+
 @dataclass(frozen=True)
 class ChainOp:
     """One operator on the chain — what the planner needs to know."""
@@ -72,6 +86,9 @@ class ChainOp:
     input_shape: Tuple[int, ...]
     output_shape: Tuple[int, ...]
     he_level_delta: int
+    # Level of the output when the HE method bootstraps internally (it then needs
+    # ``he_level_delta`` levels on input and returns at this level); None = src.l - delta.
+    he_level_out: Optional[int] = None
 
 
 def enumerate_states(chain_len: int, L: int) -> List[State]:
@@ -116,7 +133,8 @@ def outgoing(
                 edges.append(
                     TransitionEdge(
                         src=src,
-                        dst=State(i + 1, "HE", src.l - op.he_level_delta),
+                        dst=State(i + 1, "HE", op.he_level_out if op.he_level_out is not None
+                                  else src.l - op.he_level_delta),
                         cost_ms=est.latency_ms,
                         action="he_exec",
                         detail=f"{op.node_id}:{op.op_type}",
@@ -172,7 +190,10 @@ def outgoing(
 
     # -- 5. Bootstrapping (same i, HE only) --
     if src.d == "HE" and src.l < L and allow_bootstrap:
-        est = cm.estimate_bootstrap(net)
+        shape = conversion_shape_at(i) if conversion_shape_at else (
+            chain[i].input_shape if i < len(chain) else chain[-1].output_shape
+        )
+        est = cm.estimate_bootstrap(net, shape)
         if est.resolution != "infeasible":
             edges.append(
                 TransitionEdge(

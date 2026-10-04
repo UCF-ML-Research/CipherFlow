@@ -1,0 +1,1 @@
+{"op":"Bootstrap","shape":[32768],"mode":"fast","ciphertexts":1,"ms":17580.7,"levels_after_bootstrap":8,"levels_used":0,"level_out":8,"internal_bootstraps":0,"bootstrap_ms":0,"max_abs_err":0.000661921,"approx":"one pass"}

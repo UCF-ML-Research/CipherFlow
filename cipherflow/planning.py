@@ -1,4 +1,4 @@
-"""cipherflow.compile: graph + profile + deployment -> Plan."""
+"""cipherflow.compile: graph + profile + deployment -> Plan; cipherflow.match: which backends fit."""
 from __future__ import annotations
 
 import warnings
@@ -12,7 +12,8 @@ from compiler.state_expanded.profile_schema import LatencyProfile, OperatorRecor
 from . import backends as _backends
 from . import profiles as _profiles
 from .deploy import Deployment
-from .errors import CostExtrapolationError, CostExtrapolationWarning, UnsupportedOperator
+from .errors import (CostExtrapolationError, CostExtrapolationWarning, UnsupportedBackend,
+                     UnsupportedOperator)
 from .plan import Plan
 from .validate import check_graph
 
@@ -33,7 +34,10 @@ def _check_coverage(graph, methods, profile) -> None:
     unprofiled = sorted({n.op_type for n in graph.nodes if n.op_type in ops
                          and not any((n.op_type, d) in profiled for d in ops[n.op_type])})
     if unprofiled:
-        raise UnsupportedOperator(f"profile has no cost record for op types {unprofiled}")
+        raise UnsupportedOperator(f"profile has no cost record for op types {unprofiled}" + (
+            "; the paper's profiles (paper-cpu, paper-gpu) predate the Q/K/V projections: plan the "
+            "paper's graph (cf.models.bert(qkv_projection=False), cf.models.vit_paper()) to reproduce "
+            "the paper, or use a measured profile" if "Linear_QKV" in unprofiled else ""))
 
 
 def _record(op_type, domain, node, *, feasible, method, note) -> OperatorRecord:
@@ -61,7 +65,10 @@ def _prepare_profile(graph, methods, profile: LatencyProfile) -> Tuple[LatencyPr
             if d not in ops.get(n.op_type, ()):
                 blocked[(n.node_id, d)] = f"no {d} method"
             elif (n.op_type, d) not in has_records:
-                blocked[(n.node_id, d)] = f"profile has no {d} cost record for {n.op_type}"
+                blocked[(n.node_id, d)] = f"profile has no {d} cost record for {n.op_type}" + (
+                    " (the paper's profiles predate it: plan the paper's graph, e.g. "
+                    "cf.models.bert(qkv_projection=False), to reproduce the paper)"
+                    if n.op_type == "Linear_QKV" else "")
             elif (n.node_id, d) in viol:
                 blocked[(n.node_id, d)] = viol[(n.node_id, d)]
 
@@ -175,60 +182,318 @@ def cost_report(graph, profile: LatencyProfile) -> CostReport:
     return rep
 
 
-def compile(graph, deployment: Deployment, *,
-            profile: Union[str, LatencyProfile, None] = None,
-            methods: Union[str, Sequence[_backends.Method]] = "auto",
-            safe: bool = True, strict: bool = False, verbose: bool = True) -> Plan:
-    """Plan hybrid HE/MPC execution of `graph` for `deployment`.
+# ----------------------------------------------------------------- backend candidates
 
-    profile: a LatencyProfile, a JSON path, a built-in name ('cpu', 'gpu'), or 'auto'.
-             'auto' requires Deployment.local(...): it loads this machine's cached
-             MicroBench profile and measures any entries the graph still needs.
-             Defaults to the deployment's hardware profile.
-    methods: 'auto' for the built-in NEXUS-CKKS / SCI-SHAFT methods, or a list of Method.
-    safe:    also materialise the static baselines and return the cheapest plan
-             (guarantees the result is never worse than a static placement).
-    strict:  refuse (CostExtrapolationError) when a cost entry is not in the profile,
-             instead of scaling it from the nearest profiled shape with a warning.
+@dataclass
+class Candidate:
+    """One (HE backend, MPC backend) pair to plan with, and the profile to use."""
+    he: str
+    mpc: str
+    profile: Union[str, LatencyProfile]          # built-in name, path, LatencyProfile, or "auto"
+    methods: Optional[List[_backends.Method]] = None   # None: built-in methods (levels from the profile if needed)
 
-    Raises UnsupportedGraph for structures the planner does not handle and
-    UnsupportedOperator for operators no backend can run; see cipherflow.errors.
-    """
-    meths = _backends.builtin_methods() if methods == "auto" else list(methods)
-    check_graph(graph)
-    _check_methods(graph, meths)
-    spec = profile if profile is not None else (deployment.hardware.profile or "auto")
+    @property
+    def name(self) -> str:
+        return f"{self.he}+{self.mpc}"
+
+    @property
+    def backend(self) -> Optional[_backends.MPCBackend]:
+        return _backends.MPC_BACKENDS.get(self.mpc)
+
+    @property
+    def he_backend(self) -> Optional[_backends.HEBackend]:
+        return _backends.HE_BACKENDS.get(self.he)
+
+
+def _security_reason(name: str, security: str) -> Optional[str]:
+    b = _backends.MPC_BACKENDS.get(name)
+    allowed = _backends.SECURITY[security]
+    if b is None:
+        return (None if security == "any" else
+                f"unknown MPC backend, so its security model is unknown; pass security='any' or set "
+                f"the profile's metadata['mpc_backend'] to one of {sorted(_backends.MPC_BACKENDS)}")
+    if b.security not in allowed:
+        return (f"security model {b.security} ({_backends.SECURITY_TEXT[b.security]}) is not allowed by "
+                f"security={security!r}; pass security={'2pc-dealer' if b.security == '2pc-dealer' else 'any'!r} "
+                f"to allow it")
+    return None
+
+
+def _methods(cand: Candidate, profile: Optional[LatencyProfile]) -> List[_backends.Method]:
+    """Methods for a candidate. HE level consumption comes from the HE backend's table, or from
+    the profile's measured records (he_level_delta, metadata level_out) when it has none."""
+    if cand.methods is not None:
+        return cand.methods
+    hb = cand.he_backend
+    mpc = cand.mpc if cand.mpc in _backends.MPC_BACKENDS else "sci"
+    if hb is not None and hb.level_deltas is not None:
+        meths = _backends.builtin_methods(mpc, he=cand.he)
+    else:
+        deltas, outs = _backends.profile_level_rules(profile) if profile is not None else ({}, {})
+        meths = _backends.builtin_methods(mpc, he=cand.he if hb is not None else "openfhe-fast",
+                                          level_deltas=deltas, level_out=outs)
+        if hb is None:                                  # custom HE backend: its own name, no contracts
+            meths = [replace(m, backend=cand.he, contract=None) if m.domain == "HE" else m for m in meths]
+    if cand.mpc not in _backends.MPC_BACKENDS:          # custom MPC backend: its own name
+        meths = [replace(m, backend=cand.mpc) if m.domain == "MPC" else m for m in meths]
+    return meths
+
+
+def resolve_candidates(deployment: Deployment, profile=None, he: str = "auto", mpc: str = "auto",
+                       security: str = "2pc", min_precision: Optional[float] = None,
+                       methods="auto") -> Tuple[List[Candidate], Dict[str, str]]:
+    """(HE, MPC) backend pairs to plan with, and the reason each other pair is excluded."""
+    _backends.check_security(security)
+    for arg, reg, what in ((he, _backends.HE_BACKENDS, "he"), (mpc, _backends.MPC_BACKENDS, "mpc")):
+        if arg != "auto" and arg not in reg:
+            raise ValueError(f"{what} must be 'auto' or one of {sorted(reg)}, got {arg!r}")
+    hw = deployment.hardware
+    spec = profile if profile is not None else (hw.profile or "auto")
+    pairs = [(h, m) for h in _backends.HE_BACKENDS if he in ("auto", h)
+             for m in _backends.MPC_BACKENDS if mpc in ("auto", m)]
+    cands: List[Candidate] = []
+    excluded: Dict[str, str] = {}
+
+    def why_not(h, m):
+        return _security_reason(m, security) or _backends.precision_reason(h, min_precision)
+
+    if methods != "auto":                       # caller-supplied methods: their backends, as given
+        meths = list(methods)
+        hs = sorted({x.backend for x in meths if x.domain == "HE"})
+        ms = sorted({x.backend for x in meths if x.domain == "MPC"})
+        h = hs[0] if len(hs) == 1 else ("none" if not hs else "custom")
+        m = ms[0] if len(ms) == 1 else ("none" if not ms else "custom")
+        why = (None if m == "none" else _security_reason(m, security)) or \
+              (None if h == "none" else _backends.precision_reason(h, min_precision))
+        if why:
+            raise UnsupportedBackend(f"{h}+{m}: {why}")
+        return [Candidate(h, m, spec, meths)], excluded
+
     if spec == "auto":
-        if not deployment.hardware.local:
+        if not hw.local:
             raise ValueError(
                 f"profile='auto' measures this machine, but the deployment targets "
-                f"{deployment.hardware.name or deployment.hardware.device!r}. Use Deployment.local(...) "
-                "on the target machine, or pass that machine's profile file.")
+                f"{hw.name or hw.device!r}. Use Deployment.local(...) on the target machine, or pass "
+                "that machine's profile file.")
+        from .measure import BackendUnavailable, measurable
+        wired = measurable(hw.device)
+        if not wired:
+            raise BackendUnavailable(
+                f"automatic MicroBench is not wired for device={hw.device!r} yet; pass a measured profile "
+                "file (profile='path/to/profile.json'), or plan for CPU execution with "
+                "Deployment.local(..., device='cpu')")
+        for h, m in pairs:
+            why = why_not(h, m)
+            if why is None and f"{h}+{m}" not in wired:
+                why = f"automatic MicroBench is not wired for {h}+{m} on {hw.device} (available: {wired})"
+            if why:
+                excluded[f"{h}+{m}"] = why
+            else:
+                cands.append(Candidate(h, m, "auto"))
+        return cands, excluded
+
+    hw_table = _profiles.hardware_profiles()
+    if isinstance(spec, str) and spec in hw_table:   # a hardware name: try its built-in profiles
+        for h, m in pairs:
+            why = why_not(h, m)
+            if why is None and (h, m) not in hw_table[spec]:
+                hb = _backends.HE_BACKENDS[h]
+                why = (f"no built-in {spec!r} profile for {h}+{m}"
+                       + (f" ({hb.status}: {hb.note})" if hb.status == "in development" else ""))
+            if why:
+                excluded[f"{h}+{m}"] = why
+            else:
+                cands.append(Candidate(h, m, hw_table[spec][(h, m)]))
+        return cands, excluded
+
+    prof = _profiles.load(spec)                       # one profile: its backends
+    h, m = _backends.infer_he_backend(prof), _backends.infer_backend(prof)
+    if h is None or m is None:
+        raise UnsupportedBackend(f"the profile has no {'HE' if h is None else 'MPC'} cost records")
+    if he != "auto" and h != he:
+        raise UnsupportedBackend(f"the profile holds {h} HE costs, but he={he!r} was requested")
+    if mpc != "auto" and m != mpc:
+        raise UnsupportedBackend(f"the profile holds {m} costs, but mpc={mpc!r} was requested")
+    why = why_not(h, m)
+    if why:
+        excluded[f"{h}+{m}"] = why
+        return cands, excluded
+    return [Candidate(h, m, spec if isinstance(spec, str) else prof)], excluded
+
+
+def _profile_for(graph, deployment, cand: Candidate, *, measure: bool, verbose: bool):
+    if cand.profile == "auto":
         from .measure import microbench
-        prof = microbench(graph, meths, device=deployment.hardware.device, verbose=verbose)
-        prof_name = "auto"
-    else:
-        prof = _profiles.load(spec)
-        prof_name = spec if isinstance(spec, str) else (prof.platform or "custom")
+        if not measure:
+            return None, "auto"
+        return (microbench(graph, _methods(cand, None), device=deployment.hardware.device,
+                           backend=cand.mpc, he=cand.he, verbose=verbose), f"auto ({cand.name})")
+    prof = _profiles.load(cand.profile)
+    name = cand.profile if isinstance(cand.profile, str) else (prof.metadata or {}).get("label") or prof.platform
+    return prof, name
+
+
+def _plan_with(graph, deployment, cand: Candidate, *, safe, strict, verbose):
+    _check_methods(graph, _methods(cand, None) if cand.methods is None else cand.methods)
+    prof, prof_name = _profile_for(graph, deployment, cand, measure=True, verbose=verbose)
+    meths = _methods(cand, prof)
     _check_coverage(graph, meths, prof)
     prof, notes = _prepare_profile(graph, meths, prof)
-
     report = cost_report(graph, prof)
-    plan_warnings = list(notes)
-    if report.n_scaled:
-        msg = report.summary(prof_name)
-        if strict:
-            raise CostExtrapolationError(msg)
-        warnings.warn(msg, CostExtrapolationWarning, stacklevel=2)
-        plan_warnings.insert(0, msg)
-
+    scaled = report.summary(prof_name) if report.n_scaled else None
+    if scaled and strict:
+        raise CostExtrapolationError(scaled)
+    hb = cand.he_backend
+    if hb is not None and hb.status != "measured":
+        notes.append(f"HE costs of {cand.he} are {hb.status}: {hb.note}")
     deltas = _backends.level_deltas(meths)
     net = deployment.network.to_setting()
     compiled = (compile_plan_safe(graph, prof, net, level_deltas=deltas) if safe
                 else compile_plan(graph, prof, net, level_deltas=deltas))
     plan = Plan.from_compiled(compiled, graph, prof, deployment)
     for n in plan.nodes:
-        n.cost_source = ("input" if n.op_type in _backends.PSEUDO_OPS
-                         else report.node_source.get((n.id, n.domain), "exact"))
-    plan.warnings = plan_warnings
+        if n.op_type in _backends.PSEUDO_OPS:
+            n.cost_source, n.backend = "input", "client"
+        else:
+            n.cost_source = report.node_source.get((n.id, n.domain), "exact")
+            n.backend = cand.he if n.domain == "HE" else cand.mpc
+    plan.warnings = ([scaled] if scaled else []) + notes
+    plan.mpc_backend, plan.he_backend = cand.mpc, cand.he
+    plan.security = cand.backend.security if cand.backend else ("none" if cand.mpc == "none" else "unknown")
+    plan.precision_bits = hb.precision_bits if hb is not None else None
+    plan.profile["name"] = prof_name
+    return plan, scaled
+
+
+_CANDIDATE_ERRORS = (UnsupportedOperator, CostExtrapolationError, LookupError, RuntimeError, ValueError)
+
+
+def compile(graph, deployment: Deployment, *,
+            profile: Union[str, LatencyProfile, None] = None,
+            he: str = "auto", mpc: str = "auto", security: str = "2pc",
+            min_precision: Optional[float] = None,
+            methods: Union[str, Sequence[_backends.Method]] = "auto",
+            safe: bool = True, strict: bool = False, verbose: bool = True) -> Plan:
+    """Plan hybrid HE/MPC execution of `graph` for `deployment`.
+
+    profile:  a LatencyProfile, a JSON path, a built-in name (see cipherflow.profiles.BUILTIN;
+              paper-cpu / paper-gpu reproduce the paper), a hardware name ('cpu', 'gpu': its
+              built-in measured profiles, one per HE/MPC backend pair), or 'auto'. 'auto' requires
+              Deployment.local(...): it loads this machine's cached MicroBench profile and
+              measures any entries the graph still needs. Defaults to the deployment's hardware.
+    he, mpc:  HE backend (cipherflow.backends.HE_BACKENDS) and MPC backend (MPC_BACKENDS), or
+              'auto' to plan with every pair that fits and return the fastest plan
+              (plan.alternatives lists the others and why any were not used).
+    security: '2pc' (two parties, no third party; default), '2pc-dealer' (also allow a trusted
+              dealer for preprocessing, e.g. SHAFT), or 'any'.
+    min_precision: minimum HE bootstrapping precision in bits; HE backends below it (or whose
+              precision is not established) are not used.
+    methods:  'auto' for the built-in methods of each backend pair, or a list of Method.
+    safe:     also materialise the static baselines and return the cheapest plan
+              (guarantees the result is never worse than a static placement).
+    strict:   refuse (CostExtrapolationError) cost entries that are not in the profile, instead
+              of scaling them from the nearest profiled shape with a warning; with 'auto'
+              backends, pairs that would need scaled entries are skipped.
+
+    Raises UnsupportedGraph for structures the planner does not handle, UnsupportedOperator
+    for operators no backend can run, and UnsupportedBackend when no backend pair fits;
+    see cipherflow.errors.
+    """
+    check_graph(graph)
+    cands, excluded = resolve_candidates(deployment, profile, he, mpc, security, min_precision, methods)
+    if not cands:
+        raise UnsupportedBackend("no backend pair can be used: " +
+                                 "; ".join(f"{n}: {why}" for n, why in excluded.items()))
+    plans: Dict[str, Tuple[Plan, Optional[str]]] = {}
+    for c in cands:
+        try:
+            plans[c.name] = _plan_with(graph, deployment, c, safe=safe, strict=strict, verbose=verbose)
+        except _CANDIDATE_ERRORS as exc:
+            if len(cands) == 1:
+                raise
+            excluded[c.name] = f"{type(exc).__name__}: {exc}"
+    if not plans:
+        raise UnsupportedBackend("no backend pair can plan this model: " +
+                                 "; ".join(f"{n}: {why}" for n, why in excluded.items()))
+    best_name = min(plans, key=lambda n: plans[n][0].cost["total_ms"])
+    plan, scaled = plans[best_name]
+    plan.alternatives = {n: {"total_ms": p.cost["total_ms"], "security": p.security,
+                             "precision_bits": p.precision_bits, "warnings": len(p.warnings)}
+                         for n, (p, _s) in plans.items() if n != best_name}
+    plan.alternatives.update({n: {"excluded": why} for n, why in excluded.items()})
+    if scaled:
+        warnings.warn(scaled, CostExtrapolationWarning, stacklevel=2)
     return plan
+
+
+# ----------------------------------------------------------------- compatibility report
+
+@dataclass
+class MatchRow:
+    backend: str                 # "<he>+<mpc>"
+    status: str                  # "ok" | "excluded"
+    detail: str
+    security: str = ""
+    precision_bits: Optional[float] = None
+    profile: str = ""
+
+
+@dataclass
+class MatchReport:
+    graph_id: str
+    rows: List[MatchRow]
+
+    def compatible(self) -> List[str]:
+        return [r.backend for r in self.rows if r.status == "ok"]
+
+    def __str__(self) -> str:
+        w = max([len(r.backend) for r in self.rows] + [7])
+        lines = [f"backends for {self.graph_id}:"]
+        for r in self.rows:
+            lines.append(f"  {r.backend:{w}s}  {r.status:8s}  {r.detail}")
+        return "\n".join(lines)
+
+
+def match(graph, deployment: Deployment, *, profile=None, he: str = "auto", mpc: str = "auto",
+          security: str = "2pc", min_precision: Optional[float] = None, methods="auto") -> MatchReport:
+    """Which (HE, MPC) backend pairs can plan `graph` on `deployment`, without planning or
+    measuring: operator coverage, method contracts, security, precision, profile coverage."""
+    check_graph(graph)
+    cands, excluded = resolve_candidates(deployment, profile, he, mpc, security, min_precision, methods)
+    rows: List[MatchRow] = []
+    for c in cands:
+        sec = c.backend.security if c.backend else "unknown"
+        prec = c.he_backend.precision_bits if c.he_backend else None
+        try:
+            if c.profile == "auto":
+                from .measure import microbench
+                meths = _methods(c, None)
+                _check_methods(graph, meths)
+                todo = microbench(graph, meths, device=deployment.hardware.device, backend=c.mpc, he=c.he,
+                                  dry_run=True, verbose=False)
+                n = len(todo.ops) + 2 * len(todo.conversion_shapes) + int(todo.bootstrap)
+                rows.append(MatchRow(c.name, "ok", f"profile='auto': {n} cost entries still to measure"
+                                     if n else "profile='auto': all cost entries cached", sec, prec, "auto"))
+                continue
+            prof, prof_name = _profile_for(graph, deployment, c, measure=False, verbose=False)
+            meths = _methods(c, prof)
+            _check_methods(graph, meths)
+            _check_coverage(graph, meths, prof)
+            prof, notes = _prepare_profile(graph, meths, prof)
+            rep = cost_report(graph, prof)
+            detail = (f"{rep.total - rep.n_scaled}/{rep.total} cost entries exact"
+                      + (f", {rep.n_scaled} scaled from other shapes" if rep.n_scaled else ""))
+            hb = c.he_backend
+            if hb is not None and hb.status != "measured":
+                detail += f"; HE costs {hb.status}"
+            if notes:
+                detail += "; " + "; ".join(notes)
+            rows.append(MatchRow(c.name, "ok", detail, sec, prec, str(prof_name)))
+        except _CANDIDATE_ERRORS as exc:
+            rows.append(MatchRow(c.name, "excluded", f"{type(exc).__name__}: {exc}", sec, prec))
+    for n, why in excluded.items():
+        h, _, m = n.partition("+")
+        b, hb = _backends.MPC_BACKENDS.get(m), _backends.HE_BACKENDS.get(h)
+        rows.append(MatchRow(n, "excluded", why, b.security if b else "unknown",
+                             hb.precision_bits if hb else None))
+    return MatchReport(graph.graph_id, rows)

@@ -223,7 +223,17 @@ class StateExpandedCostModel:
 
     # ---------- bootstrap cost ----------
 
-    def estimate_bootstrap(self, net: NetworkSetting) -> CostEstimate:
+    def bootstrap_count(self, shape: Iterable[int] | None) -> int:
+        """Bootstraps needed to refresh a tensor of ``shape``: one per ciphertext when the
+        bootstrap record declares ``metadata["slots"]`` (values refreshed per call), else 1
+        (records without it are priced per call, as in the v0.1 profiles)."""
+        rec = self.profile.bootstrap
+        slots = int((rec.metadata or {}).get("slots", 0)) if rec is not None else 0
+        if not slots or shape is None:
+            return 1
+        return max(1, -(-_shape_size(shape) // slots))
+
+    def estimate_bootstrap(self, net: NetworkSetting, shape: Iterable[int] | None = None) -> CostEstimate:
         rec = self.profile.bootstrap
         if rec is None:
             # Bootstrapping unavailable on this profile: caller should
@@ -236,13 +246,14 @@ class StateExpandedCostModel:
                 comm_rounds=0,
                 resolution="infeasible",
             )
+        k = self.bootstrap_count(shape)
         lat = compose_latency(
-            rec.local_compute_ms, rec.comm_bytes, rec.comm_rounds, net
+            rec.local_compute_ms * k, rec.comm_bytes * k, rec.comm_rounds, net
         )
         return CostEstimate(
             latency_ms=lat,
-            local_compute_ms=rec.local_compute_ms,
-            comm_bytes=rec.comm_bytes,
+            local_compute_ms=rec.local_compute_ms * k,
+            comm_bytes=rec.comm_bytes * k,
             comm_rounds=rec.comm_rounds,
             resolution="exact",
         )

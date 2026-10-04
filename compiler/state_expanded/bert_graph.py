@@ -134,13 +134,18 @@ def bert_block_graph(manifest: BertShapeManifest | None = None) -> OperatorGraph
 
 
 def bert_multi_block_graph(
-    num_blocks: int, manifest: BertShapeManifest | None = None
+    num_blocks: int, manifest: BertShapeManifest | None = None, qkv_projection: bool = False
 ) -> OperatorGraph:
     """Chain ``num_blocks`` encoder blocks sharing manifest shapes.
 
     Node ids are prefixed with ``L<i>_`` for block index i in
     ``[0, num_blocks)``. Inter-block wiring feeds ``L<i>_ln2`` output
     into ``L<i+1>_qk`` input (same shape [B,S,H]).
+
+    ``qkv_projection=True`` adds the Q/K/V projections as a ``Linear_QKV``
+    node ``L<i>_qkv`` ([B,S,H] -> packed [3,B,S,H]) in front of ``L<i>_qk``;
+    it then starts the block (and carries the residual). The default (False)
+    is the graph used in the NeurIPS 2026 evaluation, which leaves them out.
     """
     m = manifest or default_manifest()
     tok = _shape(m.batch, m.seq, m.hidden)
@@ -157,6 +162,10 @@ def bert_multi_block_graph(
 
     for i in range(num_blocks):
         p = lambda n, _i=i: prefix(_i, n)
+        first = p("qkv") if qkv_projection else p("qk")      # block input: the residual's source
+        if qkv_projection:
+            nodes.append(OperatorNode(p("qkv"), "Linear_QKV", tok, qkv))
+            edges.append(DataEdge(p("qkv"), p("qk"), qkv))
         nodes.extend([
             OperatorNode(p("qk"),   "Attention_QK_MatMul", qkv, scores,
                          attributes={"heads": m.heads, "head_dim": m.head_dim}),
@@ -179,7 +188,7 @@ def bert_multi_block_graph(
             DataEdge(p("av"),   p("op"),   ctx),
             DataEdge(p("op"),   p("add1"), tok),
             # Residual 1: attention input bypass.
-            DataEdge(p("qk"),   p("add1"), tok),
+            DataEdge(first,     p("add1"), tok),
             DataEdge(p("add1"), p("ln1"),  tok),
             DataEdge(p("ln1"),  p("ffn1"), tok),
             DataEdge(p("ffn1"), p("gelu"), ffn1_out),
@@ -189,12 +198,12 @@ def bert_multi_block_graph(
             DataEdge(p("ln1"),  p("add2"), tok),
             DataEdge(p("add2"), p("ln2"),  tok),
         ])
-        # Inter-block wiring: previous ln2 feeds this qk.
+        # Inter-block wiring: previous ln2 feeds this block.
         if i > 0:
-            edges.append(DataEdge(prefix(i - 1, "ln2"), p("qk"), tok))
+            edges.append(DataEdge(prefix(i - 1, "ln2"), first, tok))
 
     return OperatorGraph(
-        graph_id=f"bert_{num_blocks}block_B{m.batch}_S{m.seq}",
+        graph_id=f"bert_{num_blocks}block_B{m.batch}_S{m.seq}" + ("_qkv" if qkv_projection else ""),
         nodes=nodes,
         edges=edges,
     )

@@ -74,6 +74,40 @@ _NTHREADS = 2
 
 # FFN1 bridge cap on n=B*S (see CLAUDE.md + method_mpc_bolt.py).
 _FFN1_N_CAP = 64
+# n_matrix_mul_iron (per-row weight matrices) limits, measured 2026-10-03 on a
+# Threadripper PRO 3955WX with both parties on one machine:
+#   16 x 768 x 3072 weights (37.7M): works
+#   32 x 768 x 3072 (75.5M): party segfaults after ~58 s, ~50 GB RSS per party
+#     (not out of memory; likely a 32-bit size overflow in the bridge)
+#   64 x 768 x 3072 (151M): >60 GB per party, killed by the OOM killer
+_IRON_MAX_WEIGHTS = 16 * 768 * 3072
+_IRON_BYTES_PER_WEIGHT = 700          # peak RSS per party per weight entry (50 GB / 75.5M)
+
+
+def _mem_available() -> int:
+    try:
+        for line in Path("/proc/meminfo").read_text().splitlines():
+            if line.startswith("MemAvailable"):
+                return int(line.split()[1]) * 1024
+    except OSError:
+        pass
+    return 0
+
+
+def _linear_tile(n: int, h: int, i: int) -> Tuple[int, int, str]:
+    """Rows per bridge call for an n x h x i linear layer, and the number of calls.
+    Bounded by the bridge's row cap, the largest weight count known to work, and
+    memory (both parties on one machine); the tile is the largest divisor of n within
+    the bounds, so tiles cover n exactly."""
+    bounds = [(_FFN1_N_CAP, f"bridge cap {_FFN1_N_CAP} rows"),
+              (max(1, _IRON_MAX_WEIGHTS // (h * i)), "largest working bridge call: 37.7M weights")]
+    avail = _mem_available()
+    if avail:
+        bounds.append((max(1, int(0.7 * avail / (2 * _IRON_BYTES_PER_WEIGHT * h * i))),
+                       f"memory ({avail / 2**30:.0f} GiB available)"))
+    cap, why = min(bounds)
+    tile = max(d for d in range(1, min(n, cap) + 1) if n % d == 0)
+    return tile, n // tile, (why if tile < n else "single call")
 
 
 _STAT_RE = re.compile(
@@ -94,9 +128,22 @@ def _port_available(port: int) -> bool:
         sock.close()
 
 
-def _choose_port_block(block_size: int = 64, trials: int = 200) -> int:
+# A bridge opens MAX_THREADS (64) IOPacks; IOPack i listens on port+i, port+i+50
+# (REV_PORT_OFFSET) and port+i+100 (GC_PORT_OFFSET), so it needs ports [port, port+163].
+_SCI_PORT_SPAN = 64 + 100
+# Pick blocks below the kernel's ephemeral range: party 2's outgoing connections take
+# ephemeral ports, and one landing inside the block makes party 1's bind fail.
+_EPHEMERAL_LOW = 32768
+try:
+    _EPHEMERAL_LOW = int(Path("/proc/sys/net/ipv4/ip_local_port_range").read_text().split()[0])
+except (OSError, ValueError, IndexError):
+    pass
+
+
+def _choose_port_block(block_size: int = _SCI_PORT_SPAN, trials: int = 200) -> int:
+    hi = max(10000 + block_size, _EPHEMERAL_LOW) - block_size - 1
     for _ in range(trials):
-        start = random.randint(20000, 50000 - block_size - 1)
+        start = random.randint(10000, hi)
         if all(_port_available(start + i) for i in range(block_size)):
             return start
     raise RuntimeError("No free contiguous port block for SCI.")
@@ -119,16 +166,30 @@ def _parse_stats(stdout_text: str) -> List[Tuple[float, int, int]]:
 
 
 def _run_two_party_once(cmd_p1: List[str], cmd_p2: List[str], timeout_s: int) -> MpcBridgeStats:
-    p1 = subprocess.Popen(cmd_p1, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    time.sleep(0.3)
-    p2 = subprocess.Popen(cmd_p2, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    try:
-        out1, err1 = p1.communicate(timeout=timeout_s)
-        out2, err2 = p2.communicate(timeout=timeout_s)
-    except subprocess.TimeoutExpired as exc:
-        p1.kill()
-        p2.kill()
-        raise RuntimeError(f"SCI bridge timeout: {exc}") from exc
+    with tempfile.TemporaryFile("w+") as o1, tempfile.TemporaryFile("w+") as e1, \
+            tempfile.TemporaryFile("w+") as o2, tempfile.TemporaryFile("w+") as e2:
+        p1 = subprocess.Popen(cmd_p1, stdout=o1, stderr=e1, text=True)
+        time.sleep(0.3)
+        p2 = subprocess.Popen(cmd_p2, stdout=o2, stderr=e2, text=True)
+        # A party that fails (e.g. "bind: Address already in use") leaves the other one
+        # waiting for it forever; stop both as soon as either exits with an error.
+        deadline = time.time() + timeout_s
+        while p1.poll() is None or p2.poll() is None:
+            failed = [p for p in (p1, p2) if p.poll() not in (None, 0)]
+            if failed or time.time() > deadline:
+                for p in (p1, p2):
+                    if p.poll() is None:
+                        p.kill()
+                        p.wait()
+                break
+            time.sleep(0.2)
+
+        def read(f):
+            f.seek(0)
+            return f.read()
+        out1, err1, out2, err2 = read(o1), read(e1), read(o2), read(e2)
+    if time.time() > deadline and (p1.returncode != 0 or p2.returncode != 0):
+        raise RuntimeError(f"SCI bridge timeout after {timeout_s}s")
     if p1.returncode != 0 or p2.returncode != 0:
         raise RuntimeError(
             "SCI bridge failed: rc1={} rc2={} err1={} err2={}".format(
@@ -188,6 +249,21 @@ def _write_shares(path1: Path, path2: Path, size: int, ell: int) -> None:
     a, b = _share_encode_random(size, ell)
     a.tofile(path1)
     b.tofile(path2)
+
+
+def _all_connections(stats: MpcBridgeStats, n: int) -> MpcBridgeStats:
+    """NonLinear::n_matrix_mul_iron runs its n sub-matmuls on connections 0..n-1, but the
+    bridges add up traffic over connections 0.._NTHREADS-1 only. The sub-matmuls have the same
+    dimensions and the protocol's traffic does not depend on the data, so the total traffic is
+    the counted traffic x n / _NTHREADS. Rounds are left as counted: the sub-matmuls run in
+    parallel, as the element-wise bridges' threads do."""
+    from dataclasses import replace
+    return replace(stats, comm_bytes=int(round(stats.comm_bytes * max(1.0, n / _NTHREADS))))
+
+
+def _connections_note(n: int) -> str:
+    return (f"traffic counted on {_NTHREADS} of {n} connections, scaled x{n / _NTHREADS:g}"
+            if n > _NTHREADS else "")
 
 
 # -------------- op-specific drivers --------------
@@ -301,7 +377,8 @@ def _profile_ffn1(n: int, h: int, i: int) -> MpcBridgeStats:
             ]
             return c1, c2
 
-        return _run_two_party(make, timeout_s=300)
+        # ~105 s per 37.7M weight entries (n=16, 768x3072) on a Threadripper 3955WX; allow ~3x.
+        return _all_connections(_run_two_party(make, timeout_s=max(300, int(weight_size * 8e-6))), n)
 
 
 def _profile_qk(n: int, dim1: int, dim2: int, dim3: int) -> MpcBridgeStats:
@@ -330,7 +407,7 @@ def _profile_qk(n: int, dim1: int, dim2: int, dim3: int) -> MpcBridgeStats:
             ]
             return c1, c2
 
-        return _run_two_party(make, timeout_s=300)
+        return _all_connections(_run_two_party(make, timeout_s=300), n)
 
 
 def _profile_av(n: int, dim1: int, dim2: int, dim3: int) -> MpcBridgeStats:
@@ -360,7 +437,7 @@ def _profile_av(n: int, dim1: int, dim2: int, dim3: int) -> MpcBridgeStats:
             ]
             return c1, c2
 
-        return _run_two_party(make, timeout_s=300)
+        return _all_connections(_run_two_party(make, timeout_s=300), n)
 
 
 # -------------- dispatch for paper BERT shapes --------------
@@ -400,6 +477,26 @@ def _record(
     )
 
 
+def _profile_linear_shared(rows: int, h: int, i: int) -> Tuple[MpcBridgeStats, int, int]:
+    """A [rows x h] x [h x i] linear layer as one matmul with a single (secret-shared) weight
+    matrix, on the batched-matmul bridge (n=1, so all traffic is on a counted connection).
+    Calls above _IRON_MAX_WEIGHTS segfault, so rows are split into equal tiles; each tile is a
+    separate call with the full weight matrix. Returns (stats of one tile, tile rows, tiles)."""
+    cap = max(1, _IRON_MAX_WEIGHTS // (h * i))
+    tile = max(d for d in range(1, min(rows, cap) + 1) if rows % d == 0)
+    st = _profile_qk(1, tile, h, i)
+    return st, tile, rows // tile
+
+
+def _linear_record(op_type, input_shape, output_shape, h, i):
+    rows = int(np.prod(input_shape[:-1]))
+    st, tile, k = _profile_linear_shared(rows, h, i)
+    note = ("one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext)"
+            + (f"; {tile}-row tiles x{k} (larger calls segfault in n_matrix_mul_iron)" if k > 1 else ""))
+    return _record(op_type, "sci_matmul_shared_weights", input_shape, output_shape, st,
+                   tile_factor=k, note=note)
+
+
 def profile_mpc_for_bert(
     input_shape: Shape,
     output_shape: Shape,
@@ -425,53 +522,15 @@ def profile_mpc_for_bert(
         stats = _profile_layernorm(dim, array_size)
         return _record(op_type, "method_mpc_bolt", input_shape, output_shape, stats)
 
-    if op_type == "FFN_Linear_1":
-        # [B,S,H] -> [B,S,I]  means n = B*S, h = H, i = I.
-        B, S, H = input_shape
-        I = output_shape[-1]
-        n = B * S
-        tile_factor = 1
-        if n > _FFN1_N_CAP:
-            tile_factor = (n + _FFN1_N_CAP - 1) // _FFN1_N_CAP
-            n = _FFN1_N_CAP
-        stats = _profile_ffn1(n, H, I)
-        return _record(
-            op_type, "method_mpc_bolt", input_shape, output_shape, stats,
-            tile_factor=tile_factor,
-            note=f"tile n<= {_FFN1_N_CAP} x{tile_factor}",
-        )
+    if op_type in ("FFN_Linear_1", "FFN_Linear_2", "Out_Projection"):
+        # [B,S,H] -> [B,S,O]: one matmul, weights shared across tokens. (The runtime's BOLT
+        # FFN bridge instead multiplies every row with its own copy of the weights, which
+        # costs ~3.6x more traffic; see _linear_tile for its limits.)
+        return _linear_record(op_type, input_shape, output_shape, int(input_shape[-1]), int(output_shape[-1]))
 
-    if op_type == "FFN_Linear_2":
-        # Lowered onto the same n_matrix_mul_iron primitive (docs/handoff_status.md).
-        B, S, Hin = input_shape
-        Hout = output_shape[-1]
-        n = B * S
-        tile_factor = 1
-        if n > _FFN1_N_CAP:
-            tile_factor = (n + _FFN1_N_CAP - 1) // _FFN1_N_CAP
-            n = _FFN1_N_CAP
-        stats = _profile_ffn1(n, Hin, Hout)
-        return _record(
-            op_type, "method_mpc_bolt", input_shape, output_shape, stats,
-            tile_factor=tile_factor,
-            note=f"ffn2 lowered to ffn1 primitive, tile n<= {_FFN1_N_CAP} x{tile_factor}",
-        )
-
-    if op_type == "Out_Projection":
-        # Same linear primitive.
-        B, S, H = input_shape
-        Hout = output_shape[-1]
-        n = B * S
-        tile_factor = 1
-        if n > _FFN1_N_CAP:
-            tile_factor = (n + _FFN1_N_CAP - 1) // _FFN1_N_CAP
-            n = _FFN1_N_CAP
-        stats = _profile_ffn1(n, H, Hout)
-        return _record(
-            op_type, "method_mpc_bolt_as_ffn1", input_shape, output_shape, stats,
-            tile_factor=tile_factor,
-            note="out_projection lowered to ffn1 primitive",
-        )
+    if op_type == "Linear_QKV":
+        # [B,S,H] -> packed [3,B,S,H]: one matmul with the concatenated weights [H, 3H]
+        return _linear_record(op_type, input_shape, output_shape, int(input_shape[-1]), 3 * int(input_shape[-1]))
 
     if op_type == "Attention_QK_MatMul":
         # Packed qkv [3,B,S,H]. QK = Q * K^T per head.
@@ -481,7 +540,7 @@ def profile_mpc_for_bert(
         head_dim = H // heads
         n = B * heads
         stats = _profile_qk(n, S, head_dim, S)
-        return _record(op_type, "method_mpc", input_shape, output_shape, stats)
+        return _record(op_type, "method_mpc", input_shape, output_shape, stats, note=_connections_note(n))
 
     if op_type == "Attention_V_MatMul":
         # attn_probs [B,H,S,S] times V [B,H,S,D].
@@ -489,7 +548,7 @@ def profile_mpc_for_bert(
         head_dim = 64
         n = B * heads
         stats = _profile_av(n, S, S, head_dim)
-        return _record(op_type, "method_mpc", input_shape, output_shape, stats)
+        return _record(op_type, "method_mpc", input_shape, output_shape, stats, note=_connections_note(n))
 
     if op_type == "Residual_Add":
         # Semantic add: zero comm / zero rounds (local share add).

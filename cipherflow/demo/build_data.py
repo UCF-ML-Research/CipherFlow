@@ -5,6 +5,9 @@ looks plans up on this grid (no interpolation). Hardware options:
 
 * cpu      -- measured CPU profile (AMD Threadripper PRO 3955WX)
 * gpu      -- GPU profile used in the paper
+
+Both are the paper's profiles: MPC costs are SHAFT (CrypTen), whose Beaver triples
+come from a trusted dealer, so plans are compiled with security="2pc-dealer".
 * gpu_x0.5, gpu_x2, gpu_x4 -- projections of the GPU profile with local compute
   scaled 0.5x / 2x / 4x (communication bytes and rounds unchanged)
 
@@ -27,24 +30,24 @@ from compiler.state_expanded.sese import find_sese_regions
 
 MODELS = {
     "bert": {"label": "BERT-base", "detail": "12 encoder blocks, sequence length 128",
-             "build": lambda: cf.models.bert(num_blocks=12, seq=128)},
+             "build": lambda: cf.models.bert(num_blocks=12, seq=128, qkv_projection=False)},
     "vit": {"label": "ViT-B/16", "detail": "patch embedding, 12 pre-LN encoder blocks, final LayerNorm; 197 tokens (14x14 patches + CLS); "
                        "costs scaled from the 128-token profile entries",
-            "build": lambda: cf.models.vit(num_blocks=12, tokens=197)},
+            "build": lambda: cf.models.vit(num_blocks=12, tokens=197, qkv_projection=False)},
 }
 HARDWARE = {
-    "cpu": {"label": "CPU", "detail": "AMD Threadripper PRO 3955WX (measured profile)", "base": "cpu", "scale": 1.0},
-    "gpu_x0.5": {"label": "GPU 0.5x", "detail": "paper GPU profile, compute scaled 0.5x (projection)", "base": "gpu", "scale": 0.5},
-    "gpu": {"label": "GPU", "detail": "GPU profile used in the paper", "base": "gpu", "scale": 1.0},
-    "gpu_x2": {"label": "GPU 2x", "detail": "paper GPU profile, compute scaled 2x (projection)", "base": "gpu", "scale": 2.0},
-    "gpu_x4": {"label": "GPU 4x", "detail": "paper GPU profile, compute scaled 4x (projection)", "base": "gpu", "scale": 4.0},
+    "cpu": {"label": "CPU", "detail": "paper CPU profile (Threadripper PRO 3955WX); HE: NEXUS-CKKS, MPC: SHAFT (two parties + trusted dealer)", "base": "paper-cpu", "scale": 1.0},
+    "gpu_x0.5": {"label": "GPU 0.5x", "detail": "paper GPU profile (NEXUS-CUDA + SHAFT, trusted dealer), compute scaled 0.5x (projection)", "base": "paper-gpu", "scale": 0.5},
+    "gpu": {"label": "GPU", "detail": "GPU profile used in the paper; HE: NEXUS-CUDA, MPC: SHAFT (two parties + trusted dealer)", "base": "paper-gpu", "scale": 1.0},
+    "gpu_x2": {"label": "GPU 2x", "detail": "paper GPU profile (NEXUS-CUDA + SHAFT, trusted dealer), compute scaled 2x (projection)", "base": "paper-gpu", "scale": 2.0},
+    "gpu_x4": {"label": "GPU 4x", "detail": "paper GPU profile (NEXUS-CUDA + SHAFT, trusted dealer), compute scaled 4x (projection)", "base": "paper-gpu", "scale": 4.0},
 }
 BANDWIDTHS = [("10Mbps", 10e6), ("30Mbps", 30e6), ("100Mbps", 100e6), ("300Mbps", 300e6),
               ("1Gbps", 1e9), ("3Gbps", 3e9), ("10Gbps", 10e9)]
 RTTS = [1.0, 10.0, 20.0, 40.0, 80.0]
 
 
-SHORT = {"Attention_QK_MatMul": "QK\u1d40", "Softmax": "Softmax", "Attention_V_MatMul": "Attn\u00b7V",
+SHORT = {"Linear_QKV": "QKV", "Attention_QK_MatMul": "QK\u1d40", "Softmax": "Softmax", "Attention_V_MatMul": "Attn\u00b7V",
          "Out_Projection": "Out-Proj", "Residual_Add": "Add", "LayerNorm": "LayerNorm",
          "FFN_Linear_1": "FFN-1", "GeLU": "GeLU", "FFN_Linear_2": "FFN-2"}
 
@@ -92,7 +95,7 @@ def _one(job):
     profile = _profile(hw)
     dep = cf.Deployment(cf.Hardware("cuda" if hw.startswith("gpu") else "cpu", HARDWARE[hw]["label"]),
                         cf.Network(bw, rtt))
-    plan = cf.compile(graph, dep, profile=profile)
+    plan = cf.compile(graph, dep, profile=profile, security="2pc-dealer")
     net = dep.network.to_setting()
     idx = {n.node_id: i for i, n in enumerate(graph.nodes)}
     baselines = {
@@ -136,7 +139,7 @@ def main():
             plans[r.pop("key")] = r
             if k % 25 == 0:
                 print(f"{k}/{len(jobs)} plans ({time.time() - t0:.0f}s)", flush=True)
-    he_budget = cf.load_profile("gpu").he_level_budget
+    he_budget = cf.load_profile("paper-gpu").he_level_budget
     out = {
         "generated": time.strftime("%Y-%m-%d"),
         "cipherflow_version": cf.__version__,

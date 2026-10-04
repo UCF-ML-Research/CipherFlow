@@ -46,7 +46,7 @@ from ir.types import DataEdge, OperatorGraph, OperatorNode
 
 from .cost_model import NetworkSetting, StateExpandedCostModel
 from .profile_schema import HE_LEVEL_BUDGET, LatencyProfile
-from .state_graph import ChainOp, State, TransitionEdge, outgoing
+from .state_graph import level_out, ChainOp, State, TransitionEdge, outgoing
 
 Shape = Tuple[int, ...]
 Domain = str
@@ -279,6 +279,7 @@ def _build_chain(
                 input_shape=n.input_shape,
                 output_shape=n.output_shape,
                 he_level_delta=level_deltas.get(n.op_type, 0),
+                he_level_out=level_out(level_deltas, n.op_type),
             )
         )
     return out
@@ -319,6 +320,7 @@ def compute_region_transfer(
         input_shape=join_node.input_shape,
         output_shape=join_node.output_shape,
         he_level_delta=level_deltas.get(join_node.op_type, 0),
+        he_level_out=level_out(level_deltas, join_node.op_type),
     )
 
     table: Dict[Tuple[Tuple[int, Domain, int], Tuple[int, Domain, int]], RegionPlan] = {}
@@ -494,7 +496,7 @@ def _align_for_join(
 
     # HE side: try the requested bootstrap strategy.
     if bootstrap_plan == "main" and m.l < L:
-        bs_est = cm.estimate_bootstrap(net)
+        bs_est = cm.estimate_bootstrap(net, join_op.input_shape)
         if bs_est.resolution == "infeasible":
             return float("inf"), [], -1
         cost += bs_est.latency_ms
@@ -503,7 +505,7 @@ def _align_for_join(
                                     "pre-add bootstrap main"))
         m = m2
     if bootstrap_plan == "skip" and s.l < L:
-        bs_est = cm.estimate_bootstrap(net)
+        bs_est = cm.estimate_bootstrap(net, join_op.input_shape)
         if bs_est.resolution == "infeasible":
             return float("inf"), [], -1
         cost += bs_est.latency_ms
@@ -512,7 +514,7 @@ def _align_for_join(
                                     "pre-add bootstrap skip"))
         s = s2
     if bootstrap_plan == "both":
-        bs_est = cm.estimate_bootstrap(net)
+        bs_est = cm.estimate_bootstrap(net, join_op.input_shape)
         if bs_est.resolution == "infeasible":
             return float("inf"), [], -1
         # Only bootstrap a branch if it needs it.
@@ -562,7 +564,7 @@ def _tail_to_boundary(
             )
         )
     if cur.d == "HE" and cur.l < target.l:
-        est = cm.estimate_bootstrap(net)
+        est = cm.estimate_bootstrap(net, shape)
         if est.resolution == "infeasible":
             return float("inf"), []
         cost += est.latency_ms

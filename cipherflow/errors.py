@@ -14,6 +14,10 @@ class UnsupportedGraph(ValueError):
     """The graph's structure is outside what the planner handles (see validate.check_graph)."""
 
 
+class UnsupportedBackend(ValueError):
+    """No MPC backend satisfies the requested backend, security model, hardware and profile."""
+
+
 class UnsupportedModel(ValueError):
     """The PyTorch front end cannot map the model onto the operator set."""
 

@@ -1,0 +1,2 @@
+{"direction": "HE->MPC", "numel": 294912, "ciphertexts": 9, "server_ms": 1751.99, "client_ms": 35.0181, "bytes": 9162932, "rounds": 1, "max_abs_err": 0.000243903}
+{"direction": "MPC->HE", "numel": 294912, "ciphertexts": 9, "server_ms": 654.656, "client_ms": 1525.41, "bytes": 68699522, "rounds": 1, "max_abs_err": 0.000243904}

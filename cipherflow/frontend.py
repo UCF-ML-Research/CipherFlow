@@ -8,9 +8,10 @@ torch.fx, propagates shapes, and maps it onto the canonical operators the same
 way the built-in graphs are written:
 
 * self-attention  Q/K/V linear projections of one tensor -> matmul -> softmax ->
-                  matmul: Attention_QK_MatMul (input packed [3,B,S,H]; the Q/K/V
-                  projections are folded into it, as in cf.models.bert/vit),
-                  Softmax, Attention_V_MatMul; nn.MultiheadAttention (self-attention)
+                  matmul: Linear_QKV ([B,S,H] -> packed [3,B,S,H]),
+                  Attention_QK_MatMul, Softmax, Attention_V_MatMul, as in
+                  cf.models.bert/vit (qkv_projection=False leaves Linear_QKV out, as
+                  the paper's graphs do); nn.MultiheadAttention (self-attention)
                   expands to the same nodes plus Out_Projection
 * linear layers   after attention: Out_Projection; before / after GeLU:
                   FFN_Linear_1 / FFN_Linear_2; other square linears: Out_Projection
@@ -218,7 +219,7 @@ def _concrete_value(ph, ca: Dict[str, Any]):
 
 
 def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]] = None,
-               graph_id: Optional[str] = None) -> OperatorGraph:
+               graph_id: Optional[str] = None, qkv_projection: bool = True) -> OperatorGraph:
     """Trace `module` (an encoder stack taking hidden states) into an OperatorGraph."""
     try:
         import torch
@@ -328,6 +329,8 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
             B, S, E = s
             h = m.num_heads
             att = {"heads": h, "head_dim": E // h}
+            if qkv_projection:
+                emit(f"{n.name}_qkv", "Linear_QKV", (B, S, E), (3, B, S, E))
             emit(f"{n.name}_qk", "Attention_QK_MatMul", (3, B, S, E), (B, h, S, S), att)
             emit(f"{n.name}_sm", "Softmax", (B, h, S, S), (B, h, S, S), {"axis": -1})
             emit(f"{n.name}_av", "Attention_V_MatMul", (B, h, S, S), (B, S, E), att)
@@ -338,6 +341,8 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
             if r == "Attention_QK_MatMul":
                 x, a = qk_inputs[n.name]
                 scores = _shape(n)
+                if qkv_projection:
+                    emit(f"{n.name}_qkv", "Linear_QKV", arrival_shape(x, a), (3,) + arrival_shape(x, a))
                 emit(n.name, r, (3,) + arrival_shape(x, a), scores,
                      {"heads": scores[1], "head_dim": arrival_shape(x, a)[-1] // scores[1]})
             elif r == "Softmax":
@@ -394,8 +399,11 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
         if t.kind[n.name] != "op" or n.name in folded:
             continue
         if t.op[n.name] == "MHA":
+            qk_in = f"{n.name}_qkv" if qkv_projection else f"{n.name}_qk"
             for p, a in t.producers(n):
-                add_edge(src_of(p), f"{n.name}_qk", arrival_shape(p, a))
+                add_edge(src_of(p), qk_in, arrival_shape(p, a))
+            if qkv_projection:
+                add_edge(qk_in, f"{n.name}_qk", nodes[qk_in].output_shape)
             B, h, S, _ = nodes[f"{n.name}_qk"].output_shape
             add_edge(f"{n.name}_qk", f"{n.name}_sm", (B, h, S, S))
             add_edge(f"{n.name}_sm", f"{n.name}_av", (B, h, S, S))
@@ -403,7 +411,11 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
             continue
         if roles.get(n.name) == "Attention_QK_MatMul":
             x, a = qk_inputs[n.name]
-            add_edge(src_of(x), n.name, arrival_shape(x, a))
+            if qkv_projection:
+                add_edge(src_of(x), f"{n.name}_qkv", arrival_shape(x, a))
+                add_edge(f"{n.name}_qkv", n.name, (3,) + arrival_shape(x, a))
+            else:
+                add_edge(src_of(x), n.name, arrival_shape(x, a))
             continue
         for p, a in t.producers(n):
             if p.name in folded:

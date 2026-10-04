@@ -1,0 +1,827 @@
+{
+  "schema_version": "state_expanded/1.0",
+  "platform": "cpu",
+  "hardware": {
+    "device": "cpu",
+    "platform": "Linux-6.8.0-107-generic-x86_64-with-glibc2.35",
+    "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores"
+  },
+  "he_level_budget": 20,
+  "operators": [
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 154886.25,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.75,
+        "note": "scaled from NEXUS MatMul ref by 0.75x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 59799.36,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 8,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 12.0,
+        "note": "scaled from NEXUS Softmax ref (4983.3 ms / 128x128) by 12x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 77443.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 77443.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.05,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.0,
+        "note": "ciphertext add (SEAL Evaluator::add), reference constant",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 72739.04,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 3,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 8.0,
+        "note": "scaled from NEXUS LayerNorm ref (9092.4 ms / 16x768) by 8x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 309772.5,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.5,
+        "note": "scaled from NEXUS MatMul ref (206515.0 ms / 4096x768x64) by 1.5x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 152294.40000000002,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 12.0,
+        "note": "scaled from NEXUS GELU ref (12691.2 ms / 32768 slots) by 12x",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 77443.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x (ffn2 lowered to matmul)",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Linear_QKV",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 232329.375,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "Q/K/V projections: 3 x Out_Projection (NEXUS MatMul reference scaled to weights [H, 3H])",
+        "status": "reference-scaled"
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 76.69557898771018,
+      "comm_bytes": 3155028,
+      "comm_rounds": 1,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          75.13374101836234,
+          76.69557898771018
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          3145728,
+          3145728
+        ],
+        "offline_dealer_wire_bytes": 1576523
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 79.04311607126147,
+      "comm_bytes": 4729244,
+      "comm_rounds": 1,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          79.04311607126147,
+          76.24206796754152
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          4718592,
+          4718592
+        ],
+        "offline_dealer_wire_bytes": 789311
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 599.0702289855108,
+      "comm_bytes": 11027412,
+      "comm_rounds": 1,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          592.6945829996839,
+          599.0702289855108
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          11010048,
+          11010048
+        ],
+        "offline_dealer_wire_bytes": 789426
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 3508.55070410762,
+      "comm_bytes": 39372312,
+      "comm_rounds": 1,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          3508.55070410762,
+          3442.2088080318645
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          39321600,
+          39321600
+        ],
+        "offline_dealer_wire_bytes": 3149252
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 4778.512279037386,
+      "comm_bytes": 44094027,
+      "comm_rounds": 1,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          4778.512279037386,
+          4529.726549051702
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          44040192,
+          44040192
+        ],
+        "offline_dealer_wire_bytes": 790428
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 1957.9929939936846,
+      "comm_bytes": 384352428,
+      "comm_rounds": 41,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          1942.5062569789588,
+          1957.9929939936846
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          383778816,
+          383778816
+        ],
+        "offline_dealer_wire_bytes": 97707147
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 115.60152901802212,
+      "comm_bytes": 5184392,
+      "comm_rounds": 64,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          115.60152901802212,
+          114.84060098882765
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          4933632,
+          4933632
+        ],
+        "offline_dealer_wire_bytes": 1775249
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 1920.8976320223883,
+      "comm_bytes": 371630108,
+      "comm_rounds": 19,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          1920.8976320223883,
+          1910.0927589461207
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          371195904,
+          371195904
+        ],
+        "offline_dealer_wire_bytes": 148063546
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.5084120202809572,
+      "comm_bytes": 904,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          0.5084120202809572,
+          0.5048419116064906
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          0,
+          0
+        ],
+        "offline_dealer_wire_bytes": -200
+      }
+    },
+    {
+      "op_type": "Linear_QKV",
+      "domain": "MPC",
+      "method": "shaft_crypten_2pc_cpu",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 2423.7006759503856,
+      "comm_bytes": 29925298,
+      "comm_rounds": 1,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "bench_shaft_2pc.py: two party processes on localhost",
+        "provider": "TFP (online phase)",
+        "ms_parties": [
+          2423.7006759503856,
+          2397.16704597231
+        ],
+        "rounds_definition": "CrypTen communication calls per party (max over parties)",
+        "logical_bytes_parties": [
+          29884416,
+          29884416
+        ],
+        "offline_dealer_wire_bytes": 2365720
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "seal_mask_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 577.4418000000001,
+      "comm_bytes": 3054188,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 565.879,
+        "client_ms": 11.5628,
+        "ciphertexts": 3,
+        "max_abs_err": 0.000243923,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "shaft"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "seal_share_encrypt",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 723.0450000000001,
+      "comm_bytes": 22900110,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 225.649,
+        "client_ms": 497.396,
+        "ciphertexts": 3,
+        "max_abs_err": 0.000243923,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "shaft"
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "seal_mask_decrypt",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 1168.5719,
+      "comm_bytes": 6108450,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 1145.37,
+        "client_ms": 23.2019,
+        "ciphertexts": 6,
+        "max_abs_err": 0.000243748,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "shaft"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "seal_share_encrypt",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 1432.479,
+      "comm_bytes": 45796729,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 430.769,
+        "client_ms": 1001.71,
+        "ciphertexts": 6,
+        "max_abs_err": 0.000243748,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "shaft"
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "seal_mask_decrypt",
+      "tensor_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 1787.0081,
+      "comm_bytes": 9162932,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 1751.99,
+        "client_ms": 35.0181,
+        "ciphertexts": 9,
+        "max_abs_err": 0.000243903,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "shaft"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "seal_share_encrypt",
+      "tensor_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 2180.066,
+      "comm_bytes": 68699522,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 654.656,
+        "client_ms": 1525.41,
+        "ciphertexts": 9,
+        "max_abs_err": 0.000243904,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "shaft"
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "seal_mask_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 2336.2176,
+      "comm_bytes": 12216719,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 2290.33,
+        "client_ms": 45.8876,
+        "ciphertexts": 12,
+        "max_abs_err": 0.000243872,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "shaft"
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "seal_share_encrypt",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 2884.772,
+      "comm_bytes": 91596878,
+      "comm_rounds": 1,
+      "metadata": {
+        "source": "native/conversion/conversion_bench (SEAL 4.1, N=2^16, NEXUS modulus chain)",
+        "server_ms": 875.212,
+        "client_ms": 2009.56,
+        "ciphertexts": 12,
+        "max_abs_err": 0.000243871,
+        "measured_for_ring": "SCI 2^37, 12 fractional bits",
+        "mpc_backend": "shaft"
+      }
+    }
+  ],
+  "bootstrap": {
+    "method": "nexus_ckks_bootstrap",
+    "local_compute_ms": 51608.5,
+    "comm_bytes": 0,
+    "comm_rounds": 0,
+    "metadata": {
+      "source": "NEXUS build/bin/bootstrapping (real CKKS)",
+      "slots": 8192,
+      "note": "one bootstrap refreshes 8192 values (NEXUS demo, N=2^15 sparse); priced per ciphertext. The demo's modulus exceeds the 128-bit bound for N=2^15"
+    }
+  },
+  "metadata": {
+    "he_backend": "nexus",
+    "mpc_backend": "shaft",
+    "he_stack_label": "NEXUS (CKKS) (CPU)",
+    "mpc_stack_label": "SHAFT (CPU, CrypTen 2PC, trusted dealer)",
+    "he_source": "NEXUS reference kernels scaled to each shape (reference-scaled, not an executable pipeline)",
+    "mpc_source": "measured, raw/2026-10-03, raw/2026-10-04",
+    "conversion_source": "measured with SEAL, raw/2026-10-03, raw/2026-10-04",
+    "bootstrap_source": "NEXUS bootstrapping demo, per ciphertext of 8192 values"
+  }
+}

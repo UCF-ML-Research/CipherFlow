@@ -1,0 +1,19 @@
+setup 36.5723 s, depth 24, levels after bootstrap 8, threads 32
+{"check":"keys","keys":84,"failed":0,"which":"","worst_err_of_passing":0.000713011,"ms":26824.7}
+{"check":"encode","outer_parallel":true,"runs":192,"mismatches":0,"ms":1318.28}
+{"check":"encode_every_level_first_use","outer_parallel":true,"runs":144,"mismatches":0,"ms":1424.68}
+{"check":"mult_plain","outer_parallel":true,"runs":192,"mismatches":0,"ms":2940.51}
+{"check":"mult_plain_shared_input","outer_parallel":true,"runs":192,"mismatches":0,"ms":2704.51}
+{"check":"mult_plain_pending_rescale","outer_parallel":true,"runs":192,"mismatches":0,"ms":3912.34}
+{"check":"add_pending_rescale","outer_parallel":true,"runs":192,"mismatches":0,"ms":2708.08}
+{"check":"rotate","outer_parallel":true,"runs":192,"mismatches":0,"ms":9323.89}
+{"check":"rotate_shared_input","outer_parallel":true,"runs":192,"mismatches":0,"ms":9066.13}
+{"check":"rotate_pending_rescale","outer_parallel":true,"runs":192,"mismatches":0,"ms":9459.11}
+{"check":"fast_rotate_shared_digits","outer_parallel":true,"runs":192,"mismatches":0,"ms":7652.55}
+{"check":"mult_cipher","outer_parallel":true,"runs":96,"mismatches":0,"ms":5337.12}
+{"check":"linear_task","outer_parallel":true,"runs":96,"mismatches":0,"ms":27853.5}
+{"check":"qk_task","outer_parallel":true,"runs":96,"mismatches":0,"ms":43841.4}
+{"check":"av_task","outer_parallel":true,"runs":96,"mismatches":0,"ms":49412.3}
+{"check":"chebyshev_serial","outer_parallel":false,"runs":6,"mismatches":0,"ms":7512.2}
+{"check":"bootstrap_serial","outer_parallel":false,"runs":3,"mismatches":0,"ms":80205.5}
+332.00 s wall, 21995920 KB peak

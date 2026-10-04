@@ -1,0 +1,31 @@
+{
+ "operators": [
+  {
+   "op_type": "Linear_QKV",
+   "domain": "MPC",
+   "method": "sci_matmul_shared_weights",
+   "input_shape": [
+    1,
+    128,
+    768
+   ],
+   "output_shape": [
+    3,
+    1,
+    128,
+    768
+   ],
+   "local_compute_ms": 451988.8,
+   "comm_bytes": 110221056800,
+   "comm_rounds": 266,
+   "he_level_delta": 0,
+   "feasible": true,
+   "metadata": {
+    "tile_factor": 8,
+    "party1_ms": 56498.6,
+    "party2_ms": 56470.6,
+    "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 16-row tiles x8 (larger calls segfault in n_matrix_mul_iron)"
+   }
+  }
+ ]
+}

@@ -1,0 +1,32 @@
+[
+ {
+  "op": "Linear_QKV",
+  "shape_in": [
+   1,
+   128,
+   768
+  ],
+  "shape_out": [
+   3,
+   1,
+   128,
+   768
+  ],
+  "device": "cuda",
+  "provider": "TTP",
+  "ms": 88.96351105067879,
+  "ms_parties": [
+   85.6142429402098,
+   88.96351105067879
+  ],
+  "rounds_parties": [
+   4,
+   1
+  ],
+  "logical_bytes_parties": [
+   32244016.0,
+   29884416
+  ],
+  "wire_bytes": 32286375
+ }
+]

@@ -1,0 +1,8 @@
+{"direction":"HE->MPC","numel":32768,"ciphertexts":1,"server_ms":190.987,"client_ms":4.07015,"bytes":1018077,"rounds":1,"max_abs_err":0.000242738}
+{"direction":"MPC->HE","numel":32768,"ciphertexts":1,"server_ms":75.4007,"client_ms":166.009,"bytes":7633912,"rounds":1,"max_abs_err":0.000242738}
+{"direction":"HE->MPC","numel":98304,"ciphertexts":3,"server_ms":565.879,"client_ms":11.5628,"bytes":3054188,"rounds":1,"max_abs_err":0.000243923}
+{"direction":"MPC->HE","numel":98304,"ciphertexts":3,"server_ms":225.649,"client_ms":497.396,"bytes":22900110,"rounds":1,"max_abs_err":0.000243923}
+{"direction":"HE->MPC","numel":196608,"ciphertexts":6,"server_ms":1145.37,"client_ms":23.2019,"bytes":6108450,"rounds":1,"max_abs_err":0.000243748}
+{"direction":"MPC->HE","numel":196608,"ciphertexts":6,"server_ms":430.769,"client_ms":1001.71,"bytes":45796729,"rounds":1,"max_abs_err":0.000243748}
+{"direction":"HE->MPC","numel":393216,"ciphertexts":12,"server_ms":2290.33,"client_ms":45.8876,"bytes":12216719,"rounds":1,"max_abs_err":0.000243872}
+{"direction":"MPC->HE","numel":393216,"ciphertexts":12,"server_ms":875.212,"client_ms":2009.56,"bytes":91596878,"rounds":1,"max_abs_err":0.000243871}

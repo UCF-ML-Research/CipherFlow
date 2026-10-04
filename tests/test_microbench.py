@@ -31,7 +31,8 @@ def fake(monkeypatch, tmp_path):
         calls["bootstrap"] += 1
         return BootstrapRecord("fake", 100.0, 0, 0)
 
-    monkeypatch.setitem(mb.MEASURERS, "cpu", {"HE": ops, "MPC": ops, "conversion": conv, "bootstrap": boot})
+    monkeypatch.setitem(mb.MEASURERS, "cpu", {"nexus+sci": {"HE": ops, "MPC": ops, "conversion": conv,
+                                                             "bootstrap": boot}})
     return calls
 
 
@@ -39,10 +40,10 @@ def test_measures_once_then_hits_cache(fake):
     g = cf.models.bert(num_blocks=2, seq=16)
     p1 = cf.microbench(g, device="cpu", verbose=False)
     first = dict(fake)
-    assert first == {"HE": 9, "MPC": 9, "conversion": 3, "bootstrap": 1}   # 9 op shapes x 2 domains
+    assert first == {"HE": 10, "MPC": 10, "conversion": 4, "bootstrap": 1}  # 10 op shapes x 2 domains
     cf.microbench(g, device="cpu", verbose=False)
     assert dict(fake) == first                                           # nothing re-measured
-    assert len(p1.operators) == 18
+    assert len(p1.operators) == 20
 
 
 def test_new_graph_measures_only_new_shapes(fake):
@@ -50,7 +51,7 @@ def test_new_graph_measures_only_new_shapes(fake):
     before = dict(fake)
     cf.microbench(cf.models.bert(num_blocks=1, seq=32), device="cpu", verbose=False)
     assert fake["bootstrap"] == before["bootstrap"]                      # shape-independent: reused
-    assert fake["HE"] - before["HE"] == 9 and fake["conversion"] - before["conversion"] == 3
+    assert fake["HE"] - before["HE"] == 10 and fake["conversion"] - before["conversion"] == 4
     todo = cf.microbench(cf.models.bert(num_blocks=4, seq=32), device="cpu", dry_run=True, verbose=False)
     assert not todo.ops and not todo.conversion_shapes and not todo.bootstrap   # deeper model: all cached
 
@@ -59,7 +60,8 @@ def test_compile_auto_on_local_deployment(fake):
     g = cf.models.bert(num_blocks=2, seq=16)
     plan = cf.compile(g, cf.Deployment.local("100Mbps/20ms", device="cpu"), verbose=False)
     assert len(plan.nodes) == len(g.nodes) and plan.cost["total_ms"] > 0
-    assert plan.warnings == [] and {n.cost_source for n in plan.nodes} == {"exact"}   # measured, not scaled
+    assert {n.cost_source for n in plan.nodes} == {"exact"}                            # measured, not scaled
+    assert not any("scaled from the nearest" in w for w in plan.warnings)
 
 
 def test_auto_refuses_a_remote_target(fake):
@@ -70,3 +72,27 @@ def test_auto_refuses_a_remote_target(fake):
 def test_unwired_device_is_explicit(fake):
     with pytest.raises(cf.BackendUnavailable):
         cf.microbench(cf.models.bert(1, seq=16), device="cuda", verbose=False)
+
+
+def test_cache_is_per_backend(fake):
+    g = cf.models.bert(num_blocks=1, seq=16)
+    p = cf.microbench(g, device="cpu", verbose=False)
+    assert (mb.cache_dir("cpu", "sci") / "profile.json").exists()
+    assert p.metadata["mpc_backend"] == "sci" and cf.backends.infer_backend(p) == "sci"
+
+
+def test_v01_cache_layout_is_still_read(fake):
+    g = cf.models.bert(num_blocks=1, seq=16)
+    cf.microbench(g, device="cpu", verbose=False)
+    new = mb.cache_dir("cpu", "sci") / "profile.json"
+    new.rename(mb.machine_dir("cpu") / "profile.json")                 # v0.1 location
+    assert mb.load_cached("cpu", "sci") is not None
+    assert not cf.microbench(g, device="cpu", dry_run=True, verbose=False).ops
+
+
+def test_auto_with_an_unwired_backend_is_explicit(fake):
+    dep = cf.Deployment.local("100Mbps/20ms", device="cpu")
+    with pytest.raises(cf.UnsupportedBackend, match=r"not wired for nexus\+shaft"):
+        cf.compile(cf.models.bert(1, seq=16), dep, mpc="shaft", security="2pc-dealer", verbose=False)
+    plan = cf.compile(cf.models.bert(1, seq=16), dep, security="2pc-dealer", verbose=False)
+    assert plan.mpc_backend == "sci" and "not wired" in plan.alternatives["nexus+shaft"]["excluded"]

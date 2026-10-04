@@ -1,0 +1,31 @@
+[
+ {
+  "op": "Out_Projection",
+  "shape_in": [
+   1,
+   128,
+   768
+  ],
+  "shape_out": [
+   1,
+   128,
+   768
+  ],
+  "device": "cuda",
+  "provider": "TFP",
+  "ms": 29.249839950352907,
+  "ms_parties": [
+   29.12409696727991,
+   29.249839950352907
+  ],
+  "rounds_parties": [
+   1,
+   1
+  ],
+  "logical_bytes_parties": [
+   11010048,
+   11010048
+  ],
+  "wire_bytes": 11027048
+ }
+]

@@ -243,6 +243,12 @@ def profile_he_real(
             k = output_shape[-1]
             cost, scale = _he_matmul_cost(t_mm, m, n, k)
             note = f"scaled from NEXUS MatMul ref by {scale:g}x (ffn2 lowered to matmul)"
+        elif op_type == "Linear_QKV":
+            # [B,S,H] -> packed [3,B,S,H]: matmul with the concatenated weights [H, 3H]
+            m = input_shape[0] * input_shape[1]
+            n = input_shape[-1]
+            cost, scale = _he_matmul_cost(t_mm, m, n, 3 * n)
+            note = f"scaled from NEXUS MatMul ref by {scale:g}x (Q/K/V projections, weights [H,3H])"
         elif op_type == "Out_Projection":
             m = input_shape[0] * input_shape[1]
             n = input_shape[-1]

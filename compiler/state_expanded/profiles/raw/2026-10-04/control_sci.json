@@ -1,0 +1,30 @@
+{
+ "operators": [
+  {
+   "op_type": "Out_Projection",
+   "domain": "MPC",
+   "method": "sci_matmul_shared_weights",
+   "input_shape": [
+    1,
+    128,
+    768
+   ],
+   "output_shape": [
+    1,
+    128,
+    768
+   ],
+   "local_compute_ms": 59400.2,
+   "comm_bytes": 32109871816,
+   "comm_rounds": 262,
+   "he_level_delta": 0,
+   "feasible": true,
+   "metadata": {
+    "tile_factor": 2,
+    "party1_ms": 29700.1,
+    "party2_ms": 29675.7,
+    "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 64-row tiles x2 (larger calls segfault in n_matrix_mul_iron)"
+   }
+  }
+ ]
+}

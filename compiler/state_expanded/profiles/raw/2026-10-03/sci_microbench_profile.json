@@ -1,0 +1,1479 @@
+{
+  "schema_version": "state_expanded/1.0",
+  "platform": "cpu",
+  "hardware": {
+    "machine": "x86_64",
+    "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+    "gpu_name": "NVIDIA GeForce RTX 3090"
+  },
+  "he_level_budget": 20,
+  "operators": [
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        3,
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 2218.9453125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.01171875,
+        "note": "scaled from NEXUS MatMul ref by 0.0117188x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 8875.78125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.046875,
+        "note": "scaled from NEXUS MatMul ref by 0.046875x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 35503.125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.1875,
+        "note": "scaled from NEXUS MatMul ref (189350.0 ms / 4096x768x64) by 0.1875x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 8875.78125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.046875,
+        "note": "scaled from NEXUS MatMul ref by 0.046875x (ffn2 lowered to matmul)",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 22350.6,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 2.0,
+        "note": "scaled from NEXUS GELU ref (11175.3 ms / 32768 slots) by 2x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 8269.81,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 3,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.0,
+        "note": "scaled from NEXUS LayerNorm ref (8269.8 ms / 16x768) by 1x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 8875.78125,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.046875,
+        "note": "scaled from NEXUS MatMul ref by 0.046875x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.05,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.0,
+        "note": "ciphertext add (SEAL Evaluator::add), reference constant",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 847.7531250000001,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 8,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.1875,
+        "note": "scaled from NEXUS Softmax ref (4521.4 ms / 128x128) by 0.1875x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        3,
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 139.034,
+      "comm_bytes": 17418916,
+      "comm_rounds": 160,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 138.987,
+        "party2_ms": 139.034,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 144.751,
+      "comm_bytes": 14860644,
+      "comm_rounds": 160,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 144.671,
+        "party2_ms": 144.751,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 104541.0,
+      "comm_bytes": 8645952356,
+      "comm_rounds": 200,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 104427.0,
+        "party2_ms": 104541.0,
+        "note": "tile n<= 64 x1",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 109388.0,
+      "comm_bytes": 9090688804,
+      "comm_rounds": 200,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 109388.0,
+        "party2_ms": 109374.0,
+        "note": "ffn2 lowered to ffn1 primitive, tile n<= 64 x1",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        3072
+      ],
+      "output_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 1395.6,
+      "comm_bytes": 315294052,
+      "comm_rounds": 408,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 1395.6,
+        "party2_ms": 1392.56,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 426.878,
+      "comm_bytes": 65174148,
+      "comm_rounds": 856,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 426.829,
+        "party2_ms": 426.878,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "MPC",
+      "method": "method_mpc_bolt_as_ffn1",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 25642.5,
+      "comm_bytes": 2164284964,
+      "comm_rounds": 176,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 25556.9,
+        "party2_ms": 25642.5,
+        "note": "out_projection lowered to ffn1 primitive",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "method_runtime_default",
+      "input_shape": [
+        1,
+        16,
+        768
+      ],
+      "output_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "note": "semantic add is local share addition",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "output_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 305.148,
+      "comm_bytes": 24569708,
+      "comm_rounds": 1024,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 305.074,
+        "party2_ms": 305.148,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 142012.5,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.75,
+        "note": "scaled from NEXUS MatMul ref by 0.75x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 71006.25,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 284025.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.5,
+        "note": "scaled from NEXUS MatMul ref (189350.0 ms / 4096x768x64) by 1.5x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 71006.25,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x (ffn2 lowered to matmul)",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 134103.59999999998,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 4,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 12.0,
+        "note": "scaled from NEXUS GELU ref (11175.3 ms / 32768 slots) by 12x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 66158.48,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 3,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 8.0,
+        "note": "scaled from NEXUS LayerNorm ref (8269.8 ms / 16x768) by 8x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 71006.25,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 1,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 0.375,
+        "note": "scaled from NEXUS MatMul ref by 0.375x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.05,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 1.0,
+        "note": "ciphertext add (SEAL Evaluator::add), reference constant",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "HE",
+      "method": "nexus_ckks_real",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 54256.200000000004,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 8,
+      "feasible": true,
+      "metadata": {
+        "source": "NEXUS build/bin/main (real CKKS)",
+        "scale": 12.0,
+        "note": "scaled from NEXUS Softmax ref (4521.4 ms / 128x128) by 12x",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "GeLU",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 10802.1,
+      "comm_bytes": 2385918308,
+      "comm_rounds": 408,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 10802.1,
+        "party2_ms": 10794.9,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "LayerNorm",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 1483.49,
+      "comm_bytes": 420429444,
+      "comm_rounds": 856,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 1483.48,
+        "party2_ms": 1483.49,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Residual_Add",
+      "domain": "MPC",
+      "method": "method_runtime_default",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 0.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "note": "semantic add is local share addition",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Softmax",
+      "domain": "MPC",
+      "method": "method_mpc_bolt",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 6753.54,
+      "comm_bytes": 1322242804,
+      "comm_rounds": 1096,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 6753.51,
+        "party2_ms": 6753.54,
+        "note": "",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Attention_QK_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        3,
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 4572.09,
+      "comm_bytes": 4731164760,
+      "comm_rounds": 176,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 4572.06,
+        "party2_ms": 4572.09,
+        "note": "traffic counted on 2 of 12 connections, scaled x6",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Attention_V_MatMul",
+      "domain": "MPC",
+      "method": "method_mpc",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 4536.43,
+      "comm_bytes": 4851918936,
+      "comm_rounds": 176,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 1,
+        "party1_ms": 4536.4,
+        "party2_ms": 4536.43,
+        "note": "traffic counted on 2 of 12 connections, scaled x6",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "FFN_Linear_1",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 591204.0,
+      "comm_bytes": 146910366496,
+      "comm_rounds": 266,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 8,
+        "party1_ms": 73900.5,
+        "party2_ms": 73805.8,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 16-row tiles x8 (larger calls segfault in n_matrix_mul_iron)",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "FFN_Linear_2",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 624403.2,
+      "comm_bytes": 154504215328,
+      "comm_rounds": 266,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 8,
+        "party1_ms": 78050.4,
+        "party2_ms": 77946.5,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 16-row tiles x8 (larger calls segfault in n_matrix_mul_iron)",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "op_type": "Out_Projection",
+      "domain": "MPC",
+      "method": "sci_matmul_shared_weights",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 56934.8,
+      "comm_bytes": 32109871816,
+      "comm_rounds": 262,
+      "he_level_delta": 0,
+      "feasible": true,
+      "metadata": {
+        "tile_factor": 2,
+        "party1_ms": 28467.4,
+        "party2_ms": 28442.4,
+        "note": "one matmul with secret-shared weights (pessimistic: BOLT keeps weights in plaintext); 64-row tiles x2 (larger calls segfault in n_matrix_mul_iron)",
+        "source": "SCI/BOLT bridge, localhost",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.12726937420666218,
+      "comm_bytes": 13107200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 1,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        12,
+        16,
+        16
+      ],
+      "local_compute_ms": 0.10581077076494694,
+      "comm_bytes": 13107200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 1,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.9646937949582934,
+      "comm_bytes": 13107200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 1,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        16,
+        768
+      ],
+      "local_compute_ms": 0.9532073745504022,
+      "comm_bytes": 13107200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 1,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 5.299199791625142,
+      "comm_bytes": 26214400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 2,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        16,
+        3072
+      ],
+      "local_compute_ms": 5.325730401091278,
+      "comm_bytes": 26214400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 2,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 26.537515595555305,
+      "comm_bytes": 78643200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 6,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 26.086581218987703,
+      "comm_bytes": 78643200,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 6,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 8.8014324195683,
+      "comm_bytes": 39321600,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 3,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 8.804414584301412,
+      "comm_bytes": 39321600,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 3,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "HE",
+      "to_domain": "MPC",
+      "method": "mask_and_decrypt",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 49.39036259893328,
+      "comm_bytes": 157286400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 12,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    },
+    {
+      "from_domain": "MPC",
+      "to_domain": "HE",
+      "method": "share_plus_enc",
+      "tensor_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 49.23695439938456,
+      "comm_bytes": 157286400,
+      "comm_rounds": 1,
+      "metadata": {
+        "device": "cpu",
+        "ciphertexts": 12,
+        "poly_N": 65536,
+        "slot_count": 32768,
+        "ct_size_bytes": 13107200,
+        "source": "mask-and-decrypt / re-encryption: emulated compute, analytic bytes and rounds",
+        "measured_on": {
+          "machine": "x86_64",
+          "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+          "gpu_name": "NVIDIA GeForce RTX 3090"
+        }
+      }
+    }
+  ],
+  "bootstrap": {
+    "method": "nexus_ckks_bootstrap",
+    "local_compute_ms": 47788.0,
+    "comm_bytes": 0,
+    "comm_rounds": 0,
+    "metadata": {
+      "source": "NEXUS build/bin/bootstrapping (real CKKS)",
+      "measured_on": {
+        "machine": "x86_64",
+        "cpu_model": "AMD Ryzen Threadripper PRO 3955WX 16-Cores",
+        "gpu_name": "NVIDIA GeForce RTX 3090"
+      }
+    }
+  },
+  "metadata": {
+    "source": "cipherflow.microbench",
+    "fingerprint": "ba285cd38194",
+    "mpc_backend": "sci"
+  }
+}
