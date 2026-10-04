@@ -14,8 +14,8 @@ authors = [{name = "Hedong Zhang"}, {name = "Mengxin Zheng"}, {name = "Qian Lou"
 dependencies = ["numpy"]
 
 [project.urls]
-Homepage = "https://github.com/HD-ZHANG-HD/CipherFlow"
-Demo = "https://hd-zhang-hd.github.io/CipherFlow/"
+Homepage = "https://github.com/UCF-ML-Research/CipherFlow"
+Demo = "https://ucf-ml-research.github.io/CipherFlow/"
 
 [project.optional-dependencies]
 torch = ["torch"]

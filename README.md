@@ -8,7 +8,7 @@ conditions, CipherFlow decides for every operator whether it runs in homomorphic
 encryption (HE) or secure multi-party computation (MPC), and where to insert HE↔MPC
 conversions and bootstraps, minimizing end-to-end latency.
 
-**Interactive demo:** https://hd-zhang-hd.github.io/CipherFlow/
+**Interactive demo:** https://ucf-ml-research.github.io/CipherFlow/
 
 ## Where CipherFlow fits
 
@@ -32,7 +32,7 @@ feasible, using costs measured on the target deployment.
 ## Install
 
 ```bash
-git clone https://github.com/HD-ZHANG-HD/CipherFlow.git
+git clone https://github.com/UCF-ML-Research/CipherFlow.git
 cd CipherFlow
 pip install -e .
 ```
