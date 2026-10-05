@@ -173,7 +173,7 @@ the kernel reports them, every check). A wrong or nondeterministic result from a
 computation, processes that disagree, or a memtester failure mean the machine corrupts data: its
 results cannot be trusted (timings are unaffected). A pass does not rule out rare faults.
 
-## Citation
+<!-- ## Citation
 
 ```bibtex
 @inproceedings{zhang2026cipherflow,
@@ -182,7 +182,7 @@ results cannot be trusted (timings are unaffected). A pass does not rule out rar
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
   year      = {2026}
 }
-```
+``` -->
 
 ## License
 
