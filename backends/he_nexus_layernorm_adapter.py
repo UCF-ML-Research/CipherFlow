@@ -11,9 +11,9 @@ class NexusLayerNormRestrictedAdapterConfig:
     Restricted LayerNorm adapter that mirrors current NEXUS layer-norm assumptions.
 
     NEXUS internals reference:
-    - he_compiler/NEXUS/src/layer_norm.cpp
+    - NEXUS/src/layer_norm.cpp
       - LNEvaluator::layer_norm(Ciphertext&, Ciphertext&, int len)
-    - he_compiler/NEXUS/src/main.cpp
+    - NEXUS/src/main.cpp
       - demo path uses a 768-feature vector packed with len=1024
 
     Supported contract (restricted):

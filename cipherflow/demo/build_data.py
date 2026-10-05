@@ -11,7 +11,7 @@ come from a trusted dealer, so plans are compiled with security="2pc-dealer".
 * gpu_x0.5, gpu_x2, gpu_x4 -- projections of the GPU profile with local compute
   scaled 0.5x / 2x / 4x (communication bytes and rounds unchanged)
 
-Usage (from operator_execution_framework/):
+Usage (from the repository root):
     python -m cipherflow.demo.build_data -o cipherflow/demo/demo_data.json
 """
 from __future__ import annotations

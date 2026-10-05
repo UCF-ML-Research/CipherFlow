@@ -12,7 +12,8 @@ is left to the HE/MPC backends.
 ## Install
 
 ```bash
-cd operator_execution_framework
+git clone https://github.com/UCF-ML-Research/CipherFlow.git
+cd CipherFlow
 pip install -e .
 ```
 

@@ -11,7 +11,7 @@ class NexusLinearFfn1RestrictedAdapterConfig:
     Restricted linear FFN1 adapter that mirrors NEXUS matrix-mul packing assumptions.
 
     Reused NEXUS internals (reference mapping):
-    - he_compiler/NEXUS/src/matrix_mul.cpp
+    - NEXUS/src/matrix_mul.cpp
       - MMEvaluator::matrix_mul
       - MMEvaluator::enc_compress_ciphertext
       - MMEvaluator::expand_ciphertext

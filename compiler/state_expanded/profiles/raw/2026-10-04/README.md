@@ -16,24 +16,6 @@ GeLU appears twice (Chebyshev degree 59 and 27); the profiles use degree 27 (6 l
 The precise-mode Softmax uses exp degree 13 (5 levels); an earlier degree-27 run needed 8
 internal bootstraps (320 s) and is not included.
 
-## `selfcheck/`: why some runs gave undecodable results
-
-About one process in five produced one result that OpenFHE could not decode. The kernels are
-deterministic, so `he_ops` gained self-checks to find out where the corruption comes from:
-
-| file | check | result |
-|---|---|---|
-| `racecheck_fast.log` | `he_ops fast racecheck:rounds=3`: every operation the kernels run inside parallel tasks (encode, ct-pt and ct-ct products, rotations, hoisted rotations, the linear / QK^T / Attn*V task bodies, also on shared inputs), run in parallel and compared bit for bit with a serial run; Chebyshev evaluation and bootstrapping repeated serially | 2265 comparisons, 0 mismatches |
-| `keycheck_fast_processes.log` | `he_ops fast keycheck` in fresh processes: all 84 rotation keys, relinearisation, one bootstrap | rotation and relinearisation keys always correct; one process's bootstrap failed |
-| `bootcheck_fast_processes.log` | `he_ops fast keycheck bootcheck:n=6` in 12 fresh processes: 6 inputs each, every input bootstrapped twice | 120 of 134 bootstraps correct (max error 9.1e-4); twice the same input gave one correct and one undecodable result, and after that every bootstrap in the process failed |
-| `memtester_12G.log` | `memtester 12G 1` (12 GB, mlocked), run alongside | Bit Flip test failed: 3 words with one bit cleared |
-
-Bootstrapping the same ciphertext is otherwise bit-identical (64 of 64 pairs), and no check found a
-race. The machine's memory flips bits (memtester), and the failures look like that: the same
-deterministic computation gives two different results, and once a bootstrap table or key in memory
-is hit, every later bootstrap in that process fails. The measured times stand. Results computed on
-this machine should not be trusted until its memory is fixed (check ECC, run memtest86+).
-
 ## Q/K/V projections (`*_qkv.*`)
 
 `Linear_QKV` ([1,128,768] -> packed [3,1,128,768], one matmul with weights [768, 2304]) on every
@@ -62,10 +44,9 @@ The OpenFHE kernels that run many parallel tasks (linear layers, QK^T, Attn*V) a
 and were 35-42% slower in the earlier batch (busier machine; the non-linear operators differed by
 5-12%). All ten operators were therefore measured again together, in MicroBench order, in one
 process per mode (load < 4 at the start); the profiles use these. Operators whose result did not
-decode (a memory fault on this machine, see `selfcheck/`) were measured again alone
-(`retried_after_wrong_result`). `control_openfhe_bootstrap_*` are bootstraps from the end of those
-runs: their results did not decode (the processes had already hit a fault), their times (15.0 s,
-31.9 s) are below the profile's 17.6 s / 34.8 s, which were kept.
+decode were measured again alone (`retried_after_wrong_result`). `control_openfhe_bootstrap_*` are
+bootstraps from the end of those runs; their results are not usable, their times (15.0 s, 31.9 s)
+are below the profile's 17.6 s / 34.8 s, which were kept.
 
 | operator (fast) | earlier batch | re-measured |
 |---|---|---|

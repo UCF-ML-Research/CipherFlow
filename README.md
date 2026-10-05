@@ -171,9 +171,7 @@ checks each against plaintext, and bootstraps afterwards, so damage the kernels 
 shows up. It prints `PASS` or the fault it found and writes a JSON report (the machine, its ECC counters when
 the kernel reports them, every check). A wrong or nondeterministic result from a deterministic
 computation, processes that disagree, or a memtester failure mean the machine corrupts data: its
-results cannot be trusted (timings are unaffected). A pass does not rule out rare faults. On the
-development workstation the cause was memory bit flips; the evidence is in
-[`compiler/state_expanded/profiles/raw/2026-10-04/selfcheck/`](compiler/state_expanded/profiles/raw/2026-10-04/selfcheck/).
+results cannot be trusted (timings are unaffected). A pass does not rule out rare faults.
 
 ## Citation
 

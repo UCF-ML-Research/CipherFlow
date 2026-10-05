@@ -11,11 +11,11 @@ class NexusAttentionRestrictedConfig:
     Restricted attention-matmul adapter backed by NEXUS matrix-mul style assumptions.
 
     NEXUS internals reference:
-    - he_compiler/NEXUS/src/matrix_mul.cpp
+    - NEXUS/src/matrix_mul.cpp
       - MMEvaluator::matrix_mul
       - MMEvaluator::enc_compress_ciphertext
       - MMEvaluator::expand_ciphertext
-    - he_compiler/NEXUS/src/main.cpp MM_test() packing workflow
+    - NEXUS/src/main.cpp MM_test() packing workflow
 
     Supported contract:
     - hidden_size = 768

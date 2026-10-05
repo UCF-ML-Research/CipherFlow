@@ -3,7 +3,7 @@
 These numbers were captured on *this* machine by separately running
 each baseline system end-to-end on a full 12-block BERT-base at
 sequence length 128. The raw logs live in
-``operator_execution_framework/baseline/*`` alongside per-round
+the baselines' repositories alongside per-round
 communication traces.
 
 For each system we record the triple

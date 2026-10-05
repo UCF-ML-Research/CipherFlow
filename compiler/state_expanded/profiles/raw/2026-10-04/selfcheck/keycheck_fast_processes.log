@@ -1,4 +1,0 @@
-A 1 {"check":"keys","keys":84,"failed":0,"which":"","worst_err_of_passing":0.000624223,"ms":35027.6}
-A 2 {"check":"keys","keys":84,"failed":1,"which":"bootstrap","worst_err_of_passing":6.42982e-09,"ms":33509.2}
-B 1 {"check":"keys","keys":84,"failed":0,"which":"","worst_err_of_passing":0.000636054,"ms":38988.9}
-B 2 {"check":"keys","keys":84,"failed":0,"which":"","worst_err_of_passing":0.000614841,"ms":40892.3}

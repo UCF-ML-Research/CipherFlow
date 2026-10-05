@@ -47,8 +47,8 @@ Planning with several HE and MPC backends, on costs measured end to end.
   yet hardened (coefficient masking with noise flooding).
 - Plans are not executed yet (no runtime); kernels are measured on random inputs.
 - Chebyshev input ranges (GeLU, LayerNorm, Softmax) are assumed, not calibrated on real activations.
-- Bootstrapping precision depends on the machine and OpenFHE build (one pass: 10.5 bits on the
-  development machine, 9.4 bits on an EPYC node with OpenFHE 1.4.2.6).
+- Bootstrapping precision depends on the machine and OpenFHE build (one pass: 10.5 bits on a
+  Threadripper PRO 3955WX with OpenFHE 1.4.2, 9.4 bits on an EPYC 75F3 with OpenFHE 1.4.2.6).
 - OpenFHE kernels pack 128-token blocks (other sequence lengths stay in MPC); SHAFT's offline
   (dealer) phase is not costed; SCI and SHAFT count rounds differently.
 

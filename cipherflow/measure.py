@@ -415,10 +415,8 @@ def measurable(device: str) -> List[str]:
 def load_cached(device: Optional[str] = None, backend: str = "sci", he: str = "nexus") -> Optional[LatencyProfile]:
     device = device or local_device()
     candidates = [cache_dir(device, backend, he) / "profile.json"]
-    if he == "nexus":                                   # earlier layouts: NEXUS was the only HE backend
-        candidates.append(machine_dir(device) / backend / "profile.json")          # 0.2.0.dev
-        if backend == "sci":
-            candidates.append(machine_dir(device) / "profile.json")                # v0.1
+    if he == "nexus" and backend == "sci":              # v0.1 cache layout
+        candidates.append(machine_dir(device) / "profile.json")
     f = next((c for c in candidates if c.exists()), None)
     if f is None:
         return None

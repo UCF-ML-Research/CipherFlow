@@ -59,10 +59,8 @@ BUILTIN: Dict[str, Dict[str, str]] = {
         "file": "profile_gpu_full_model.json",
         "label": "the paper's GPU profile (NEXUS-CUDA + SHAFT single-process, allocated communication)"},
 }
-# v0.1 names for load_profile (the paper's profiles) and 0.2.0.dev names
-ALIASES: Dict[str, str] = {"cpu": "paper-cpu", "gpu": "paper-gpu",
-                           "cpu-sci": "cpu-nexus-sci", "cpu-shaft": "cpu-nexus-shaft",
-                           "gpu-shaft": "gpu-nexus-shaft"}
+# v0.1 names for load_profile (the paper's profiles)
+ALIASES: Dict[str, str] = {"cpu": "paper-cpu", "gpu": "paper-gpu"}
 
 
 def hardware_profiles() -> Dict[str, Dict[Tuple[str, str], str]]:

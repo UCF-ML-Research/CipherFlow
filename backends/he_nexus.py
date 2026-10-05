@@ -11,8 +11,8 @@ class NexusHeGeluBridgeConfig:
     NEXUS-based GeLU bridge configuration.
 
     Source reference:
-    - he_compiler/NEXUS/src/gelu.cpp (GeLUEvaluator::gelu)
-    - he_compiler/NEXUS/data/data_generation.py (gelu calibration function)
+    - NEXUS/src/gelu.cpp (GeLUEvaluator::gelu)
+    - NEXUS/data/data_generation.py (gelu calibration function)
 
     Notes:
     - This bridge mirrors the target GeLU behavior in plaintext for framework integration.
@@ -29,8 +29,8 @@ class NexusHeSoftmaxBridgeConfig:
     NEXUS-based Softmax bridge configuration.
 
     Source reference:
-    - he_compiler/NEXUS/src/softmax.cpp (SoftmaxEvaluator::softmax)
-    - he_compiler/NEXUS/src/ckks_evaluator.cpp:
+    - NEXUS/src/softmax.cpp (SoftmaxEvaluator::softmax)
+    - NEXUS/src/ckks_evaluator.cpp:
       - CKKSEvaluator::exp
       - CKKSEvaluator::inverse
 

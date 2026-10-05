@@ -4,7 +4,7 @@ Outputs
   cipherflow/demo/cipherflow_demo.html   artifact body (the viewer adds the document skeleton)
   cipherflow/demo/site/index.html        standalone page for GitHub Pages / any static host
 
-Usage (from operator_execution_framework/):
+Usage (from the repository root):
     python -m cipherflow.demo.build_page
 """
 from pathlib import Path
