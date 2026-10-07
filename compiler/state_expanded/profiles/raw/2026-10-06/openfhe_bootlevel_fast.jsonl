@@ -1,0 +1,30 @@
+{"check":"bootlevel","case":"levels","amp":1,"levels_left":0,"scale":1,"status":"exception: /home/hedong/project/openfhe-development/src/core/include/lattice/hal/default/dcrtpoly-impl.h:l.695:DropLastE","max_abs_err":-1}
+{"check":"bootlevel","case":"levels","amp":1,"levels_left":1,"scale":1,"status":"ok","max_abs_err":0.000602126}
+{"check":"bootlevel","case":"levels","amp":1,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.000670297}
+{"check":"bootlevel","case":"levels","amp":18,"levels_left":3,"scale":1,"status":"ok","max_abs_err":0.00067624}
+{"check":"bootlevel","case":"levels","amp":18,"levels_left":4,"scale":1,"status":"ok","max_abs_err":0.000622897}
+{"check":"bootlevel","case":"levels","amp":18,"levels_left":5,"scale":1,"status":"ok","max_abs_err":0.0006892}
+{"check":"bootlevel","case":"levels","amp":18,"levels_left":6,"scale":1,"status":"ok","max_abs_err":0.000744073}
+{"check":"bootlevel","case":"levels","amp":18,"levels_left":7,"scale":1,"status":"ok","max_abs_err":0.00061893}
+{"check":"bootlevel","case":"repeated every 128 slots","amp":0.5,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.000705097}
+{"check":"bootlevel","case":"repeated every 128 slots","amp":1,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.000656876}
+{"check":"bootlevel","case":"repeated every 128 slots","amp":2,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.00061161}
+{"check":"bootlevel","case":"repeated every 128 slots","amp":4,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.000793522}
+{"check":"bootlevel","case":"repeated every 128 slots","amp":8,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.00186779}
+{"check":"bootlevel","case":"repeated every 128 slots","amp":18,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.0128141}
+{"check":"bootlevel","case":"block 0 in [1.5, 19], constant elsewhere","amp":0,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.000801319}
+{"check":"bootlevel","case":"block 0 in [1.5, 19], constant elsewhere","amp":1,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.00114671}
+{"check":"bootlevel","case":"block 0 in [1.5, 19], constant elsewhere","amp":2.9,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.0106475}
+{"check":"bootlevel","case":"block 0 in [1.5, 19], constant elsewhere","amp":10,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.397554}
+{"check":"bootlevel","case":"after a constant product","amp":9,"levels_left":1,"scale":1,"status":"ok","max_abs_err":0.000673738}
+{"check":"bootlevel","case":"after a constant product","amp":9,"levels_left":2,"scale":1,"status":"ok","max_abs_err":0.000665273}
+{"check":"bootlevel","case":"after a constant product","amp":9,"levels_left":4,"scale":1,"status":"ok","max_abs_err":0.000646522}
+{"check":"bootlevel","case":"after a constant product","amp":9,"levels_left":6,"scale":1,"status":"ok","max_abs_err":0.000649201}
+{"check":"bootlevel","case":"amplitude","amp":32,"levels_left":1,"scale":1,"status":"ok","max_abs_err":0.000845544}
+{"check":"bootlevel","case":"amplitude","amp":60,"levels_left":1,"scale":1,"status":"ok","max_abs_err":0.00338857}
+{"check":"bootlevel","case":"amplitude","amp":64,"levels_left":1,"scale":1,"status":"ok","max_abs_err":0.00436262}
+{"check":"bootlevel","case":"amplitude","amp":100,"levels_left":1,"scale":1,"status":"ok","max_abs_err":0.0166217}
+{"check":"bootlevel","case":"amplitude","amp":256,"levels_left":1,"scale":1,"status":"ok","max_abs_err":0.29886}
+{"check":"bootlevel","case":"amplitude","amp":1100,"levels_left":1,"scale":1,"status":"ok","max_abs_err":21.2034}
+{"check":"bootlevel","case":"scaled","amp":256,"levels_left":2,"scale":8,"status":"ok","max_abs_err":0.0068764}
+{"check":"bootlevel","case":"scaled","amp":1100,"levels_left":2,"scale":32,"status":"ok","max_abs_err":0.0261148}

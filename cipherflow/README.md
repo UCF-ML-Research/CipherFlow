@@ -147,11 +147,16 @@ HE–MPC communication. Each node's `cost_source` is `exact` (profile record) or
 | measured profiles: SCI and SHAFT two-party operators, HE<->MPC conversion with SEAL | done (v0.2.0) |
 | OpenFHE HE backend: ten operators, bootstrapping and conversions on one 128-bit CKKS parameter set, measured | done (v0.2.0) |
 | Q/K/V projections as an operator (`Linear_QKV`), measured on every backend; paper graphs kept as `bert_paper` / `vit_paper` | done (v0.2.0) |
-| NEXUS on one executable parameter set; SPU (Cheetah, 2PC) backend | planned |
+| plan checks and emulation on real data (`cipherflow.runtime`: `check_plan`, `emulate`, GLUE by emulation) | done (v0.3.0) |
+| calibration and value contracts (`runtime.calibrate`, `compile(..., calibration=)`), margins from measured dev-set gaps | done (v0.3.0) |
+| hardened HE<->MPC conversion (OpenFHE): statistically hiding masks, exact decoding, wrap-free MPC -> HE | done (v0.3.0) |
+| wide-range OpenFHE kernels (GeLU, Softmax, LayerNorm), chosen per node from the calibration | done (v0.3.0) |
+| bootstrapping's level and amplitude limits in the planner, static baselines and emulator | done (v0.3.0) |
+| NEXUS on one executable parameter set; hardened NEXUS (SEAL) conversion; SPU (Cheetah, 2PC) backend | planned |
 | `from_torch` for encoder stacks (hand-written, `nn.MultiheadAttention`, HF `BertEncoder`/`ViTEncoder`) | done (v0.1.1) |
 | automatic MicroBench (`profile="auto"`, cached, incremental) | done on CPU (NEXUS-CKKS, SCI/BOLT); GPU: pass a measured profile |
 | decoder LLMs, `from_onnx`, embeddings / task heads | planned (see the roadmap) |
-| runtime adapter (execute a plan) | v2 |
+| encrypted execution of a plan (runtime adapter) | planned |
 
 ## Demo
 

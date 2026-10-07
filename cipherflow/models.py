@@ -6,7 +6,9 @@ from compiler.state_expanded.bert_graph import BertShapeManifest, bert_multi_blo
 
 def bert(num_blocks: int = 12, seq: int = 128, batch: int = 1, qkv_projection: bool = True):
     """BERT-base encoder: 12 operators per block (Q/K/V projections, attention, output
-    projection, FFN, two residual Adds and LayerNorms), two residual regions per block.
+    projection, FFN, two residual Adds and LayerNorms), two residual regions per block and,
+    nested in the first, V's edge from the projections to Attn*V. The graph starts with an
+    Input node (the residual of the first block).
 
     qkv_projection=False leaves out the Q/K/V projections, as the graph used in the
     NeurIPS 2026 evaluation does (11 operators per block); use it with the paper's
@@ -39,10 +41,13 @@ def vit(num_blocks: int = 12, tokens: int = 197, batch: int = 1, hidden: int = 7
         p = lambda n, _i=i: f"L{_i}_{n}"
         att_in = p("qkv") if qkv_projection else p("qk")
         nodes.append(OperatorNode(p("ln1"), "LayerNorm", tok, tok))
-        if qkv_projection:
+        qk_attrs = dict(att)
+        if qkv_projection:                  # Q and K to QK^T, V straight to Attn*V
+            qk_in = (2, B, S, H)
             nodes.append(OperatorNode(p("qkv"), "Linear_QKV", tok, qkv))
-            edges.append(DataEdge(p("qkv"), p("qk"), qkv))
-        nodes += [OperatorNode(p("qk"), "Attention_QK_MatMul", qkv, sc, attributes=att),
+            edges.extend([DataEdge(p("qkv"), p("qk"), qk_in), DataEdge(p("qkv"), p("av"), tok)])
+            qk_attrs["in_edge_shape"] = qk_in
+        nodes += [OperatorNode(p("qk"), "Attention_QK_MatMul", qkv, sc, attributes=qk_attrs),
                   OperatorNode(p("sm"), "Softmax", sc, sc, attributes={"axis": -1}),
                   OperatorNode(p("av"), "Attention_V_MatMul", sc, tok, attributes=att),
                   OperatorNode(p("op"), "Out_Projection", tok, tok),

@@ -18,12 +18,12 @@ def _ops(g):
 def test_graphs_have_the_projections_and_paper_graphs_do_not():
     g, paper = cf.models.bert(2), cf.models.bert_paper(2)
     assert _ops(g).count("Linear_QKV") == 2 and "Linear_QKV" not in _ops(paper)
-    assert _ops(g)[:2] == ["Linear_QKV", "Attention_QK_MatMul"] and len(g.nodes) == len(paper.nodes) + 2
-    qkv = g.nodes[0]
+    assert _ops(g)[:3] == ["Input", "Linear_QKV", "Attention_QK_MatMul"] and len(g.nodes) == len(paper.nodes) + 3
+    qkv = g.nodes[1]
     assert (tuple(qkv.input_shape), tuple(qkv.output_shape)) == ((1, 128, 768), (3, 1, 128, 768))
     assert _ops(paper) == _ops(bert_multi_block_graph(2, default_manifest()))   # the paper's graph is unchanged
     cf.check_graph(g)
-    assert len(find_sese_regions(g)) == len(find_sese_regions(paper)) == 4
+    assert len(find_sese_regions(paper)) == 4 and len(find_sese_regions(g)) == 6     # + V's region per block
     vit = cf.models.vit(2)
     assert _ops(vit)[:4] == ["Out_Projection", "LayerNorm", "Linear_QKV", "Attention_QK_MatMul"]
     assert "Linear_QKV" not in _ops(cf.models.vit_paper(2)) + _ops(cf.models.vit(2, qkv_projection=False))

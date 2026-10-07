@@ -39,6 +39,7 @@ pre-compilation.
 from __future__ import annotations
 
 import heapq
+import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -86,6 +87,7 @@ def find_sese_regions(graph: OperatorGraph) -> List[SeseRegion]:
         out_adj[e.src].append(e.dst)
         in_adj[e.dst].append(e.src)
 
+    topo = _topo_index(graph, out_adj, in_adj)
     regions: List[SeseRegion] = []
     for fork in graph.nodes:
         if len(out_adj[fork.node_id]) < 2:
@@ -96,8 +98,8 @@ def find_sese_regions(graph: OperatorGraph) -> List[SeseRegion]:
         for i in range(len(children)):
             for j in range(i + 1, len(children)):
                 a, b = children[i], children[j]
-                path_a = _descendants_in_order(a, out_adj)
-                path_b = _descendants_in_order(b, out_adj)
+                path_a = _descendants_in_order(a, out_adj, topo)
+                path_b = _descendants_in_order(b, out_adj, topo)
                 set_a = set(path_a)
                 set_b = set(path_b)
                 common = [n for n in path_a if n in set_b]
@@ -127,8 +129,9 @@ def find_sese_regions(graph: OperatorGraph) -> List[SeseRegion]:
                     continue
                 # main_path = nodes from `a` up to (but not including) join
                 # skip_path = nodes from `b` up to (but not including) join
-                ma = _prefix_up_to(path_a, join)
-                mb = _prefix_up_to(path_b, join)
+                anc = _ancestors(join, in_adj)
+                ma = [n for n in _prefix_up_to(path_a, join) if n in anc]
+                mb = [n for n in _prefix_up_to(path_b, join) if n in anc]
                 # Heuristic: the longer arm is "main", shorter is "skip".
                 if len(ma) >= len(mb):
                     main_path, skip_path = ma, mb
@@ -148,20 +151,43 @@ def find_sese_regions(graph: OperatorGraph) -> List[SeseRegion]:
     return regions
 
 
-def _descendants_in_order(start: str, out_adj: Dict[str, List[str]]) -> List[str]:
-    seen: Dict[str, int] = {}
-    order: List[str] = []
+def _topo_index(graph: OperatorGraph, out_adj, in_adj) -> Dict[str, int]:
+    indeg = {n.node_id: len(in_adj[n.node_id]) for n in graph.nodes}
+    ready = sorted(n for n, k in indeg.items() if k == 0)
+    order: Dict[str, int] = {}
+    while ready:
+        u = ready.pop(0)
+        order[u] = len(order)
+        for v in out_adj.get(u, []):
+            indeg[v] -= 1
+            if indeg[v] == 0:
+                ready.append(v)
+                ready.sort()
+    return order
+
+
+def _descendants_in_order(start: str, out_adj: Dict[str, List[str]], topo: Dict[str, int]) -> List[str]:
+    """``start`` and every node reachable from it, in topological order (nested
+    branches must not be cut off before the join, as a depth-first order would)."""
+    seen = {start}
     stack = [start]
     while stack:
-        node = stack.pop()
-        if node in seen:
-            continue
-        seen[node] = 1
-        order.append(node)
-        for child in out_adj.get(node, []):
+        for child in out_adj.get(stack.pop(), []):
             if child not in seen:
+                seen.add(child)
                 stack.append(child)
-    return order
+    return sorted(seen, key=lambda n: topo.get(n, 0))
+
+
+def _ancestors(node: str, in_adj: Dict[str, List[str]]) -> set:
+    seen = set()
+    stack = [node]
+    while stack:
+        for p in in_adj.get(stack.pop(), []):
+            if p not in seen:
+                seen.add(p)
+                stack.append(p)
+    return seen
 
 
 def _prefix_up_to(path: List[str], stop: str) -> List[str]:
@@ -267,11 +293,13 @@ class RegionTransferTable:
 
 
 def _build_chain(
-    node_ids: List[str], node_map: Dict[str, OperatorNode], level_deltas: Dict[str, int]
+    node_ids: List[str], node_map: Dict[str, OperatorNode], level_deltas: Dict[str, int],
+    preds: Optional[Dict[str, List[str]]] = None,
 ) -> List[ChainOp]:
     out: List[ChainOp] = []
     for nid in node_ids:
         n = node_map[nid]
+        p = (preds or {}).get(nid, [])
         out.append(
             ChainOp(
                 node_id=n.node_id,
@@ -280,9 +308,92 @@ def _build_chain(
                 output_shape=n.output_shape,
                 he_level_delta=level_deltas.get(n.op_type, 0),
                 he_level_out=level_out(level_deltas, n.op_type),
+                edge_shape=_edge_shape_attr(n),
+                pred=p[0] if len(p) == 1 else None,
             )
         )
     return out
+
+
+def _edge_shape_attr(n: OperatorNode) -> Optional[Shape]:
+    s = (n.attributes or {}).get("in_edge_shape")
+    return tuple(s) if s else None
+
+
+# A branch is a sequence of operators and nested regions: a nested region's fork runs as an
+# operator, then the region (interior and join) is one step priced by its transfer table.
+@dataclass
+class NestedRegion:
+    region: "SeseRegion"
+    table: "RegionTransferTable"
+
+
+def _branch_elements(path: List[str], node_map, level_deltas, nested: Dict[str, NestedRegion],
+                     preds: Optional[Dict[str, List[str]]] = None) -> list:
+    out: list = []
+    inside: set = set()
+    for nid in path:
+        if nid in inside:
+            continue
+        out.extend(_build_chain([nid], node_map, level_deltas, preds))
+        if nid in nested:
+            q = nested[nid]
+            out.append(q)
+            inside |= set(q.region.main_path) | set(q.region.skip_path) | {q.region.join}
+    return out
+
+
+def dijkstra_elements(source: State, elements: list, cm, net, L: int, boundary_states: List[State]):
+    """dijkstra_chain over operators and nested regions; dist values are
+    (cost, edge, region plan or None)."""
+    dist = {source.key(): (0.0, None, None)}
+    pq = [(0.0, source.i, source.d, source.l)]
+    while pq:
+        cost, i, d, l = heapq.heappop(pq)
+        if dist[(i, d, l)][0] < cost - 1e-12 or i == len(elements):
+            continue
+        el = elements[i]
+        if isinstance(el, NestedRegion):
+            for s_dst in boundary_states:
+                plan = el.table.lookup(State(0, d, l), s_dst)
+                if plan.cost_ms == float("inf"):
+                    continue
+                key, ncost = (i + 1, s_dst.d, s_dst.l), cost + plan.cost_ms
+                if key not in dist or ncost + 1e-12 < dist[key][0]:
+                    edge = TransitionEdge(State(i, d, l), State(*key), plan.cost_ms, "sese", el.region.region_id)
+                    dist[key] = (ncost, edge, plan)
+                    heapq.heappush(pq, (ncost, *key))
+            continue
+        for e in outgoing(State(0, d, l), [el], cm, net, L):
+            ni = i + 1 if e.action in ("he_exec", "mpc_exec") else i
+            key, ncost = (ni, e.dst.d, e.dst.l), cost + e.cost_ms
+            if key not in dist or ncost + 1e-12 < dist[key][0]:
+                dist[key] = (ncost, TransitionEdge(State(i, d, l), State(*key), e.cost_ms, e.action, e.detail), None)
+                heapq.heappush(pq, (ncost, *key))
+    return dist
+
+
+def _backtrack_elements(dist, end_state: State, src_state: State) -> List[TransitionEdge]:
+    chunks: List[List[TransitionEdge]] = []
+    cur = end_state.key()
+    while cur != src_state.key():
+        _c, edge, plan = dist.get(cur, (0.0, None, None))
+        if edge is None:
+            break
+        chunks.append(list(plan.steps) if plan is not None else [edge])
+        cur = edge.src.key()
+    return [e for chunk in reversed(chunks) for e in chunk]
+
+
+def _explore_branch(src: State, elements: list, cm, net, L, boundary_states):
+    """End states of a branch with their costs, and a function that returns the steps to one."""
+    if all(isinstance(e, ChainOp) for e in elements):
+        dist = dijkstra_chain(src, elements, cm, net, L)
+        ends = [(State(len(elements), d, l), c) for (i, d, l), (c, _) in dist.items() if i == len(elements)]
+        return ends, (lambda end: _backtrack(dist, end, src))
+    dist = dijkstra_elements(src, elements, cm, net, L, boundary_states)
+    ends = [(State(len(elements), d, l), c) for (i, d, l), (c, _e, _p) in dist.items() if i == len(elements)]
+    return ends, (lambda end: _backtrack_elements(dist, end, src))
 
 
 def compute_region_transfer(
@@ -293,6 +404,7 @@ def compute_region_transfer(
     net: NetworkSetting,
     L: int,
     boundary_states: List[State],
+    nested: Optional[Dict[str, NestedRegion]] = None,
 ) -> RegionTransferTable:
     """Compute T_R(s_src, s_dst) over ``boundary_states``.
 
@@ -310,8 +422,19 @@ def compute_region_transfer(
     """
 
     node_map = {n.node_id: n for n in graph.nodes}
-    main_chain = _build_chain(region.main_path, node_map, level_deltas)
-    skip_chain = _build_chain(region.skip_path, node_map, level_deltas)
+    nested = nested or {}
+    preds: Dict[str, List[str]] = {}
+    for e in graph.edges:
+        preds.setdefault(e.dst, []).append(e.src)
+    main_chain = _branch_elements(region.main_path, node_map, level_deltas, nested, preds)
+    skip_chain = _branch_elements(region.skip_path, node_map, level_deltas, nested, preds)
+    # the tensors arriving at the join on each branch (they differ when the join is not an
+    # Add, e.g. Attn*V receives the attention probabilities and V)
+    edge_shapes = {(e.src, e.dst): tuple(e.tensor_shape) for e in graph.edges}
+    main_last = region.main_path[-1] if region.main_path else region.fork
+    skip_last = region.skip_path[-1] if region.skip_path else region.fork
+    main_shape = edge_shapes.get((main_last, region.join), tuple(node_map[region.join].input_shape))
+    skip_shape = edge_shapes.get((skip_last, region.join), tuple(node_map[region.join].input_shape))
 
     join_node = node_map[region.join]
     join_op = ChainOp(
@@ -328,21 +451,9 @@ def compute_region_transfer(
     for s_src in boundary_states:
         # --- explore main path from s_src ---
         main_src = State(0, s_src.d, s_src.l)
-        main_dist = dijkstra_chain(main_src, main_chain, cm, net, L)
+        main_ends, main_steps_to = _explore_branch(main_src, main_chain, cm, net, L, boundary_states)
         # --- explore skip path from s_src (both branches share the fork) ---
-        skip_dist = dijkstra_chain(main_src, skip_chain, cm, net, L)
-
-        # Enumerate end states for both arms.
-        main_ends = [
-            (State(len(main_chain), d, l), c)
-            for (idx, d, l), (c, _) in main_dist.items()
-            if idx == len(main_chain)
-        ]
-        skip_ends = [
-            (State(len(skip_chain), d, l), c)
-            for (idx, d, l), (c, _) in skip_dist.items()
-            if idx == len(skip_chain)
-        ]
+        skip_ends, skip_steps_to = _explore_branch(main_src, skip_chain, cm, net, L, boundary_states)
 
         for s_dst in boundary_states:
             best: RegionPlan = RegionPlan.infeasible()
@@ -360,7 +471,8 @@ def compute_region_transfer(
                     for add_domain, bs_plan in strategies:
                         align_cost, align_steps, common_l = _align_for_join(
                             main_end, skip_end, add_domain, join_op, cm, net, L,
-                            bootstrap_plan=bs_plan,
+                            bootstrap_plan=bs_plan, main_shape=main_shape, skip_shape=skip_shape,
+                            main_edge=f"{main_last}->{region.join}", skip_edge=f"{skip_last}->{region.join}",
                         )
                         if align_cost == float("inf"):
                             continue
@@ -375,17 +487,18 @@ def compute_region_transfer(
                         # but for the region we represent that as a
                         # "post-join" state; then conversion to s_dst if
                         # needed.
+                        if add_domain == "HE" and common_l < join_op.he_level_delta:
+                            continue
                         post_state = State(
                             0,
                             add_domain,
-                            (common_l - join_op.he_level_delta) if add_domain == "HE" else L,
+                            (join_op.he_level_out if join_op.he_level_out is not None
+                             else common_l - join_op.he_level_delta) if add_domain == "HE" else L,
                         )
-                        if add_domain == "HE" and post_state.l < 0:
-                            continue
                         # Transition from post_state to s_dst: allow at
                         # most one conversion (HE<->MPC) and bootstrap.
                         tail_cost, tail_steps = _tail_to_boundary(
-                            post_state, s_dst, join_op.output_shape, cm, net, L
+                            post_state, s_dst, join_op.output_shape, cm, net, L, edge=f"{region.join}->*"
                         )
                         if tail_cost == float("inf"):
                             continue
@@ -394,10 +507,10 @@ def compute_region_transfer(
                             # Reconstruct the step list from the
                             # Dijkstra predecessor maps + align_steps +
                             # join step + tail_steps.
-                            main_steps = _backtrack(main_dist, main_end, main_src)
-                            skip_steps = _backtrack(skip_dist, skip_end, main_src)
+                            main_steps = main_steps_to(main_end)
+                            skip_steps = skip_steps_to(skip_end)
                             join_edge = TransitionEdge(
-                                src=State(-1, add_domain, post_state.l + join_op.he_level_delta if add_domain == "HE" else L),
+                                src=State(-1, add_domain, common_l if add_domain == "HE" else L),
                                 dst=post_state,
                                 cost_ms=join_est.latency_ms,
                                 action="he_exec" if add_domain == "HE" else "mpc_exec",
@@ -445,6 +558,10 @@ def _align_for_join(
     net: NetworkSetting,
     L: int,
     bootstrap_plan: str = "none",
+    main_shape: Optional[Shape] = None,
+    skip_shape: Optional[Shape] = None,
+    main_edge: str = "",
+    skip_edge: str = "",
 ) -> Tuple[float, List[TransitionEdge], int]:
     """Compute alignment cost + common level to execute the join.
 
@@ -467,28 +584,41 @@ def _align_for_join(
     """
     steps: List[TransitionEdge] = []
     cost = 0.0
+    main_shape = tuple(main_shape or join_op.input_shape)
+    skip_shape = tuple(skip_shape or join_op.input_shape)
 
-    def _conv(x: State, to: Domain) -> Tuple[float, State]:
+    def _conv(x: State, to: Domain, shape, edge) -> Tuple[float, float, State]:
+        """(bootstrap before it, the conversion, the state after); the bootstrap step, if any, is
+        recorded here: the hardened HE->MPC conversion needs levels left."""
         if x.d == to:
-            return 0.0, x
-        est = cm.estimate_conversion(x.d, to, join_op.input_shape, net)
-        new = State(x.i, to, L if to == "HE" else L)
-        return est.latency_ms, new
+            return 0.0, 0.0, x
+        pre = 0.0
+        if x.d == "HE" and x.l < cm.he_to_mpc_min_level:
+            bs = cm.estimate_bootstrap_at(net, shape, x.l, edge)
+            if bs.resolution == "infeasible":
+                return float("inf"), 0.0, x
+            steps.append(TransitionEdge(x, State(x.i, "HE", L), bs.latency_ms, "bootstrap",
+                                        f"pre-conversion edge={edge}"))
+            pre, x = bs.latency_ms, State(x.i, "HE", L)
+        est = cm.estimate_conversion(x.d, to, shape, net)
+        return pre, est.latency_ms, State(x.i, to, L)
 
-    c_m, m = _conv(main_end, add_domain)
-    c_s, s = _conv(skip_end, add_domain)
-    cost += c_m + c_s
-    if c_m > 0:
+    b_m, c_m, m = _conv(main_end, add_domain, main_shape, main_edge)
+    b_s, c_s, s = _conv(skip_end, add_domain, skip_shape, skip_edge)
+    if math.isinf(b_m) or math.isinf(b_s):
+        return float("inf"), [], -1
+    cost += b_m + c_m + b_s + c_s
+    if main_end.d != add_domain:
         steps.append(
             TransitionEdge(main_end, m, c_m,
                            "he2mpc" if add_domain == "MPC" else "mpc2he",
-                           f"align@join shape={join_op.input_shape}")
+                           f"align@join shape={main_shape} edge={main_edge}")
         )
-    if c_s > 0:
+    if skip_end.d != add_domain:
         steps.append(
             TransitionEdge(skip_end, s, c_s,
                            "he2mpc" if add_domain == "MPC" else "mpc2he",
-                           f"align@join shape={join_op.input_shape}")
+                           f"align@join shape={skip_shape} edge={skip_edge}")
         )
     if add_domain == "MPC":
         # bootstrap_plan irrelevant for MPC.
@@ -496,39 +626,40 @@ def _align_for_join(
 
     # HE side: try the requested bootstrap strategy.
     if bootstrap_plan == "main" and m.l < L:
-        bs_est = cm.estimate_bootstrap(net, join_op.input_shape)
+        bs_est = cm.estimate_bootstrap_at(net, main_shape, m.l, main_edge)
         if bs_est.resolution == "infeasible":
             return float("inf"), [], -1
         cost += bs_est.latency_ms
         m2 = State(m.i, "HE", L)
         steps.append(TransitionEdge(m, m2, bs_est.latency_ms, "bootstrap",
-                                    "pre-add bootstrap main"))
+                                    f"pre-add bootstrap main edge={main_edge}"))
         m = m2
     if bootstrap_plan == "skip" and s.l < L:
-        bs_est = cm.estimate_bootstrap(net, join_op.input_shape)
+        bs_est = cm.estimate_bootstrap_at(net, skip_shape, s.l, skip_edge)
         if bs_est.resolution == "infeasible":
             return float("inf"), [], -1
         cost += bs_est.latency_ms
         s2 = State(s.i, "HE", L)
         steps.append(TransitionEdge(s, s2, bs_est.latency_ms, "bootstrap",
-                                    "pre-add bootstrap skip"))
+                                    f"pre-add bootstrap skip edge={skip_edge}"))
         s = s2
     if bootstrap_plan == "both":
-        bs_est = cm.estimate_bootstrap(net, join_op.input_shape)
-        if bs_est.resolution == "infeasible":
+        bs_m = cm.estimate_bootstrap_at(net, main_shape, m.l if m.l < L else None, main_edge)
+        bs_s = cm.estimate_bootstrap_at(net, skip_shape, s.l if s.l < L else None, skip_edge)
+        if "infeasible" in (bs_m.resolution, bs_s.resolution):
             return float("inf"), [], -1
         # Only bootstrap a branch if it needs it.
         if m.l < L:
-            cost += bs_est.latency_ms
+            cost += bs_m.latency_ms
             m2 = State(m.i, "HE", L)
-            steps.append(TransitionEdge(m, m2, bs_est.latency_ms, "bootstrap",
-                                        "pre-add bootstrap main"))
+            steps.append(TransitionEdge(m, m2, bs_m.latency_ms, "bootstrap",
+                                        f"pre-add bootstrap main edge={main_edge}"))
             m = m2
         if s.l < L:
-            cost += bs_est.latency_ms
+            cost += bs_s.latency_ms
             s2 = State(s.i, "HE", L)
-            steps.append(TransitionEdge(s, s2, bs_est.latency_ms, "bootstrap",
-                                        "pre-add bootstrap skip"))
+            steps.append(TransitionEdge(s, s2, bs_s.latency_ms, "bootstrap",
+                                        f"pre-add bootstrap skip edge={skip_edge}"))
             s = s2
 
     common_l = min(m.l, s.l)
@@ -542,14 +673,24 @@ def _tail_to_boundary(
     cm: StateExpandedCostModel,
     net: NetworkSetting,
     L: int,
+    edge: str = "",
 ) -> Tuple[float, List[TransitionEdge]]:
-    """Cheapest 0-1 transitions from post to target (conversion +/- bootstrap)."""
+    """Cheapest 0-1 transitions from post to target (conversion +/- bootstrap).
+    ``edge`` ("<join>->*"): they apply to the join's output, for all its consumers."""
     if post.d == target.d and post.l >= target.l:
         # We can always drop level for free (or no-op if same).
         return 0.0, []
     cost = 0.0
     steps: List[TransitionEdge] = []
     cur = post
+    if cur.d == "HE" and target.d == "MPC" and cur.l < cm.he_to_mpc_min_level:   # the conversion needs levels
+        est = cm.estimate_bootstrap_at(net, shape, cur.l, edge)
+        if est.resolution == "infeasible":
+            return float("inf"), []
+        cost += est.latency_ms
+        nxt = State(cur.i, "HE", L)
+        steps.append(TransitionEdge(cur, nxt, est.latency_ms, "bootstrap", f"pre-conversion edge={edge}"))
+        cur = nxt
     if cur.d != target.d:
         est = cm.estimate_conversion(cur.d, target.d, shape, net)
         if est.resolution == "infeasible":
@@ -560,15 +701,15 @@ def _tail_to_boundary(
             TransitionEdge(
                 post, cur, est.latency_ms,
                 "he2mpc" if target.d == "MPC" else "mpc2he",
-                f"tail shape={shape}",
+                f"tail shape={shape} edge={edge}",
             )
         )
     if cur.d == "HE" and cur.l < target.l:
-        est = cm.estimate_bootstrap(net, shape)
+        est = cm.estimate_bootstrap_at(net, shape, cur.l, edge)
         if est.resolution == "infeasible":
             return float("inf"), []
         cost += est.latency_ms
         nxt = State(cur.i, "HE", L)
-        steps.append(TransitionEdge(cur, nxt, est.latency_ms, "bootstrap", ""))
+        steps.append(TransitionEdge(cur, nxt, est.latency_ms, "bootstrap", f"edge={edge}"))
         cur = nxt
     return cost, steps

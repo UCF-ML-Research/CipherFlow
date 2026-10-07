@@ -89,6 +89,13 @@ class ChainOp:
     # Level of the output when the HE method bootstraps internally (it then needs
     # ``he_level_delta`` levels on input and returns at this level); None = src.l - delta.
     he_level_out: Optional[int] = None
+    # Shape of the tensor arriving on the chain edge, when it differs from the operator's
+    # input (e.g. Q and K into QK^T when V travels on its own edge); None = input_shape.
+    # Conversions and bootstraps before the operator are priced on it.
+    edge_shape: Optional[Tuple[int, ...]] = None
+    # The operator the chain edge comes from (its only input), recorded on the conversions and
+    # bootstraps placed on that edge; None when unknown (the graph input).
+    pred: Optional[str] = None
 
 
 def enumerate_states(chain_len: int, L: int) -> List[State]:
@@ -156,11 +163,21 @@ def outgoing(
                     )
                 )
 
-    # -- 3. HE->MPC conversion (same i) --
-    if src.d == "HE":
-        shape = conversion_shape_at(i) if conversion_shape_at else (
-            chain[i].input_shape if i < len(chain) else chain[-1].output_shape
-        )
+    def _edge_at(i: int) -> str:
+        if i < len(chain) and chain[i].pred is not None:
+            return f" edge={chain[i].pred}->{chain[i].node_id}"
+        return ""
+
+    def _shape_at(i: int) -> Tuple[int, ...]:
+        if conversion_shape_at:
+            return conversion_shape_at(i)
+        if i < len(chain):
+            return chain[i].edge_shape or chain[i].input_shape
+        return chain[-1].output_shape
+
+    # -- 3. HE->MPC conversion (same i), if enough levels are left for it --
+    if src.d == "HE" and src.l >= cm.he_to_mpc_min_level:
+        shape = _shape_at(i)
         est = cm.estimate_conversion("HE", "MPC", shape, net)
         edges.append(
             TransitionEdge(
@@ -168,15 +185,13 @@ def outgoing(
                 dst=State(i, "MPC", L),
                 cost_ms=est.latency_ms,
                 action="he2mpc",
-                detail=f"shape={shape}",
+                detail=f"shape={shape}{_edge_at(i)}",
             )
         )
 
     # -- 4. MPC->HE conversion (same i) --
     if src.d == "MPC":
-        shape = conversion_shape_at(i) if conversion_shape_at else (
-            chain[i].input_shape if i < len(chain) else chain[-1].output_shape
-        )
+        shape = _shape_at(i)
         est = cm.estimate_conversion("MPC", "HE", shape, net)
         edges.append(
             TransitionEdge(
@@ -184,16 +199,15 @@ def outgoing(
                 dst=State(i, "HE", L),
                 cost_ms=est.latency_ms,
                 action="mpc2he",
-                detail=f"shape={shape}",
+                detail=f"shape={shape}{_edge_at(i)}",
             )
         )
 
     # -- 5. Bootstrapping (same i, HE only) --
     if src.d == "HE" and src.l < L and allow_bootstrap:
-        shape = conversion_shape_at(i) if conversion_shape_at else (
-            chain[i].input_shape if i < len(chain) else chain[-1].output_shape
-        )
-        est = cm.estimate_bootstrap(net, shape)
+        shape = _shape_at(i)
+        producer = (chain[i].pred if i < len(chain) else chain[-1].node_id) if chain else None
+        est = cm.estimate_bootstrap_at(net, shape, src.l, producer)
         if est.resolution != "infeasible":
             edges.append(
                 TransitionEdge(
@@ -201,7 +215,7 @@ def outgoing(
                     dst=State(i, "HE", L),
                     cost_ms=est.latency_ms,
                     action="bootstrap",
-                    detail="",
+                    detail=_edge_at(i).strip(),
                 )
             )
 

@@ -60,7 +60,7 @@ def test_compile_auto_on_local_deployment(fake):
     g = cf.models.bert(num_blocks=2, seq=16)
     plan = cf.compile(g, cf.Deployment.local("100Mbps/20ms", device="cpu"), verbose=False)
     assert len(plan.nodes) == len(g.nodes) and plan.cost["total_ms"] > 0
-    assert {n.cost_source for n in plan.nodes} == {"exact"}                            # measured, not scaled
+    assert {n.cost_source for n in plan.operators()} == {"exact"}                            # measured, not scaled
     assert not any("scaled from the nearest" in w for w in plan.warnings)
 
 

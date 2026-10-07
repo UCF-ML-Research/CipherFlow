@@ -622,7 +622,8 @@
         "ciphertexts": 3,
         "max_abs_err": 0.000243923,
         "measured_for_ring": "SCI 2^37, 12 fractional bits",
-        "mpc_backend": "sci"
+        "mpc_backend": "sci",
+        "protocol": "slot mask (not hardened)"
       }
     },
     {
@@ -644,7 +645,8 @@
         "ciphertexts": 3,
         "max_abs_err": 0.000243923,
         "measured_for_ring": "SCI 2^37, 12 fractional bits",
-        "mpc_backend": "sci"
+        "mpc_backend": "sci",
+        "protocol": "slot mask (not hardened)"
       }
     },
     {
@@ -667,7 +669,8 @@
         "ciphertexts": 6,
         "max_abs_err": 0.000243748,
         "measured_for_ring": "SCI 2^37, 12 fractional bits",
-        "mpc_backend": "sci"
+        "mpc_backend": "sci",
+        "protocol": "slot mask (not hardened)"
       }
     },
     {
@@ -690,7 +693,8 @@
         "ciphertexts": 6,
         "max_abs_err": 0.000243748,
         "measured_for_ring": "SCI 2^37, 12 fractional bits",
-        "mpc_backend": "sci"
+        "mpc_backend": "sci",
+        "protocol": "slot mask (not hardened)"
       }
     },
     {
@@ -713,7 +717,8 @@
         "ciphertexts": 9,
         "max_abs_err": 0.000243903,
         "measured_for_ring": "SCI 2^37, 12 fractional bits",
-        "mpc_backend": "sci"
+        "mpc_backend": "sci",
+        "protocol": "slot mask (not hardened)"
       }
     },
     {
@@ -736,7 +741,8 @@
         "ciphertexts": 9,
         "max_abs_err": 0.000243904,
         "measured_for_ring": "SCI 2^37, 12 fractional bits",
-        "mpc_backend": "sci"
+        "mpc_backend": "sci",
+        "protocol": "slot mask (not hardened)"
       }
     },
     {
@@ -758,7 +764,8 @@
         "ciphertexts": 12,
         "max_abs_err": 0.000243872,
         "measured_for_ring": "SCI 2^37, 12 fractional bits",
-        "mpc_backend": "sci"
+        "mpc_backend": "sci",
+        "protocol": "slot mask (not hardened)"
       }
     },
     {
@@ -780,7 +787,8 @@
         "ciphertexts": 12,
         "max_abs_err": 0.000243871,
         "measured_for_ring": "SCI 2^37, 12 fractional bits",
-        "mpc_backend": "sci"
+        "mpc_backend": "sci",
+        "protocol": "slot mask (not hardened)"
       }
     }
   ],

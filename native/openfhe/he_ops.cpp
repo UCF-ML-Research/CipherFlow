@@ -2,7 +2,7 @@
 // and error against plaintext.
 //
 //   he_ops <fast|precise> <op>[:k=v,...] ...
-//     operators: add gelu layernorm softmax qkv out_proj ffn1 ffn2 qk av; bootstrap microbench
+//     operators: add gelu gelu_wide layernorm layernorm_wide softmax softmax_wide qkv out_proj ffn1 ffn2 qk av; bootstrap microbench
 //     self-checks: keycheck, bootcheck[:n=4,amp=1], racecheck[:rounds=3,only=name+name]
 //
 // Parameters (128-bit, checked by OpenFHE): N = 2^16, SPARSE_ENCAPSULATED secret, scale 2^50,
@@ -20,6 +20,10 @@
 // internally when it runs out; it reports levels used before its first internal bootstrap,
 // the level of its output, its internal bootstraps, wall time and max |error|.
 #include "openfhe.h"
+
+#include "gelu_wide_coeffs.h"
+#include "softmax_wide_coeffs.h"
+#include "layernorm_wide_coeffs.h"
 
 #include <omp.h>
 
@@ -220,6 +224,180 @@ static Result run_gelu(Env &e, int F, double bound, int degree) {
     return r;
 }
 
+// GeLU on [-B, B] (NONLINEAR.md): input y = x / B (the scaling folds into the producer: the
+// previous linear layer's weights or the MPC -> HE conversion's output scale); out = y * (B h)(f1(y))
+// with f1 (degree 59) and h (degree 27) Chebyshev series on [-1, 1] and one bootstrap between them.
+static Result run_gelu_wide(Env &e, int F, int B) {
+    auto it = GELU_WIDE.find(B);
+    if (it == GELU_WIDE.end()) throw std::runtime_error("gelu_wide: no coefficients for B = " + std::to_string(B));
+    std::vector<double> hB = it->second.h;
+    for (auto &c : hB) c *= B;
+    int n = F / 256;
+    std::vector<Vec> x, ref;
+    std::vector<CT> cy, out;
+    for (int i = 0; i < n; ++i) {
+        x.push_back(rand_vec(e.slots, -B, B));                  // the whole range: worst-case error
+        ref.push_back(Vec(e.slots)); for (uint32_t j = 0; j < e.slots; ++j) ref[i][j] = gelu(x[i][j]);
+        Vec y(e.slots); for (uint32_t j = 0; j < e.slots; ++j) y[j] = x[i][j] / B;
+        cy.push_back(e.enc(y));
+    }
+    e.boots = 0; e.boot_ms = 0; e.first_boot_used = -1; e.start_levels = e.L;
+    auto t = Clock::now();
+    for (int i = 0; i < n; ++i) {
+        CT v = e.cc->EvalChebyshevSeries(cy[i], it->second.f1, -1.0, 1.0);
+        v = e.refresh(v);
+        CT g = e.cc->EvalChebyshevSeries(v, hB, -1.0, 1.0);
+        out.push_back(e.cc->EvalMult(cy[i], g));
+    }
+    Result r{"GeLU_wide", "[1,128," + std::to_string(F) + "]", n, ms(t)};
+    r.err = max_err(e, out, ref);
+    r.levels_used = e.first_boot_used;
+    r.level_out = int(e.left(out[0]));
+    r.boots = e.boots; r.boot_ms = e.boot_ms;
+    r.approx = "x h(f1(x/B)), f1 degree " + std::to_string(Degree(it->second.f1)) + ", h degree " +
+               std::to_string(Degree(it->second.h)) + ", B " + std::to_string(B) + ", one bootstrap between";
+    return r;
+}
+
+// LayerNorm on wide variance ranges (NONLINEAR.md): variances in [vlo, vhi] (calibrated), w = (var +
+// eps) / vhi in [e0, 1]. The variances (one ciphertext, every block) give two copies: t in [-1, 1]
+// (bootstrapped; y0 = P(t) / s ~ 1 / sqrt(s^2 w)) and 0.5 s^2 w, kept unbootstrapped for the Newton
+// steps y <- y (1.5 - 0.5 s^2 w y^2), so the result is exact up to their count. The kernel needs 6
+// levels on its input (the exact variances keep 3 for the Newton steps); its output is c * y, i.e.
+// the normalised values times sqrt(vhi) / s, a constant that folds into gamma (the next layer).
+static Result run_layernorm_wide(Env &e, int H, double vlo, double vhi, double eps, bool debug = false) {
+    auto dbg = [&](const std::string &what, const CT &c) {
+        if (!debug) return;
+        Vec v;
+        try { v = e.dec(c); } catch (const std::exception &) { std::cerr << "  [debug] " << what << ": not decodable\n"; return; }
+        double lo = 1e300, hi = -1e300;
+        for (double z : v) { lo = std::min(lo, z); hi = std::max(hi, z); }
+        std::cerr << "  [debug] " << what << ": levels left " << e.left(c) << ", values [" << lo << ", " << hi << "]\n";
+    };
+    const LnWide *fit = nullptr;
+    for (const auto &f : LN_WIDE) if (f.e0 <= vlo / vhi && (!fit || f.e0 > fit->e0)) fit = &f;
+    if (!fit) throw std::runtime_error("layernorm_wide: variance range wider than the fits (vhi / vlo > 1e4)");
+    const double e0 = fit->e0, sc = fit->s;
+    const int n = H / 256;
+    std::normal_distribution<double> nd(0.0, 1.0);
+    std::uniform_real_distribution<double> U(0.0, 1.0);
+    std::vector<double> mu(T), sd(T);
+    for (uint32_t t = 0; t < T; ++t) {                     // variances log-uniform inside [vlo, vhi], with room for
+        mu[t] = -2 + 4 * U(rng);                           // the sample variance's spread (beyond vhi, P diverges)
+        sd[t] = std::sqrt(1.2 * vlo * std::pow(vhi / vlo / 1.44, U(rng)));
+    }
+    std::vector<Vec> x(n, Vec(e.slots)), ref(n, Vec(e.slots));
+    for (int i = 0; i < n; ++i) for (uint32_t c = 0; c < 256; ++c) for (uint32_t t = 0; t < T; ++t)
+        x[i][c * T + t] = mu[t] + sd[t] * nd(rng);
+    const double outscale = std::sqrt(vhi) / sc;              // the kernel's output is the reference times this
+    for (uint32_t t = 0; t < T; ++t) {
+        double m = 0, v = 0;
+        for (int i = 0; i < n; ++i) for (uint32_t c = 0; c < 256; ++c) m += x[i][c * T + t];
+        m /= H;
+        for (int i = 0; i < n; ++i) for (uint32_t c = 0; c < 256; ++c) v += std::pow(x[i][c * T + t] - m, 2);
+        v /= H;
+        for (int i = 0; i < n; ++i) for (uint32_t c = 0; c < 256; ++c)
+            ref[i][c * T + t] = (x[i][c * T + t] - m) / std::sqrt(v + eps) * outscale;
+    }
+    std::vector<CT> cx;
+    for (auto &v : x) cx.push_back(e.enc(v));
+    Vec yexact(T);                                            // 1 / sqrt(s^2 w) per token
+    for (uint32_t t = 0; t < T; ++t) {
+        double m = 0, v = 0;
+        for (int i = 0; i < n; ++i) for (uint32_t c = 0; c < 256; ++c) m += x[i][c * T + t];
+        m /= H;
+        for (int i = 0; i < n; ++i) for (uint32_t c = 0; c < 256; ++c) v += std::pow(x[i][c * T + t] - m, 2);
+        yexact[t] = 1.0 / (sc * std::sqrt((v / H + eps) / vhi));
+    }
+    auto ycheck = [&](const std::string &what, const CT &c, int blocks) {
+        if (!debug) return;
+        Vec v = e.dec(c);
+        double m = 0, rel = 0;
+        for (int b = 0; b < blocks; ++b) for (uint32_t t = 0; t < T; ++t) {
+            m = std::max(m, std::fabs(v[size_t(b) * T + t] - yexact[t]));
+            rel = std::max(rel, std::fabs(v[size_t(b) * T + t] / yexact[t] - 1));
+        }
+        std::cerr << "  [debug] " << what << " vs exact (" << blocks << " blocks): max abs " << m << ", max rel " << rel << "\n";
+    };
+    e.boots = 0; e.boot_ms = 0; e.first_boot_used = -1; e.start_levels = e.L;
+    auto t0 = Clock::now();
+    for (auto &c : cx) c = e.need(c, 6);
+    CT s = cx[0];
+    for (int i = 1; i < n; ++i) s = e.cc->EvalAdd(s, cx[i]);
+    CT mean = e.cc->EvalMult(sum_blocks(e, s), 1.0 / H);                          // 1 level
+    std::vector<CT> c(n);
+    for (int i = 0; i < n; ++i) c[i] = e.cc->EvalSub(cx[i], mean);
+    CT q = e.cc->EvalSquare(c[0]);
+    for (int i = 1; i < n; ++i) q = e.cc->EvalAdd(q, e.cc->EvalSquare(c[i]));
+    CT Q = sum_blocks(e, q);                                                       // H var, every block
+    // the statistics are the same in every 128-slot block; bootstrapping a vector repeated like this
+    // works on few large coefficients (he_ops bootlevel: its error grows from |x| ~ 4, not 32), so
+    // only block 0 keeps them (the mask folds into the constants) and the result is broadcast at the end
+    // fast bootstrapping's noise is absolute: t in [-1, 1] uses 1/32 of the flat range, and at the
+    // smallest variances the noise would put the initial guess outside Newton's basin (vhi / vlo ~ 1e4
+    // on a 9.4-bit build). t is bootstrapped 16 times larger and scaled back (one level)
+    const double amp = e.precise ? 1.0 : 16.0;
+    Vec m0 = block_mask(e, {0}), mw(e.slots, 0.0), mt(e.slots, 0.0), ow(e.slots, 0.0), ot(e.slots, 0.0);
+    for (uint32_t q0 = 0; q0 < T; ++q0) {
+        mw[q0] = 0.5 * sc * sc / (H * vhi);  ow[q0] = 0.5 * sc * sc * eps / vhi;
+        mt[q0] = amp * 2.0 / (H * vhi * (1 - e0)); ot[q0] = amp * ((2 * eps / vhi - 2 * e0) / (1 - e0) - 1);
+    }
+    CT w2 = e.cc->EvalMult(Q, e.pt(mw, Q));                                       // 0.5 s^2 w in block 0
+    if (eps / vlo > 1e-9) {                     // (BERT's eps, 1e-12, is below the arithmetic's precision)
+        Plaintext pow_ = e.pt(ow, w2);
+        w2 = e.cc->EvalAdd(w2, pow_);
+    }
+    CT tt = e.cc->EvalMult(Q, e.pt(mt, Q));                                       // t in block 0, 0 elsewhere
+    Plaintext pot = e.pt(ot, tt);
+    tt = e.cc->EvalAdd(tt, pot);
+    dbg("Q (H var)", Q); dbg("0.5 s^2 w", w2); dbg("t", tt);
+    tt = e.need(tt, amp > 1 ? 8 : 7);
+    if (amp > 1) tt = e.cc->EvalMult(tt, 1.0 / amp);
+    dbg("t bootstrapped", tt);
+    std::vector<double> p = fit->coef;
+    for (auto &v : p) v /= sc;
+    CT y = e.cc->EvalChebyshevSeries(tt, p, -1.0, 1.0);                           // ~ 1 / sqrt(s^2 w)
+    dbg("y0", y);
+    ycheck("y0", y, 1);
+    // bootstrapping is much less precise for vectors with a large mean (he_ops bootlevel: a constant
+    // 2.9 outside one block costs 1e-2): before the first Newton step the unused blocks hold P(0) / s,
+    // which is subtracted for the bootstrap; the steps' 1.5 lives in block 0 only, so they zero the
+    // unused blocks and later bootstraps see small means
+    double p0 = p[0] / 2;
+    for (size_t k = 2; k < p.size(); k += 2) p0 += (k % 4 == 0 ? 1.0 : -1.0) * p[k];
+    Vec half(e.slots, 0.0);
+    for (uint32_t q0 = 0; q0 < T; ++q0) half[q0] = 1.5;
+    for (int r = 0; r < fit->steps; ++r) {
+        if (r == 0 && e.left(y) < 4) y = e.cc->EvalAdd(e.refresh(e.cc->EvalSub(y, p0)), p0);
+        else y = e.need(y, 4);
+        CT q2 = e.cc->EvalMult(w2, e.cc->EvalSquare(y));
+        Plaintext ph = e.pt(half, q2);
+        y = e.cc->EvalMult(y, e.cc->EvalAdd(e.cc->EvalNegate(q2), ph));
+        dbg("y after Newton step " + std::to_string(r + 1), y);
+        ycheck("y after Newton step " + std::to_string(r + 1), y, 1);
+    }
+    int lowest = e.L;
+    for (int i = 0; i < n; ++i) lowest = std::min(lowest, int(e.left(c[i])));
+    y = e.need(y, std::max(3, std::min(int(e.L), lowest + 2)));                  // refresh one ciphertext, not n
+    ycheck("y refreshed", y, 1);
+    y = e.cc->EvalMult(y, e.pt(m0, y));          // the refresh's noise in the unused blocks would add up below
+    y = sum_blocks(e, y);                                                         // block 0 -> every block
+    dbg("y refreshed", y);
+    ycheck("y broadcast", y, 256);
+    dbg("c[0]", c[0]);
+    std::vector<CT> out(n);
+    for (int i = 0; i < n; ++i) out[i] = e.cc->EvalMult(c[i], y);
+    Result r{"LayerNorm_wide", "[1,128," + std::to_string(H) + "]", n, ms(t0)};
+    r.err = max_err(e, out, ref);
+    if (r.err > 0) r.err /= outscale;                                              // in the normalised values' units
+    r.levels_used = 5;                     // needs 6 on its input (openfhe_record adds one for internal bootstraps)
+    r.level_out = int(e.left(out[0]));
+    r.boots = e.boots; r.boot_ms = e.boot_ms;
+    r.approx = "variances [" + std::to_string(vlo) + "," + std::to_string(vhi) + "]: e0 " + std::to_string(e0) +
+               ", 1/sqrt degree 59, Newton " + std::to_string(fit->steps);
+    return r;
+}
+
 // LayerNorm over H per token (no affine parameters; they fold into the next linear layer)
 static Result run_layernorm(Env &e, int H, double vlo, double vhi, int degree) {
     int n = H / 256;
@@ -262,6 +440,120 @@ static Result run_layernorm(Env &e, int H, double vlo, double vhi, int degree) {
     r.level_out = int(e.left(out[0]));
     r.boots = e.boots; r.boot_ms = e.boot_ms;
     r.approx = "1/sqrt: Chebyshev degree " + std::to_string(degree) + " on [" + std::to_string(vlo) + "," + std::to_string(vhi) + "]";
+    return r;
+}
+
+// Softmax over keys on wide score ranges (NONLINEAR.md), scores in the diagonal layout. Calibrated
+// bounds: scores in [lo, hi], every row's max >= rmin. Input u = affine(x) in [-1, 1] (the map folds
+// into the producer: QK^T's weights, or the MPC -> HE conversion's output scale). y0 = exp((x - c) / 2^k);
+// normalise y0 (rough inverse P1), then k rounds of square-and-normalise (P2 + Newton steps); the row
+// sums of all heads are inverted in one packed ciphertext; rows are kept scaled by sqrt(AMP) so that
+// every bootstrapped value is in the bootstrapping's flat range.
+static Result run_softmax_wide(Env &e, int heads, double lo, double hi, double rmin, int newton_last,
+                               bool debug = false) {
+    auto dbg = [&](const std::string &what, const CT &c, const std::vector<int> &blocks) {
+        if (!debug) return;
+        Vec v;
+        try { v = e.dec(c); } catch (const std::exception &) { std::cerr << "  [debug] " << what << ": not decodable\n"; return; }
+        double amin = 1e300, amax = -1e300, all = 0;
+        for (size_t q = 0; q < v.size(); ++q) all = std::max(all, std::fabs(v[q]));
+        for (int blk : blocks) for (uint32_t t = 0; t < T; ++t) { amin = std::min(amin, v[size_t(blk) * T + t]); amax = std::max(amax, v[size_t(blk) * T + t]); }
+        std::cerr << "  [debug] " << what << ": levels left " << e.left(c) << ", in blocks [" << amin << ", " << amax
+                  << "], max |slot| " << all << "\n";
+    };
+    const double span = hi - lo, c = hi + 0.125 * span, lo2 = lo - 0.125 * span, rmin2 = rmin - 0.125 * span;
+    const int k = std::max(1, int(std::ceil(std::log2((c - rmin2) / SMW_TARGET))));
+    const double W = (c - lo2) / std::ldexp(1.0, k), sq = std::sqrt(SMW_AMP);
+    const int n = heads / 2;
+    std::vector<Vec> x(n, Vec(e.slots)), ref(n, Vec(e.slots)), u(n, Vec(e.slots));
+    std::uniform_real_distribution<double> U(0.0, 1.0);
+    for (int i = 0; i < n; ++i) for (int h = 0; h < 2; ++h) for (uint32_t t = 0; t < T; ++t) {
+        const double r = rmin + U(rng) * (hi - rmin);               // this row's max
+        const uint32_t at = uint32_t(U(rng) * T) % T;
+        double z = 0;
+        for (uint32_t d = 0; d < T; ++d) {
+            const double v = d == at ? r : lo + U(rng) * (r - lo);
+            x[i][(h * T + d) * T + t] = v;
+            z += std::exp(v - r);
+        }
+        for (uint32_t d = 0; d < T; ++d) {
+            const size_t q = (h * T + d) * T + t;
+            ref[i][q] = std::exp(x[i][q] - r) / z;
+            u[i][q] = 2 * (x[i][q] - lo2) / (c - lo2) - 1;
+        }
+    }
+    std::vector<CT> y;
+    for (auto &v : u) y.push_back(e.enc(v));
+    e.boots = 0; e.boot_ms = 0; e.first_boot_used = -1; e.start_levels = e.L;
+    auto t0 = Clock::now();
+    for (int i = 0; i < n; ++i)
+        y[i] = e.cc->EvalChebyshevFunction([W](double v) { return std::exp(W * (v - 1) / 2); }, y[i], -1.0, 1.0, SMW_EXP_DEGREE);
+    dbg("exp", y[0], {0, 1, 128});
+    std::vector<double> p2z = SMW_P2;
+    for (auto &v : p2z) v /= SMW_ZETA;                               // ~ 1 / (zeta S) <= AMP
+    for (int j = 0; j <= k; ++j) {
+        const bool last = j == k;
+        const double a = j == 0 ? SMW_A1 : SMW_A2, b = j == 0 ? SMW_B1 : SMW_B2;
+        std::vector<CT> s(n);
+        // the last round keeps 3 levels on its packed sums: its Newton steps use them unbootstrapped
+        for (int i = 0; i < n; ++i) s[i] = e.need(j == 0 ? y[i] : e.cc->EvalSquare(e.need(y[i], 2)), last ? 4 : 2);
+        // row sums -> one ciphertext, mapped to [-1, 1] (the map folds into the mask); in the last
+        // round also zeta S (for the Newton steps)
+        Vec mask = block_mask(e, {0, 128}), maskz = block_mask(e, {0, 128});
+        for (auto &v : mask) v *= 2.0 / (b - a);
+        for (auto &v : maskz) v *= SMW_ZETA;
+        CT packed, packz;
+        for (int i = 0; i < n; ++i) {
+            CT sum = sum_head_forward(e, s[i]);
+            CT m = e.cc->EvalMult(sum, e.pt(mask, sum));
+            packed = i == 0 ? m : e.cc->EvalAdd(packed, e.rot(m, -128 * i));
+            if (last) {
+                CT mz = e.cc->EvalMult(sum, e.pt(maskz, sum));
+                packz = i == 0 ? mz : e.cc->EvalAdd(packz, e.rot(mz, -128 * i));
+            }
+        }
+        // the offset only where sums are: other slots stay 0 (the interval's middle), where the inverse
+        // and its Newton steps stay bounded (large values anywhere would spoil bootstrapping everywhere)
+        Vec offset(e.slots, 0.0);
+        for (int i = 0; i < n; ++i) for (int blk : {i, 128 + i}) for (uint32_t t = 0; t < T; ++t)
+            offset[size_t(blk) * T + t] = -(a + b) / (b - a);
+        Plaintext po = e.pt(offset, packed);
+        packed = e.cc->EvalAdd(packed, po);
+        dbg("round " + std::to_string(j) + " sums (normalised)", packed, {0, 128});
+        CT st = e.need(packed, 8);
+        CT z = e.cc->EvalChebyshevSeries(st, j == 0 ? SMW_P1 : (last ? p2z : SMW_P2), -1.0, 1.0);
+        dbg("round " + std::to_string(j) + " inverse", z, {0, 128});
+        double scale = j == 0 ? sq : (last ? SMW_ZETA : sq);
+        if (last) {
+            for (int r = 0; r < newton_last; ++r) {                  // z <- z (2 - zeta S z) -> 1 / (zeta S)
+                z = e.need(z, 3);
+                packz = e.need(packz, 3);
+                CT q = e.cc->EvalMult(packz, z);
+                z = e.cc->EvalMult(z, e.cc->EvalSub(2.0, q));
+            }
+        }
+        // the rows' product takes the lower of the two levels: refresh the inverse (one ciphertext)
+        // rather than let it pull the rows (n ciphertexts) down to its level
+        int lowest = e.L;
+        for (int i = 0; i < n; ++i) lowest = std::min(lowest, int(e.left(s[i])));
+        z = e.need(z, std::max(3, std::min(int(e.L), lowest + 1)));
+        dbg("round " + std::to_string(j) + " inverse refined", z, {0, 128});
+        Vec first = block_mask(e, {0, 128});
+        for (auto &v : first) v *= scale;
+        for (int i = 0; i < n; ++i) {
+            CT inv = broadcast_head(e, e.cc->EvalMult(e.rot(z, 128 * i), e.pt(first, z)));
+            y[i] = e.cc->EvalMult(s[i], inv);
+        }
+        dbg("round " + std::to_string(j) + " rows", y[0], {0, 1, 128});
+    }
+    Result r{"Softmax_wide", "[1," + std::to_string(heads) + ",128,128]", n, ms(t0)};
+    r.err = max_err(e, y, ref);
+    r.levels_used = e.first_boot_used >= 0 ? e.first_boot_used : int(e.L) - int(e.left(y[0]));
+    r.level_out = int(e.left(y[0]));
+    r.boots = e.boots; r.boot_ms = e.boot_ms;
+    r.approx = "scores [" + std::to_string(lo) + "," + std::to_string(hi) + "], row max >= " + std::to_string(rmin) +
+               ": k " + std::to_string(k) + ", exp degree " + std::to_string(SMW_EXP_DEGREE) + " on [-" + std::to_string(W) +
+               ",0], inverses degree 59 (first) / 27 (rounds), Newton " + std::to_string(newton_last) + " (last round)";
     return r;
 }
 
@@ -606,6 +898,111 @@ static void keycheck(Env &e) {
 // n independent bootstraps (fresh data and encryption each), each run twice on the same input:
 // a failure that repeats on the same input comes from the input (or the keys); one that does
 // not is nondeterminism inside bootstrapping
+// What bootstrapping accepts: levels left on its input, and the amplitude of the values (plain
+// bootstrapping, then scaled: x / s, bootstrap, * s, which needs one more level).
+static void bootlevel(Env &e) {
+    auto run = [&](const char *what, double amp, uint32_t left, double s) {
+        Vec v = rand_vec(e.slots, -amp, amp);
+        CT c = e.cc->Encrypt(e.kp.publicKey, e.cc->MakeCKKSPackedPlaintext(v, 1, e.depth - left, nullptr, e.slots));
+        std::string status = "ok";
+        double err = -1;
+        try {
+            CT x = s > 1 ? e.cc->EvalMult(c, 1.0 / s) : c;
+            CT b = e.precise ? e.cc->EvalBootstrap(x, 2, 13) : e.cc->EvalBootstrap(x);
+            if (s > 1) b = e.cc->EvalMult(b, s);
+            Vec d = e.dec(b);
+            err = 0;
+            for (uint32_t j = 0; j < e.slots; ++j) err = std::max(err, std::fabs(d[j] - v[j]));
+        } catch (const std::exception &ex) { status = std::string("exception: ") + ex.what(); }
+        std::cout << "{\"check\":\"bootlevel\",\"case\":\"" << what << "\",\"amp\":" << amp << ",\"levels_left\":" << left
+                  << ",\"scale\":" << s << ",\"status\":\"" << status.substr(0, 120) << "\",\"max_abs_err\":" << err << "}" << std::endl;
+    };
+    for (uint32_t left : {0u, 1u, 2u}) run("levels", 1.0, left, 1);
+    // more levels left, values up to 18; and the product of a ciphertext with a constant (pending rescale)
+    for (uint32_t left : {3u, 4u, 5u, 6u, 7u}) run("levels", 18.0, left, 1);
+    // values repeated in every 128-slot block (as LayerNorm's per-token statistics): their energy sits
+    // in few coefficients, which bootstrapping sees ~sqrt(256) times larger
+    for (double amp : {0.5, 1.0, 2.0, 4.0, 8.0, 18.0}) {
+        Vec base = rand_vec(T, -amp, amp), v(e.slots);
+        for (uint32_t j = 0; j < e.slots; ++j) v[j] = base[j % T];
+        CT c = e.cc->Encrypt(e.kp.publicKey, e.cc->MakeCKKSPackedPlaintext(v, 1, e.depth - 2, nullptr, e.slots));
+        std::string status = "ok";
+        double err = -1;
+        try {
+            Vec d = e.dec(e.precise ? e.cc->EvalBootstrap(c, 2, 13) : e.cc->EvalBootstrap(c));
+            err = 0;
+            for (uint32_t j = 0; j < e.slots; ++j) err = std::max(err, std::fabs(d[j] - v[j]));
+        } catch (const std::exception &ex) { status = std::string("exception: ") + ex.what(); }
+        std::cout << "{\"check\":\"bootlevel\",\"case\":\"repeated every 128 slots\",\"amp\":" << amp
+                  << ",\"levels_left\":2,\"scale\":1,\"status\":\"" << status.substr(0, 120) << "\",\"max_abs_err\":" << err << "}" << std::endl;
+    }
+    // values in one 128-slot block, zeros elsewhere (as per-token statistics kept in block 0)
+    for (double amp : {1.0, 4.0, 8.0, 16.0, 32.0}) {
+        Vec v(e.slots, 0.0), blk = rand_vec(T, -amp, amp);
+        for (uint32_t j = 0; j < T; ++j) v[j] = blk[j];
+        CT c = e.cc->Encrypt(e.kp.publicKey, e.cc->MakeCKKSPackedPlaintext(v, 1, e.depth - 2, nullptr, e.slots));
+        std::string status = "ok";
+        double err = -1;
+        try {
+            Vec d = e.dec(e.precise ? e.cc->EvalBootstrap(c, 2, 13) : e.cc->EvalBootstrap(c));
+            err = 0;
+            for (uint32_t j = 0; j < e.slots; ++j) err = std::max(err, std::fabs(d[j] - v[j]));
+        } catch (const std::exception &ex) { status = std::string("exception: ") + ex.what(); }
+        std::cout << "{\"check\":\"bootlevel\",\"case\":\"one block, zeros elsewhere\",\"amp\":" << amp
+                  << ",\"levels_left\":2,\"scale\":1,\"status\":\"" << status.substr(0, 120) << "\",\"max_abs_err\":" << err << "}" << std::endl;
+    }
+    // a constant in every slot but one block (as an iterate whose other blocks are unused)
+    for (double cst : {0.0, 1.0, 2.9, 10.0}) {
+        Vec v(e.slots, cst), blk = rand_vec(T, 1.5, 19.0);
+        for (uint32_t j = 0; j < T; ++j) v[j] = blk[j];
+        CT c = e.cc->Encrypt(e.kp.publicKey, e.cc->MakeCKKSPackedPlaintext(v, 1, e.depth - 2, nullptr, e.slots));
+        std::string status = "ok";
+        double err = -1;
+        try {
+            Vec d = e.dec(e.precise ? e.cc->EvalBootstrap(c, 2, 13) : e.cc->EvalBootstrap(c));
+            err = 0;
+            for (uint32_t j = 0; j < e.slots; ++j) err = std::max(err, std::fabs(d[j] - v[j]));
+        } catch (const std::exception &ex) { status = std::string("exception: ") + ex.what(); }
+        std::cout << "{\"check\":\"bootlevel\",\"case\":\"block 0 in [1.5, 19], constant elsewhere\",\"amp\":" << cst
+                  << ",\"levels_left\":2,\"scale\":1,\"status\":\"" << status.substr(0, 120) << "\",\"max_abs_err\":" << err << "}" << std::endl;
+    }
+    for (uint32_t left : {2u, 3u, 5u, 7u}) {
+        Vec v = rand_vec(e.slots, -18.0, 18.0);
+        CT c = e.cc->Encrypt(e.kp.publicKey, e.cc->MakeCKKSPackedPlaintext(v, 1, e.depth - left, nullptr, e.slots));
+        CT m = e.cc->EvalMult(c, 0.5);
+        std::string status = "ok";
+        double err = -1;
+        try {
+            Vec d = e.dec(e.precise ? e.cc->EvalBootstrap(m, 2, 13) : e.cc->EvalBootstrap(m));
+            err = 0;
+            for (uint32_t j = 0; j < e.slots; ++j) err = std::max(err, std::fabs(d[j] - 0.5 * v[j]));
+        } catch (const std::exception &ex) { status = std::string("exception: ") + ex.what(); }
+        std::cout << "{\"check\":\"bootlevel\",\"case\":\"after a constant product\",\"amp\":9,\"levels_left\":" << e.left(m)
+                  << ",\"scale\":1,\"status\":\"" << status.substr(0, 120) << "\",\"max_abs_err\":" << err << "}" << std::endl;
+    }
+    for (double amp : {32.0, 60.0, 64.0, 100.0, 256.0, 1100.0}) run("amplitude", amp, 1, 1);
+    for (double amp : {256.0, 1100.0}) run("scaled", amp, 2, amp <= 256 ? 8 : 32);
+}
+
+// bootstrapping of a vector with values in one 128-slot block and zeros elsewhere, nothing else
+static void bootblock(Env &e, double amp, int n, uint32_t left) {
+    for (int k = 0; k < n; ++k) {
+        Vec v(e.slots, 0.0), blk = rand_vec(T, -amp, amp);
+        for (uint32_t j = 0; j < T; ++j) v[j] = blk[j];
+        CT c = e.cc->Encrypt(e.kp.publicKey, e.cc->MakeCKKSPackedPlaintext(v, 1, e.depth - left, nullptr, e.slots));
+        std::string status = "ok";
+        double err = -1;
+        try {
+            Vec d = e.dec(e.precise ? e.cc->EvalBootstrap(c, 2, 13) : e.cc->EvalBootstrap(c));
+            err = 0;
+            for (uint32_t j = 0; j < e.slots; ++j) err = std::max(err, std::fabs(d[j] - v[j]));
+        } catch (const std::exception &ex) { status = std::string("exception: ") + ex.what(); }
+        if (status != "ok") std::cerr << status << "\n";
+        std::cout << "{\"check\":\"bootblock\",\"amp\":" << amp << ",\"levels_left\":" << left << ",\"status\":\""
+                  << status.substr(0, 60) << "\",\"max_abs_err\":" << err << "}" << std::endl;
+    }
+}
+
 static void bootcheck(Env &e, int n, double amp) {
     auto run = [&](const CT &in, const Vec &v, double &err, int &over, double &logerr) {
         auto t = Clock::now();
@@ -761,10 +1158,17 @@ int main(int argc, char **argv) {
         auto get = [&](const char *k, double d) { return p.count(k) ? p[k] : d; };
         Result r;
         if (op == "keycheck") { keycheck(e); continue; }
+        if (op == "bootlevel") { bootlevel(e); continue; }
+        if (op == "bootblock") { bootblock(e, get("amp", 1.0), int(get("n", 3)), uint32_t(get("left", 2))); continue; }
         if (op == "bootcheck") { bootcheck(e, int(get("n", 4)), get("amp", 1.0)); continue; }
         if (op == "racecheck") { racecheck(e, int(get("rounds", 3)), text(spec, "only")); continue; }
         if (op == "add") r = run_add(e, int(get("H", 768)));
         else if (op == "gelu") r = run_gelu(e, int(get("F", 3072)), get("bound", 8), int(get("degree", 59)));
+        else if (op == "gelu_wide") r = run_gelu_wide(e, int(get("F", 3072)), int(get("B", 64)));
+        else if (op == "softmax_wide") r = run_softmax_wide(e, int(get("heads", 12)), get("lo", -28), get("hi", 29),
+                                                            get("rmin", 0), int(get("newton", 3)), get("debug", 0) > 0);
+        else if (op == "layernorm_wide") r = run_layernorm_wide(e, int(get("H", 768)), get("vlo", 0.024), get("vhi", 2.1),
+                                                                get("eps", 1e-12), get("debug", 0) > 0);
         else if (op == "layernorm") r = run_layernorm(e, int(get("H", 768)), get("vlo", 0.25), get("vhi", 25), int(get("degree", 59)));
         else if (op == "microbench") {               // per-operation costs at the post-bootstrap level
             CT c = e.enc(rand_vec(e.slots, -1, 1));

@@ -277,6 +277,14 @@ def _openfhe_spec(op: str, i: Shape, o: Shape) -> str:
         return f"add:H={i[-1]}"
     if op == "GeLU":
         return f"gelu:F={i[-1]},degree=27"
+    if op == "GeLU.wide":                     # cost and levels do not depend on the bound
+        return f"gelu_wide:F={i[-1]},B=64"
+    if op == "LayerNorm.wide":                # 2 Newton steps (variance ratio ~200)
+        return f"layernorm_wide:H={i[-1]},vlo=0.47,vhi=123"
+    if op == "LayerNorm.wider":               # 6 Newton steps (variance ratio ~5000)
+        return f"layernorm_wide:H={i[-1]},vlo=0.47,vhi=2340"
+    if op == "Softmax.wide":                  # priced at 4 rounds (scores as in BERT-base layer 2)
+        return f"softmax_wide:heads={i[1]},lo=-28.2,hi=28.6,rmin=0"
     if op == "LayerNorm":
         return f"layernorm:H={i[-1]},degree=27"
     if op == "Softmax":

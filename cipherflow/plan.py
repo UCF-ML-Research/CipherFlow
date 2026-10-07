@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -22,6 +23,7 @@ class NodePlacement:
     level_out: Optional[int] = None
     cost_source: Optional[str] = None  # "exact" profile record, "scaled" from the nearest shape, or "input"
     backend: Optional[str] = None      # the HE or MPC backend name, or "client" (Input)
+    kernel: Optional[Dict] = None      # HE kernel variant and its parameters, e.g. {"kernel": "wide", "bound": 64}
 
 
 @dataclass
@@ -33,6 +35,13 @@ class Action:
     tensor_shape: Optional[List[int]] = None
     level_in: Optional[int] = None   # bootstrap: level being refreshed
     cost_ms: float = 0.0
+    edge: Optional[List[str]] = None  # [producer, consumer] the action applies to; consumer "*": the
+                                      # producer's output, for all its consumers (at a region's exit)
+
+
+def _edge(detail: str) -> Optional[List[str]]:
+    m = re.search(r"edge=(\S+?)->(\S+)", detail)
+    return [m.group(1), m.group(2)] if m else None
 
 
 @dataclass
@@ -84,9 +93,10 @@ class Plan:
             elif s.action in ("he2mpc", "mpc2he"):
                 detail = s.detail or ""
                 shape = None
-                if "shape=" in detail:
+                m = re.search(r"shape=(\([^)]*\))", detail)
+                if m:
                     try:
-                        shape = list(ast.literal_eval(detail.split("shape=", 1)[1].strip()))
+                        shape = list(ast.literal_eval(m.group(1)))
                     except (ValueError, SyntaxError):
                         shape = None
                 src, dst = ("HE", "MPC") if s.action == "he2mpc" else ("MPC", "HE")
@@ -94,10 +104,12 @@ class Plan:
                     est = cm.estimate_conversion(src, dst, tuple(shape), net)
                     comm_bytes += est.comm_bytes
                     comm_rounds += est.comm_rounds
-                pending.append(Action("convert", "<output>", src, dst, shape, cost_ms=s.cost_ms))
+                pending.append(Action("convert", "<output>", src, dst, shape, cost_ms=s.cost_ms,
+                                      edge=_edge(detail)))
             elif s.action == "bootstrap":
                 lvl = s.src.l if s.src is not None else None
-                pending.append(Action("bootstrap", "<output>", level_in=lvl, cost_ms=s.cost_ms))
+                pending.append(Action("bootstrap", "<output>", level_in=lvl, cost_ms=s.cost_ms,
+                                      edge=_edge(s.detail or "")))
         actions.extend(pending)
 
         unplanned = [n.node_id for n in graph.nodes if n.node_id not in compiled.node_assignment]
@@ -116,6 +128,9 @@ class Plan:
                         "bandwidth_bps": deployment.network.bandwidth_bps,
                         "rtt_ms": deployment.network.rtt_ms},
             profile={"platform": profile.platform, "he_level_budget": profile.he_level_budget,
+                     "he_to_mpc_min_level": cm.he_to_mpc_min_level,
+                     "bootstrap_min_level": cm.bootstrap_min_level,
+                     "scaled_bootstrap": cm.scaled_bootstrap,
                      "metadata": {k: v for k, v in (profile.metadata or {}).items()
                                   if isinstance(v, (str, int, float))}},
             strategy=compiled.strategy_used,

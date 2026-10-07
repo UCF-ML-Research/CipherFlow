@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cipherflow"
-version = "0.2.0"
+version = "0.3.0"
 description = "Deployment-aware planning of hybrid HE-MPC secure inference (NeurIPS 2026)"
 requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
@@ -28,3 +28,4 @@ include = ["cipherflow*", "compiler*", "ir*", "backends*"]
 
 [tool.setuptools.package-data]
 "compiler.state_expanded" = ["profiles/*.json"]
+"cipherflow" = ["kernel_data/*.json"]

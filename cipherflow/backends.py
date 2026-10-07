@@ -18,6 +18,8 @@ from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from compiler.state_expanded.planner import DEFAULT_LEVEL_DELTAS
 
+from .kernel_params import HE_NUMERICS, WIDE_KERNELS, unknown_ranges, value_contracts
+
 # Returns None when the node satisfies the contract, else the reason it does not.
 Contract = Callable[[object], Optional[str]]
 
@@ -95,9 +97,29 @@ class Method:
     level_delta: int = 0   # levels the HE method needs on input; 0 for MPC
     contract: Optional[Contract] = field(default=None, compare=False, repr=False)
     level_out: Optional[int] = None   # HE method bootstraps internally: output level (else input - delta)
+    # (node, calibrated statistics) -> why the method's approximation is not valid on them (None: valid)
+    value_contract: Optional[Callable] = field(default=None, compare=False, repr=False)
+    # kernel variant (e.g. a wide-range GeLU): op_type is "<base>.<variant>", base the graph's op type
+    base: str = ""
+    # (node, calibrated statistics) -> the variant's kernel parameters (e.g. {"bound": 64})
+    params: Optional[Callable] = field(default=None, compare=False, repr=False)
 
-    def violation(self, node) -> Optional[str]:
-        return self.contract(node) if self.contract is not None else None
+    @property
+    def variant(self) -> str:
+        return self.op_type[len(self.base) + 1:] if self.base else ""
+
+    def violation(self, node, calibration=None) -> Optional[str]:
+        """Why this method cannot run `node`: its shape contract, then, with a calibration, its
+        value contract on the node's calibrated statistics. A variant chooses its kernel's
+        range from the calibration, so it needs one."""
+        if self.base and self.domain == "HE" and calibration is None:
+            return "the kernel's range is chosen from a calibration"
+        why = self.contract(node) if self.contract is not None else None
+        if why is None and calibration is not None and self.value_contract is not None:
+            stats = calibration.nodes.get(node.node_id)
+            why = (self.value_contract(node, stats) if stats is not None
+                   else "not in the calibration (calibrate the model this graph was traced from)")
+        return why
 
 
 # ----------------------------------------------------------------- NEXUS contracts
@@ -207,11 +229,16 @@ class HEBackend:
     level_deltas: Optional[Dict[str, int]] = field(default=None, compare=False)
     contracts: Dict[str, Contract] = field(default_factory=dict, compare=False)
     note: str = ""
+    # value ranges the approximations are valid on (checked when compile gets a calibration)
+    value_contracts: Dict[str, Callable] = field(default_factory=dict, compare=False)
+    # op type -> [(variant, value contract, kernel parameters)]: further kernels, used with a
+    # calibration when the profile prices them ("<op>.<variant>" records)
+    variants: Dict[str, list] = field(default_factory=dict, compare=False)
 
 
 _OPENFHE_NOTE = ("native/openfhe kernels on 128-token blocks; GeLU, LayerNorm and Softmax use Chebyshev "
                  "approximations on assumed input ranges (GeLU [-8,8], variance [0.25,25], scores [-6,6]); "
-                 "HE<->MPC conversion masks in the slot domain (protocol costs, not yet hardened)")
+                 "HE<->MPC conversion with the hardened protocol of native/openfhe/CONVERSION.md")
 
 HE_BACKENDS: Dict[str, HEBackend] = {
     "nexus": HEBackend(
@@ -219,6 +246,7 @@ HE_BACKENDS: Dict[str, HEBackend] = {
         "operators at N=2^16 (20 primes); MatMul at N=2^13; bootstrapping demo at N=2^15 with 8192 slots",
         "unverified", None, "reference-scaled", 20,
         level_deltas=dict(DEFAULT_LEVEL_DELTAS), contracts=NEXUS_CONTRACTS,
+        value_contracts=unknown_ranges("NEXUS"),
         note="operator costs are NEXUS reference kernels scaled to each shape; the operators use three "
              "different parameter sets, so they do not run as one pipeline, and the bootstrapping demo's "
              "modulus exceeds the 128-bit bound for N=2^15"),
@@ -226,12 +254,14 @@ HE_BACKENDS: Dict[str, HEBackend] = {
         "openfhe-fast", "OpenFHE CKKS, one-pass bootstrapping", ("cpu",), ("openfhe",),
         "N=2^16, SPARSE_ENCAPSULATED secret, scale 2^50, 8 levels after one-pass bootstrapping (17.6 s)",
         "128-bit", 10.5, "measured", 8, contracts=OPENFHE_CONTRACTS,
-        note=_OPENFHE_NOTE),
+        note=_OPENFHE_NOTE, value_contracts=value_contracts(HE_NUMERICS["openfhe-fast"]),
+        variants=WIDE_KERNELS),
     "openfhe-precise": HEBackend(
         "openfhe-precise", "OpenFHE CKKS, two-pass bootstrapping", ("cpu",), ("openfhe",),
         "N=2^16, SPARSE_ENCAPSULATED secret, scale 2^50, 7 levels after two-pass bootstrapping (34.8 s)",
         "128-bit", 23.5, "measured", 7, contracts=OPENFHE_CONTRACTS,
-        note=_OPENFHE_NOTE),
+        note=_OPENFHE_NOTE, value_contracts=value_contracts(HE_NUMERICS["openfhe-precise"]),
+        variants=WIDE_KERNELS),
 }
 
 
@@ -299,10 +329,43 @@ def builtin_methods(mpc: Optional[str] = "sci", he: str = HE_BACKEND,
     methods = []
     for op in DEFAULT_LEVEL_DELTAS:
         methods.append(Method(op, "HE", he, int(deltas.get(op, 0)), hb.contracts.get(op),
-                              level_out.get(op)))
+                              level_out.get(op), hb.value_contracts.get(op)))
         if mpc is not None:
             methods.append(Method(op, "MPC", mpc, 0))
+    for op, variants in hb.variants.items():
+        for name, contract, params in variants:
+            key = f"{op}.{name}"
+            if key not in deltas:                       # not priced by the profile
+                continue
+            methods.append(Method(key, "HE", he, int(deltas[key]), hb.contracts.get(op), level_out.get(key),
+                                  contract, base=op, params=params))
+            if mpc is not None:
+                methods.append(Method(key, "MPC", mpc, 0, base=op))
     return methods
+
+
+def assign_kernels(graph, methods: Iterable[Method], calibration=None):
+    """Per node, the first HE method (the base kernel, then its variants) whose contracts hold.
+    Returns the graph with the op type of every node that needs a variant replaced by the
+    variant's ("GeLU" -> "GeLU.wide"), and node_id -> {"kernel": variant, **parameters}."""
+    from dataclasses import replace as _replace
+    he: Dict[str, List[Method]] = {}
+    for m in methods:
+        if m.domain == "HE":
+            he.setdefault(m.base or m.op_type, []).append(m)
+    kernels: Dict[str, Dict] = {}
+    nodes = []
+    for n in graph.nodes:
+        ms = sorted(he.get(n.op_type, []), key=lambda m: bool(m.base))      # base kernel first
+        chosen = next((m for m in ms if m.violation(n, calibration) is None), None)
+        if chosen is not None and chosen.base:
+            stats = calibration.nodes.get(n.node_id) if calibration is not None else None
+            kernels[n.node_id] = {"kernel": chosen.variant, **(chosen.params(n, stats) if chosen.params else {})}
+            n = _replace(n, op_type=chosen.op_type)
+        nodes.append(n)
+    if not kernels:
+        return graph, kernels
+    return _replace(graph, nodes=nodes), kernels
 
 
 def level_deltas(methods: Iterable[Method]) -> Dict[str, int]:
@@ -321,18 +384,23 @@ def supported_ops(methods: Iterable[Method]) -> Dict[str, set]:
     return out
 
 
-def violations(graph, methods: Iterable[Method]) -> Dict[Tuple[str, str], str]:
-    """(node_id, domain) -> reason, for every node a method's contract rules out."""
+def violations(graph, methods: Iterable[Method], calibration=None) -> Dict[Tuple[str, str], str]:
+    """(node_id, domain) -> reason, for every node a method's contract rules out (with a
+    calibration, also the methods' value contracts)."""
     by_key: Dict[Tuple[str, str], List[Method]] = {}
+    variants: Dict[Tuple[str, str], List[Method]] = {}
     for m in methods:
         by_key.setdefault((m.op_type, m.domain), []).append(m)
+        if m.base:
+            variants.setdefault((m.base, m.domain), []).append(m)
     out: Dict[Tuple[str, str], str] = {}
     for n in graph.nodes:
         for d in ("HE", "MPC"):
             ms = by_key.get((n.op_type, d))
             if not ms:
                 continue
-            reasons = [m.violation(n) for m in ms]
+            extra = variants.get((n.op_type, d), [])        # a node no kernel variant covers either
+            reasons = [m.violation(n, calibration) for m in ms + extra]
             if all(reasons):          # no method of this domain accepts the node
-                out[(n.node_id, d)] = reasons[0]
+                out[(n.node_id, d)] = reasons[-1] if extra else reasons[0]
     return out

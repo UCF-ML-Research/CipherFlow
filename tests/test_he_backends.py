@@ -105,6 +105,16 @@ def test_plan_reports_backend_pair_and_he_status():
     assert (back.he_backend, back.precision_bits) == (plan.he_backend, plan.precision_bits)
 
 
+def test_unhardened_conversions_rank_last():
+    """NEXUS profiles price the slot-domain mask: with 'auto' backends, a NEXUS plan that converts
+    is not chosen over the OpenFHE pairs (hardened conversions), even when it is cheaper."""
+    best = _compile(GRAPH, cf.Deployment.of("cpu", "10Mbps/20ms"), security="2pc-dealer")
+    assert best.he_backend != "nexus" or best.counts()["conversions"] == 0
+    flagged = {n: a for n, a in best.alternatives.items() if a.get("unhardened_conversions")}
+    assert flagged and all(n.startswith("nexus+") for n in flagged)
+    assert any(a["total_ms"] < best.cost["total_ms"] for a in flagged.values())   # cheaper, yet not chosen
+
+
 def test_match_lists_he_backend_pairs():
     rep = cf.match(GRAPH, CPU, security="2pc-dealer")
     assert len(rep.compatible()) == 6

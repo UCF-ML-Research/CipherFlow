@@ -140,7 +140,7 @@
         128,
         768
       ],
-      "local_compute_ms": 15018.6,
+      "local_compute_ms": 23467.1,
       "comm_bytes": 0,
       "comm_rounds": 0,
       "he_level_delta": 1,
@@ -149,8 +149,8 @@
         "source": "native/openfhe/he_ops (fast)",
         "internal_bootstraps": 0,
         "bootstrap_ms": 0,
-        "max_abs_err": 7.43959e-10,
-        "approx": "diagonal BSGS 16x16 over column blocks, 2304 plaintext mults; encode+multiply+add (parallel) 11.6079 s, rotate+bias 3.40376 s",
+        "max_abs_err": 6.84237e-10,
+        "approx": "diagonal BSGS 16x16 over column blocks, 2304 plaintext mults; encode+multiply+add (parallel) 19.5902 s, rotate+bias 3.87021 s",
         "ciphertexts": 3
       }
     },
@@ -296,6 +296,124 @@
         "max_abs_err": 7.57108e-10,
         "approx": "diagonal BSGS 16x16 over column blocks, 6912 plaintext mults; encode+multiply+add (parallel) 35.3419 s, rotate+bias 4.16347 s",
         "ciphertexts": 3
+      }
+    },
+    {
+      "op_type": "GeLU.wide",
+      "domain": "HE",
+      "method": "openfhe_ckks_fast",
+      "input_shape": [
+        1,
+        128,
+        3072
+      ],
+      "output_shape": [
+        1,
+        128,
+        3072
+      ],
+      "local_compute_ms": 266581.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 7,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (fast)",
+        "internal_bootstraps": 12,
+        "bootstrap_ms": 240180,
+        "max_abs_err": 0.000417282,
+        "approx": "x h(f1(x/B)), f1 degree 59, h degree 27, B 64, one bootstrap between",
+        "ciphertexts": 12,
+        "level_out": 2
+      }
+    },
+    {
+      "op_type": "Softmax.wide",
+      "domain": "HE",
+      "method": "openfhe_ckks_fast",
+      "input_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "output_shape": [
+        1,
+        12,
+        128,
+        128
+      ],
+      "local_compute_ms": 482741.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 6,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (fast)",
+        "internal_bootstraps": 22,
+        "bootstrap_ms": 445935,
+        "max_abs_err": 0.00314695,
+        "approx": "scores [-28.200000,28.600000], row max >= 0.000000: k 4, exp degree 13 on [-4.437500,0], inverses degree 59 (first) / 27 (rounds), Newton 3 (last round)",
+        "ciphertexts": 6,
+        "level_out": 6
+      }
+    },
+    {
+      "op_type": "LayerNorm.wide",
+      "domain": "HE",
+      "method": "openfhe_ckks_fast",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 81926.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 6,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (fast)",
+        "internal_bootstraps": 4,
+        "bootstrap_ms": 78256.6,
+        "max_abs_err": 0.000593349,
+        "approx": "variances [0.470000,123.000000]: e0 0.003000, 1/sqrt degree 59, Newton 2",
+        "ciphertexts": 3,
+        "level_out": 6
+      }
+    },
+    {
+      "op_type": "LayerNorm.wider",
+      "domain": "HE",
+      "method": "openfhe_ckks_fast",
+      "input_shape": [
+        1,
+        128,
+        768
+      ],
+      "output_shape": [
+        1,
+        128,
+        768
+      ],
+      "local_compute_ms": 156091.0,
+      "comm_bytes": 0,
+      "comm_rounds": 0,
+      "he_level_delta": 6,
+      "feasible": true,
+      "metadata": {
+        "source": "native/openfhe/he_ops (fast)",
+        "internal_bootstraps": 8,
+        "bootstrap_ms": 151543,
+        "max_abs_err": 0.00136183,
+        "approx": "variances [0.470000,2340.000000]: e0 0.000100, 1/sqrt degree 59, Newton 6",
+        "ciphertexts": 3,
+        "level_out": 6
       }
     },
     {
@@ -649,173 +767,221 @@
     {
       "from_domain": "HE",
       "to_domain": "MPC",
-      "method": "openfhe_mask_decrypt",
+      "method": "openfhe_hardened_mask_decrypt",
       "tensor_shape": [
         1,
         128,
         768
       ],
-      "local_compute_ms": 459.914,
-      "comm_bytes": 3152625,
+      "local_compute_ms": 1292.105,
+      "comm_bytes": 9444909,
       "comm_rounds": 1,
       "metadata": {
-        "source": "native/openfhe/conv_bench",
-        "server_ms": 267.473,
-        "client_ms": 192.441,
+        "source": "native/openfhe/conv_hardened",
+        "server_ms": 442.68,
+        "client_ms": 849.425,
         "ciphertexts": 3,
-        "max_abs_err": 1.51737e-05,
-        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+        "max_abs_err": 1.52312e-05,
+        "protocol": "hardened",
+        "towers_sent": 3,
+        "min_levels_left": 2,
+        "mask_bits": 74,
+        "kappa": 40,
+        "bound_bits": 12,
+        "log2_values": 22
       }
     },
     {
       "from_domain": "MPC",
       "to_domain": "HE",
-      "method": "openfhe_share_encrypt",
+      "method": "openfhe_hardened_share_encrypt",
       "tensor_shape": [
         1,
         128,
         768
       ],
-      "local_compute_ms": 460.562,
-      "comm_bytes": 28321713,
+      "local_compute_ms": 9152.451,
+      "comm_bytes": 66075273,
       "comm_rounds": 1,
       "metadata": {
-        "source": "native/openfhe/conv_bench",
-        "server_ms": 208.361,
-        "client_ms": 252.201,
+        "source": "native/openfhe/conv_hardened",
+        "server_ms": 8618.91,
+        "client_ms": 533.541,
         "ciphertexts": 3,
-        "max_abs_err": 1.51736e-05,
-        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+        "max_abs_err": 0.000245946,
+        "protocol": "hardened",
+        "levels_left": 9,
+        "wrap_levels": 12,
+        "reduced_ring_bits": 34,
+        "delta": 6,
+        "noise_rms": 4.02706e-05,
+        "degree": 31
       }
     },
     {
       "from_domain": "HE",
       "to_domain": "MPC",
-      "method": "openfhe_mask_decrypt",
+      "method": "openfhe_hardened_mask_decrypt",
       "tensor_shape": [
         1,
         12,
         128,
         128
       ],
-      "local_compute_ms": 1034.9950000000001,
-      "comm_bytes": 6305250,
+      "local_compute_ms": 2595.9049999999997,
+      "comm_bytes": 18889818,
       "comm_rounds": 1,
       "metadata": {
-        "source": "native/openfhe/conv_bench",
-        "server_ms": 653.017,
-        "client_ms": 381.978,
+        "source": "native/openfhe/conv_hardened",
+        "server_ms": 903.535,
+        "client_ms": 1692.37,
         "ciphertexts": 6,
-        "max_abs_err": 1.52269e-05,
-        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+        "max_abs_err": 1.52234e-05,
+        "protocol": "hardened",
+        "towers_sent": 3,
+        "min_levels_left": 2,
+        "mask_bits": 74,
+        "kappa": 40,
+        "bound_bits": 12,
+        "log2_values": 22
       }
     },
     {
       "from_domain": "MPC",
       "to_domain": "HE",
-      "method": "openfhe_share_encrypt",
+      "method": "openfhe_hardened_share_encrypt",
       "tensor_shape": [
         1,
         12,
         128,
         128
       ],
-      "local_compute_ms": 924.461,
-      "comm_bytes": 56643426,
+      "local_compute_ms": 17951.8,
+      "comm_bytes": 132150546,
       "comm_rounds": 1,
       "metadata": {
-        "source": "native/openfhe/conv_bench",
-        "server_ms": 427.078,
-        "client_ms": 497.383,
+        "source": "native/openfhe/conv_hardened",
+        "server_ms": 16757.8,
+        "client_ms": 1194,
         "ciphertexts": 6,
-        "max_abs_err": 1.52269e-05,
-        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+        "max_abs_err": 0.000282122,
+        "protocol": "hardened",
+        "levels_left": 9,
+        "wrap_levels": 12,
+        "reduced_ring_bits": 34,
+        "delta": 6,
+        "noise_rms": 4.03826e-05,
+        "degree": 31
       }
     },
     {
       "from_domain": "HE",
       "to_domain": "MPC",
-      "method": "openfhe_mask_decrypt",
+      "method": "openfhe_hardened_mask_decrypt",
       "tensor_shape": [
         3,
         1,
         128,
         768
       ],
-      "local_compute_ms": 1575.7930000000001,
-      "comm_bytes": 9457875,
+      "local_compute_ms": 3900.43,
+      "comm_bytes": 28334727,
       "comm_rounds": 1,
       "metadata": {
-        "source": "native/openfhe/conv_bench",
-        "server_ms": 994.191,
-        "client_ms": 581.602,
+        "source": "native/openfhe/conv_hardened",
+        "server_ms": 1365.33,
+        "client_ms": 2535.1,
         "ciphertexts": 9,
-        "max_abs_err": 1.52434e-05,
-        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+        "max_abs_err": 1.5223e-05,
+        "protocol": "hardened",
+        "towers_sent": 3,
+        "min_levels_left": 2,
+        "mask_bits": 74,
+        "kappa": 40,
+        "bound_bits": 12,
+        "log2_values": 22
       }
     },
     {
       "from_domain": "MPC",
       "to_domain": "HE",
-      "method": "openfhe_share_encrypt",
+      "method": "openfhe_hardened_share_encrypt",
       "tensor_shape": [
         3,
         1,
         128,
         768
       ],
-      "local_compute_ms": 1458.3029999999999,
-      "comm_bytes": 84965139,
+      "local_compute_ms": 25842.09,
+      "comm_bytes": 198225819,
       "comm_rounds": 1,
       "metadata": {
-        "source": "native/openfhe/conv_bench",
-        "server_ms": 655.6,
-        "client_ms": 802.703,
+        "source": "native/openfhe/conv_hardened",
+        "server_ms": 23999.3,
+        "client_ms": 1842.79,
         "ciphertexts": 9,
-        "max_abs_err": 1.52431e-05,
-        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+        "max_abs_err": 0.00025052,
+        "protocol": "hardened",
+        "levels_left": 9,
+        "wrap_levels": 12,
+        "reduced_ring_bits": 34,
+        "delta": 6,
+        "noise_rms": 4.01664e-05,
+        "degree": 31
       }
     },
     {
       "from_domain": "HE",
       "to_domain": "MPC",
-      "method": "openfhe_mask_decrypt",
+      "method": "openfhe_hardened_mask_decrypt",
       "tensor_shape": [
         1,
         128,
         3072
       ],
-      "local_compute_ms": 1774.5410000000002,
-      "comm_bytes": 12610500,
+      "local_compute_ms": 5212.68,
+      "comm_bytes": 37779636,
       "comm_rounds": 1,
       "metadata": {
-        "source": "native/openfhe/conv_bench",
-        "server_ms": 1014.87,
-        "client_ms": 759.671,
+        "source": "native/openfhe/conv_hardened",
+        "server_ms": 1826.67,
+        "client_ms": 3386.01,
         "ciphertexts": 12,
-        "max_abs_err": 1.52354e-05,
-        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+        "max_abs_err": 1.52445e-05,
+        "protocol": "hardened",
+        "towers_sent": 3,
+        "min_levels_left": 2,
+        "mask_bits": 74,
+        "kappa": 40,
+        "bound_bits": 12,
+        "log2_values": 22
       }
     },
     {
       "from_domain": "MPC",
       "to_domain": "HE",
-      "method": "openfhe_share_encrypt",
+      "method": "openfhe_hardened_share_encrypt",
       "tensor_shape": [
         1,
         128,
         3072
       ],
-      "local_compute_ms": 1805.3829999999998,
-      "comm_bytes": 113286852,
+      "local_compute_ms": 35712.590000000004,
+      "comm_bytes": 264301092,
       "comm_rounds": 1,
       "metadata": {
-        "source": "native/openfhe/conv_bench",
-        "server_ms": 855.564,
-        "client_ms": 949.819,
+        "source": "native/openfhe/conv_hardened",
+        "server_ms": 33190.9,
+        "client_ms": 2521.69,
         "ciphertexts": 12,
-        "max_abs_err": 1.52355e-05,
-        "note": "mask in the slot domain: protocol costs; a hardened version masks coefficients with noise flooding"
+        "max_abs_err": 0.000368688,
+        "protocol": "hardened",
+        "levels_left": 9,
+        "wrap_levels": 12,
+        "reduced_ring_bits": 34,
+        "delta": 6,
+        "noise_rms": 4.02382e-05,
+        "degree": 31
       }
     }
   ],
@@ -827,6 +993,8 @@
     "metadata": {
       "source": "native/openfhe/he_ops (fast)",
       "slots": 32768,
+      "min_level_in": 1,
+      "flat_range": 32,
       "levels_after": 8,
       "max_abs_err": 0.000661921,
       "approx": "one pass"
@@ -837,8 +1005,8 @@
     "mpc_backend": "shaft",
     "he_stack_label": "OpenFHE CKKS (CPU, N=2^16, 128-bit, fast bootstrapping)",
     "mpc_stack_label": "SHAFT (CPU, CrypTen 2PC, trusted dealer)",
-    "he_source": "measured with native/openfhe/he_ops, raw/2026-10-04",
+    "he_source": "measured with native/openfhe/he_ops, raw/2026-10-04, raw/2026-10-05, raw/2026-10-06",
     "mpc_source": "measured, raw/2026-10-03, raw/2026-10-04",
-    "conversion_source": "measured with native/openfhe/conv_bench, raw/2026-10-04"
+    "conversion_source": "measured with native/openfhe/conv_hardened, raw/2026-10-05"
   }
 }

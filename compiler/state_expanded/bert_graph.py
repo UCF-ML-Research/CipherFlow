@@ -143,9 +143,11 @@ def bert_multi_block_graph(
     into ``L<i+1>_qk`` input (same shape [B,S,H]).
 
     ``qkv_projection=True`` adds the Q/K/V projections as a ``Linear_QKV``
-    node ``L<i>_qkv`` ([B,S,H] -> packed [3,B,S,H]) in front of ``L<i>_qk``;
-    it then starts the block (and carries the residual). The default (False)
-    is the graph used in the NeurIPS 2026 evaluation, which leaves them out.
+    node ``L<i>_qkv`` ([B,S,H] -> packed [3,B,S,H]) in front of ``L<i>_qk``.
+    Q and K go to ``L<i>_qk`` ([2,B,S,H]) and V straight to ``L<i>_av``
+    ([B,S,H]); the residual starts at the block input (an ``Input`` node for
+    the first block). The default (False) is the graph used in the NeurIPS
+    2026 evaluation, which leaves the projections out.
     """
     m = manifest or default_manifest()
     tok = _shape(m.batch, m.seq, m.hidden)
@@ -156,19 +158,26 @@ def bert_multi_block_graph(
 
     nodes: List[OperatorNode] = []
     edges: List[DataEdge] = []
+    qk_in = _shape(2, m.batch, m.seq, m.hidden)          # Q and K; V travels on its own edge
+    if qkv_projection:
+        nodes.append(OperatorNode("input", "Input", tok, tok))
 
     def prefix(i: int, name: str) -> str:
         return f"L{i}_{name}"
 
     for i in range(num_blocks):
         p = lambda n, _i=i: prefix(_i, n)
-        first = p("qkv") if qkv_projection else p("qk")      # block input: the residual's source
+        first = p("qkv") if qkv_projection else p("qk")
+        # the residual's source: the block input (the paper's graph uses its first operator)
+        block_in = ("input" if i == 0 else prefix(i - 1, "ln2")) if qkv_projection else first
+        qk_attrs = {"heads": m.heads, "head_dim": m.head_dim}
         if qkv_projection:
             nodes.append(OperatorNode(p("qkv"), "Linear_QKV", tok, qkv))
-            edges.append(DataEdge(p("qkv"), p("qk"), qkv))
+            edges.extend([DataEdge(p("qkv"), p("qk"), qk_in), DataEdge(p("qkv"), p("av"), ctx)])
+            qk_attrs["in_edge_shape"] = qk_in
         nodes.extend([
             OperatorNode(p("qk"),   "Attention_QK_MatMul", qkv, scores,
-                         attributes={"heads": m.heads, "head_dim": m.head_dim}),
+                         attributes=qk_attrs),
             OperatorNode(p("sm"),   "Softmax",             scores, scores,
                          attributes={"axis": -1}),
             OperatorNode(p("av"),   "Attention_V_MatMul",  scores, ctx,
@@ -188,7 +197,7 @@ def bert_multi_block_graph(
             DataEdge(p("av"),   p("op"),   ctx),
             DataEdge(p("op"),   p("add1"), tok),
             # Residual 1: attention input bypass.
-            DataEdge(first,     p("add1"), tok),
+            DataEdge(block_in,  p("add1"), tok),
             DataEdge(p("add1"), p("ln1"),  tok),
             DataEdge(p("ln1"),  p("ffn1"), tok),
             DataEdge(p("ffn1"), p("gelu"), ffn1_out),
@@ -198,9 +207,11 @@ def bert_multi_block_graph(
             DataEdge(p("ln1"),  p("add2"), tok),
             DataEdge(p("add2"), p("ln2"),  tok),
         ])
-        # Inter-block wiring: previous ln2 feeds this block.
+        # Inter-block wiring: previous ln2 (or the input) feeds this block.
         if i > 0:
             edges.append(DataEdge(prefix(i - 1, "ln2"), first, tok))
+        elif qkv_projection:
+            edges.append(DataEdge("input", first, tok))
 
     return OperatorGraph(
         graph_id=f"bert_{num_blocks}block_B{m.batch}_S{m.seq}" + ("_qkv" if qkv_projection else ""),

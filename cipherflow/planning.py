@@ -14,6 +14,7 @@ from . import profiles as _profiles
 from .deploy import Deployment
 from .errors import (CostExtrapolationError, CostExtrapolationWarning, UnsupportedBackend,
                      UnsupportedOperator)
+from .calibration import Calibration
 from .plan import Plan
 from .validate import check_graph
 
@@ -47,14 +48,14 @@ def _record(op_type, domain, node, *, feasible, method, note) -> OperatorRecord:
                           feasible=feasible, metadata={"source": "cipherflow", "note": note})
 
 
-def _prepare_profile(graph, methods, profile: LatencyProfile) -> Tuple[LatencyProfile, List[str]]:
+def _prepare_profile(graph, methods, profile: LatencyProfile, calibration=None) -> Tuple[LatencyProfile, List[str]]:
     """Profile the planner sees: the measured one plus
     * zero-cost records for structural nodes (Input),
     * infeasible records where a node violates its method's contract, or where a
       domain has no method or no cost record at all for the op type.
     Raises UnsupportedOperator when a node is feasible in no domain."""
     ops = _backends.supported_ops(methods)
-    viol = _backends.violations(graph, methods)
+    viol = _backends.violations(graph, methods, calibration)
     has_records = {(r.op_type, r.domain) for r in profile.operators}
     blocked: Dict[Tuple[str, str], str] = {}
     notes: List[str] = []
@@ -110,6 +111,42 @@ def _prepare_profile(graph, methods, profile: LatencyProfile) -> Tuple[LatencyPr
             by_reason[msg] = by_reason.get(msg, 0) + 1
     notes += [f"{msg} ({k} node{'s' if k > 1 else ''})" for msg, k in by_reason.items()]
     return replace(profile, operators=kept + extra), notes
+
+
+def _with_variant_records(profile: LatencyProfile, graph, kernels) -> LatencyProfile:
+    """MPC cost records for the op types of kernel variants ("GeLU.wide"): the base op's."""
+    if not kernels:
+        return profile
+    variant_ops = {n.op_type for n in graph.nodes if n.node_id in kernels}
+    have = {(r.op_type, r.domain) for r in profile.operators}
+    extra = [replace(r, op_type=v) for v in sorted(variant_ops) if (v, "MPC") not in have
+             for r in profile.operators if r.domain == "MPC" and r.op_type == v.split(".", 1)[0]]
+    return replace(profile, operators=list(profile.operators) + extra)
+
+
+def _with_scaled_bootstrap(profile: LatencyProfile, calibration) -> LatencyProfile:
+    """With a calibration and a bootstrap record that states its flat range: the nodes whose
+    outputs exceed it are bootstrapped scaled (one more level; the cost model reads this)."""
+    flat = (profile.bootstrap.metadata or {}).get("flat_range") if profile.bootstrap is not None else None
+    if calibration is None or not flat:
+        return profile
+    from .kernel_params import bootstrap_amplitude, bootstrap_scale
+    amp = {nid: bootstrap_amplitude(s["out_absmax"], s.get("out_absmean", 0.0))
+           for nid, s in calibration.nodes.items() if s.get("out_absmax") is not None}
+    scaled = {nid: bootstrap_scale(a, flat) for nid, a in amp.items() if bootstrap_scale(a, flat) > 1}
+    return replace(profile, metadata=dict(profile.metadata or {}, scaled_bootstrap=scaled))
+
+
+def _kernel_notes(graph, kernels) -> List[str]:
+    """One note per (op type, kernel): nodes whose calibrated inputs need a wide-range kernel."""
+    groups: Dict[Tuple[str, str], List[str]] = {}
+    ops = {n.node_id: n.op_type for n in graph.nodes}
+    for nid, k in kernels.items():
+        params = ", ".join(f"{a} {b}" for a, b in k.items() if a != "kernel")
+        groups.setdefault((ops[nid], k["kernel"]), []).append(params)
+    return [f"{op} runs its {kind}-range HE kernel on {len(ps)} node{'s' if len(ps) > 1 else ''} "
+            f"(calibrated inputs outside the base kernel's range; {', '.join(sorted(set(ps)))})"
+            for (op, kind), ps in groups.items()]
 
 
 def _feasible(cm, node, domain) -> bool:
@@ -333,12 +370,16 @@ def _profile_for(graph, deployment, cand: Candidate, *, measure: bool, verbose: 
     return prof, name
 
 
-def _plan_with(graph, deployment, cand: Candidate, *, safe, strict, verbose):
+def _plan_with(graph, deployment, cand: Candidate, *, safe, strict, verbose, calibration=None):
     _check_methods(graph, _methods(cand, None) if cand.methods is None else cand.methods)
     prof, prof_name = _profile_for(graph, deployment, cand, measure=True, verbose=verbose)
     meths = _methods(cand, prof)
     _check_coverage(graph, meths, prof)
-    prof, notes = _prepare_profile(graph, meths, prof)
+    base_graph = graph
+    graph, kernels = _backends.assign_kernels(graph, meths, calibration)
+    prof = _with_variant_records(prof, graph, kernels)
+    prof, notes = _prepare_profile(graph, meths, prof, calibration)
+    prof = _with_scaled_bootstrap(prof, calibration)
     report = cost_report(graph, prof)
     scaled = report.summary(prof_name) if report.n_scaled else None
     if scaled and strict:
@@ -351,18 +392,73 @@ def _plan_with(graph, deployment, cand: Candidate, *, safe, strict, verbose):
     compiled = (compile_plan_safe(graph, prof, net, level_deltas=deltas) if safe
                 else compile_plan(graph, prof, net, level_deltas=deltas))
     plan = Plan.from_compiled(compiled, graph, prof, deployment)
+    base_ops = {n.node_id: n.op_type for n in base_graph.nodes}
+    for n in plan.nodes:
+        if n.id in kernels:                      # back to the model's op type; the kernel says which
+            n.op_type = base_ops[n.id]
+            n.kernel = dict(kernels[n.id]) if n.domain == "HE" else None
+    notes += _kernel_notes(base_graph, {n.id: n.kernel for n in plan.nodes if n.kernel})
     for n in plan.nodes:
         if n.op_type in _backends.PSEUDO_OPS:
             n.cost_source, n.backend = "input", "client"
         else:
             n.cost_source = report.node_source.get((n.id, n.domain), "exact")
             n.backend = cand.he if n.domain == "HE" else cand.mpc
+    if calibration is None:
+        unchecked = sorted({n.op_type for n in plan.nodes if n.domain == "HE" and any(
+            m.value_contract is not None for m in meths if m.op_type == n.op_type and m.domain == "HE")})
+        if unchecked:
+            notes.append(f"HE {', '.join(unchecked)} approximate on fixed input ranges ({cand.he}: "
+                         f"{_ranges_text(cand.he)}); real models often exceed them. Pass "
+                         "calibration=cipherflow.runtime.calibrate(model, inputs) to keep operators whose "
+                         "inputs fall outside out of HE")
+    if plan.counts()["conversions"] and not all((c.metadata or {}).get("protocol") == "hardened"
+                                                 for c in prof.conversions):
+        notes.append(_UNHARDENED + " (slot-domain mask; the hardened protocol is measured for the OpenFHE "
+                     "backend), so their cost is underestimated")
+    if calibration is not None:
+        notes += _conversion_bound_notes(plan, prof, calibration)
     plan.warnings = ([scaled] if scaled else []) + notes
     plan.mpc_backend, plan.he_backend = cand.mpc, cand.he
     plan.security = cand.backend.security if cand.backend else ("none" if cand.mpc == "none" else "unknown")
     plan.precision_bits = hb.precision_bits if hb is not None else None
     plan.profile["name"] = prof_name
     return plan, scaled
+
+
+_UNHARDENED = "HE<->MPC conversions are priced with an unhardened protocol"
+
+
+def _unhardened(plan: Plan) -> bool:
+    return any(w.startswith(_UNHARDENED) for w in plan.warnings)
+
+
+def _conversion_bound_notes(plan, prof, calibration) -> List[str]:
+    """The hardened conversions assume |x| < 2^bound_bits (statistical hiding of HE -> MPC, wrap
+    removal of MPC -> HE); calibrated values above it would be converted wrongly."""
+    from .kernel_params import CONVERSION_BOUND_BITS
+    bits = [(c.metadata or {}).get("bound_bits") for c in prof.conversions]
+    bound = 2.0 ** min([b for b in bits if b is not None] or [CONVERSION_BOUND_BITS])
+    over = {}
+    for a in plan.actions:
+        if a.kind == "convert" and a.edge:
+            peak = (calibration.nodes.get(a.edge[0]) or {}).get("out_absmax", 0.0)
+            if peak >= bound:
+                over[a.edge[0]] = peak
+    if not over:
+        return []
+    worst = sorted(over, key=over.get, reverse=True)
+    return [f"calibrated values up to {over[worst[0]]:.4g} cross HE<->MPC conversions ({', '.join(worst[:4])}"
+            f"{', ...' if len(worst) > 4 else ''}); the conversion protocol assumes |x| < {bound:g}"]
+
+
+def _ranges_text(he: str) -> str:
+    from .kernel_params import HE_NUMERICS
+    p = HE_NUMERICS.get(he)
+    if p is None:
+        return "see cipherflow.kernel_params"
+    return (f"GeLU [{-p.gelu_bound:g}, {p.gelu_bound:g}], LayerNorm variance [{p.ln_var_lo:g}, {p.ln_var_hi:g}], "
+            f"Softmax scores [{-p.sm_bound:g}, {p.sm_bound:g}] with row means of exp(x - {p.sm_bound:g}) >= {p.sm_umin:g}")
 
 
 _CANDIDATE_ERRORS = (UnsupportedOperator, CostExtrapolationError, LookupError, RuntimeError, ValueError)
@@ -373,7 +469,8 @@ def compile(graph, deployment: Deployment, *,
             he: str = "auto", mpc: str = "auto", security: str = "2pc",
             min_precision: Optional[float] = None,
             methods: Union[str, Sequence[_backends.Method]] = "auto",
-            safe: bool = True, strict: bool = False, verbose: bool = True) -> Plan:
+            safe: bool = True, strict: bool = False, verbose: bool = True,
+            calibration=None) -> Plan:
     """Plan hybrid HE/MPC execution of `graph` for `deployment`.
 
     profile:  a LatencyProfile, a JSON path, a built-in name (see cipherflow.profiles.BUILTIN;
@@ -383,7 +480,8 @@ def compile(graph, deployment: Deployment, *,
               measures any entries the graph still needs. Defaults to the deployment's hardware.
     he, mpc:  HE backend (cipherflow.backends.HE_BACKENDS) and MPC backend (MPC_BACKENDS), or
               'auto' to plan with every pair that fits and return the fastest plan
-              (plan.alternatives lists the others and why any were not used).
+              (plan.alternatives lists the others and why any were not used). Plans that
+              convert with an unhardened protocol (NEXUS profiles) rank after all others.
     security: '2pc' (two parties, no third party; default), '2pc-dealer' (also allow a trusted
               dealer for preprocessing, e.g. SHAFT), or 'any'.
     min_precision: minimum HE bootstrapping precision in bits; HE backends below it (or whose
@@ -394,12 +492,17 @@ def compile(graph, deployment: Deployment, *,
     strict:   refuse (CostExtrapolationError) cost entries that are not in the profile, instead
               of scaling them from the nearest profiled shape with a warning; with 'auto'
               backends, pairs that would need scaled entries are skipped.
+    calibration: a cipherflow.Calibration (or its JSON path) from cipherflow.runtime.calibrate:
+              operators whose calibrated inputs fall outside an HE method's approximation are
+              kept out of HE (see cipherflow.kernel_params).
 
     Raises UnsupportedGraph for structures the planner does not handle, UnsupportedOperator
     for operators no backend can run, and UnsupportedBackend when no backend pair fits;
     see cipherflow.errors.
     """
     check_graph(graph)
+    if calibration is not None:
+        calibration = Calibration.load(calibration)
     cands, excluded = resolve_candidates(deployment, profile, he, mpc, security, min_precision, methods)
     if not cands:
         raise UnsupportedBackend("no backend pair can be used: " +
@@ -407,7 +510,8 @@ def compile(graph, deployment: Deployment, *,
     plans: Dict[str, Tuple[Plan, Optional[str]]] = {}
     for c in cands:
         try:
-            plans[c.name] = _plan_with(graph, deployment, c, safe=safe, strict=strict, verbose=verbose)
+            plans[c.name] = _plan_with(graph, deployment, c, safe=safe, strict=strict, verbose=verbose,
+                                       calibration=calibration)
         except _CANDIDATE_ERRORS as exc:
             if len(cands) == 1:
                 raise
@@ -415,10 +519,18 @@ def compile(graph, deployment: Deployment, *,
     if not plans:
         raise UnsupportedBackend("no backend pair can plan this model: " +
                                  "; ".join(f"{n}: {why}" for n, why in excluded.items()))
-    best_name = min(plans, key=lambda n: plans[n][0].cost["total_ms"])
+    # plans whose conversions are priced with an unhardened protocol are cheaper than they would be
+    # with a secure one: they rank after every other plan; equal costs (e.g. all-MPC plans of
+    # several HE backends) go to a measured HE backend, then to the plan with fewer warnings
+    def _rank(n):
+        p = plans[n][0]
+        hb = _backends.HE_BACKENDS.get(p.he_backend or "")
+        return (_unhardened(p), p.cost["total_ms"], hb is None or hb.status != "measured", len(p.warnings))
+    best_name = min(plans, key=_rank)
     plan, scaled = plans[best_name]
     plan.alternatives = {n: {"total_ms": p.cost["total_ms"], "security": p.security,
-                             "precision_bits": p.precision_bits, "warnings": len(p.warnings)}
+                             "precision_bits": p.precision_bits, "warnings": len(p.warnings),
+                             **({"unhardened_conversions": True} if _unhardened(p) else {})}
                          for n, (p, _s) in plans.items() if n != best_name}
     plan.alternatives.update({n: {"excluded": why} for n, why in excluded.items()})
     if scaled:
@@ -455,7 +567,8 @@ class MatchReport:
 
 
 def match(graph, deployment: Deployment, *, profile=None, he: str = "auto", mpc: str = "auto",
-          security: str = "2pc", min_precision: Optional[float] = None, methods="auto") -> MatchReport:
+          security: str = "2pc", min_precision: Optional[float] = None, methods="auto",
+          calibration=None) -> MatchReport:
     """Which (HE, MPC) backend pairs can plan `graph` on `deployment`, without planning or
     measuring: operator coverage, method contracts, security, precision, profile coverage."""
     check_graph(graph)
@@ -479,7 +592,8 @@ def match(graph, deployment: Deployment, *, profile=None, he: str = "auto", mpc:
             meths = _methods(c, prof)
             _check_methods(graph, meths)
             _check_coverage(graph, meths, prof)
-            prof, notes = _prepare_profile(graph, meths, prof)
+            prof, notes = _prepare_profile(graph, meths, prof,
+                                           Calibration.load(calibration) if calibration is not None else None)
             rep = cost_report(graph, prof)
             detail = (f"{rep.total - rep.n_scaled}/{rep.total} cost entries exact"
                       + (f", {rep.n_scaled} scaled from other shapes" if rep.n_scaled else ""))

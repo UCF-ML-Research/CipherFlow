@@ -39,8 +39,8 @@ def test_default_security_uses_dealer_free_backend():
     plan = _compile(GRAPH, CPU)
     assert plan.mpc_backend == "sci" and plan.security == "2pc"
     assert "security" in plan.alternatives["nexus+shaft"]["excluded"]
-    assert {n.backend for n in plan.nodes if n.domain == "MPC"} <= {"sci"}
-    assert {n.backend for n in plan.nodes if n.domain == "HE"} <= {plan.he_backend}
+    assert {n.backend for n in plan.operators() if n.domain == "MPC"} <= {"sci"}
+    assert {n.backend for n in plan.operators() if n.domain == "HE"} <= {plan.he_backend}
 
 
 def test_auto_picks_the_fastest_allowed_backend():
@@ -96,7 +96,7 @@ def test_match_report():
     rep = cf.match(GRAPH, CPU, security="2pc-dealer")
     assert {"nexus+sci", "nexus+shaft", "openfhe-fast+sci", "openfhe-precise+shaft"} <= set(rep.compatible())
     rows = {r.backend: r for r in rep.rows}
-    assert rows["nexus+sci"].detail.startswith("28/28") and rows["nexus+shaft"].detail.startswith("28/28")
+    assert rows["nexus+sci"].detail.startswith("30/30") and rows["nexus+shaft"].detail.startswith("30/30")
     rep = cf.match(cf.models.vit(2), GPU)
     assert rep.compatible() == [] and "pass security='2pc-dealer'" in str(rep)
 

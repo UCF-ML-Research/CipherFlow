@@ -1,0 +1,11 @@
+{"check":"bootlevel","case":"levels","amp":1,"levels_left":0,"scale":1,"status":"exception: /home/hedong/project/openfhe-development/src/core/include/lattice/hal/default/dcrtpoly-impl.h:l.695:DropLastE","max_abs_err":-1}
+{"check":"bootlevel","case":"levels","amp":1,"levels_left":1,"scale":1,"status":"ok","max_abs_err":8.12574e-08}
+{"check":"bootlevel","case":"levels","amp":1,"levels_left":2,"scale":1,"status":"ok","max_abs_err":7.66174e-08}
+{"check":"bootlevel","case":"amplitude","amp":32,"levels_left":1,"scale":1,"status":"ok","max_abs_err":9.38506e-08}
+{"check":"bootlevel","case":"amplitude","amp":60,"levels_left":1,"scale":1,"status":"ok","max_abs_err":1.12068e-07}
+{"check":"bootlevel","case":"amplitude","amp":64,"levels_left":1,"scale":1,"status":"ok","max_abs_err":3.39979e-07}
+{"check":"bootlevel","case":"amplitude","amp":100,"levels_left":1,"scale":1,"status":"ok","max_abs_err":9.31278e-06}
+{"check":"bootlevel","case":"amplitude","amp":256,"levels_left":1,"scale":1,"status":"ok","max_abs_err":0.0518273}
+{"check":"bootlevel","case":"amplitude","amp":1100,"levels_left":1,"scale":1,"status":"ok","max_abs_err":21.3056}
+{"check":"bootlevel","case":"scaled","amp":256,"levels_left":2,"scale":8,"status":"ok","max_abs_err":1.48088e-06}
+{"check":"bootlevel","case":"scaled","amp":1100,"levels_left":2,"scale":32,"status":"ok","max_abs_err":6.52659e-06}

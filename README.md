@@ -74,8 +74,13 @@ any were not used). `security=` sets which MPC security models are acceptable, a
 
 Precision is -log2 of the largest bootstrapping error on random values in [-1, 1]. The OpenFHE
 kernels pack 128-token blocks (other sequence lengths are kept out of HE), approximate GeLU,
-LayerNorm and Softmax with Chebyshev polynomials on assumed input ranges, and convert between HE
-and MPC with the protocol's real costs but a slot-domain mask (not yet hardened).
+LayerNorm and Softmax with Chebyshev polynomials on fixed input ranges (checked against a
+calibration, see below), and convert between HE and MPC with a hardened protocol (statistically
+hiding masks on every slot, exact decoding; wrap-free MPC -> HE) for values below 2^12: see
+[`native/openfhe/CONVERSION.md`](native/openfhe/CONVERSION.md). An HE -> MPC conversion needs 2
+levels left on the ciphertext; an MPC -> HE conversion costs ~2.8 s of server time and 22 MB per
+ciphertext of 32768 values (the wrap removal), so plans convert less than with the earlier
+slot-mask costs.
 
 | MPC backend | security model | devices |
 |---|---|---|
@@ -113,15 +118,45 @@ evaluation leave them out (three 768×768 matmuls per block, 10–30% of a block
 `cf.models.bert_paper()` / `vit_paper()` (or `qkv_projection=False`) with `paper-cpu` / `paper-gpu`
 to reproduce the paper; those profiles have no cost for the projections.
 
-## Known limitations (v0.2.0)
+## Running a plan on real data (emulation)
 
-- The value tensor V is not a separate edge in the graph: when QKᵀ and Attn·V run in different
-  domains, the conversion of V is not priced.
-- HE↔MPC conversion masks in the slot domain: its costs are the protocol's, its security is not yet
-  hardened (coefficient-domain masking with noise flooding).
-- Plans are not executed yet (no runtime); the kernels are measured on random inputs, and the
-  Chebyshev input ranges of GeLU, LayerNorm and Softmax are assumed, not calibrated on real
-  activations.
+```python
+import cipherflow as cf
+graph = cf.models.from_torch(encoder, x)                 # x: [1, 128, 768] hidden states
+plan  = cf.compile(graph, cf.Deployment.of("cpu", "10Mbps/20ms"))
+res   = cf.runtime.emulate(plan, encoder, x)             # needs PyTorch
+print(res.summary())     # error vs the plaintext model; plan checks; inputs outside the approximations
+```
+
+`emulate` checks the plan (every edge's conversions and bootstraps take the value to the consumer's
+domain and level) and runs the model in float64 with each operator in its planned domain: the
+OpenFHE kernels' polynomial approximations and measured bootstrapping noise in HE, fixed point in
+MPC, rounding at conversions. It runs at plaintext speed, so it can evaluate accuracy on datasets;
+it does not run the cryptography.
+
+The HE kernels approximate GeLU, LayerNorm and Softmax on fixed input ranges, which real models
+exceed. Calibrate on real inputs and plan with the calibration, so operators whose inputs fall
+outside an approximation stay out of HE:
+
+```python
+cal  = cf.runtime.calibrate(encoder, [hidden_states_of(s) for s in training_sentences])
+plan = cf.compile(graph, cf.Deployment.of("cpu", "1Gbps/40ms"), calibration=cal)
+```
+
+`python -m cipherflow.runtime.glue --tasks sst2,mrpc,rte,stsb` measures the GLUE accuracy of
+calibrated plans this way.
+
+## Known limitations
+
+- Plans are emulated (`cipherflow.runtime`: the backends' numerical models on real data), not yet
+  executed under encryption end to end.
+- The OpenFHE base kernels approximate GeLU, LayerNorm and Softmax on fixed input ranges that
+  fine-tuned BERT exceeds; their wide-range versions (`native/openfhe/NONLINEAR.md`) are chosen per
+  node from a calibration and pay at low bandwidth (SCI, 10 Mbps). Their costs were measured on a
+  busy machine and are too high; the planner's own bootstraps of residual-stream values assume
+  random-like data (structured values bootstrap worse).
+- HE↔MPC conversions are hardened for the OpenFHE backend only; the NEXUS (SEAL) profiles still
+  price the slot-domain mask (plans warn).
 - Bootstrapping precision depends on the machine and the OpenFHE build; check yours with
   `cipherflow selfcheck`.
 

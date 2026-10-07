@@ -94,13 +94,22 @@ def test_builtin_graphs_pass_structure_check(graph):
     cf.check_graph(graph)
 
 
+def test_nested_regions_are_planned():
+    g = _g(["s", "a", "b", ("j1", "Residual_Add"), ("j2", "Residual_Add")],
+           [("s", "a"), ("a", "b"), ("b", "j1"), ("a", "j1"), ("j1", "j2"), ("s", "j2")])
+    cf.check_graph(g)
+    plan = cf.compile(g, DEP, verbose=False, **PAPER)
+    assert len(plan.nodes) == 5 and plan.cost["total_ms"] > 0
+
+
 @pytest.mark.parametrize("nodes,edges,match", [
     (["a", "b", ("c", "Residual_Add")], [("a", "c"), ("b", "c")], "2 inputs"),
     (["a", "b", "c"], [("a", "b"), ("a", "c")], "2 outputs"),
     (["s", "a", "b", "c", ("j", "Residual_Add")], [("s", "a"), ("s", "b"), ("s", "c"), ("a", "j"), ("b", "j"), ("c", "j")],
      "feeds 3 operators"),
-    (["s", "a", "b", ("j1", "Residual_Add"), ("j2", "Residual_Add")],
-     [("s", "a"), ("a", "b"), ("b", "j1"), ("a", "j1"), ("j1", "j2"), ("s", "j2")], "residual"),
+    (["s", "a", "b", "x", ("j1", "Residual_Add"), ("j2", "Residual_Add")],      # overlapping, not nested
+     [("s", "a"), ("s", "j1"), ("a", "b"), ("a", "x"), ("b", "j1"), ("j1", "j2"), ("x", "j2")],
+     "not a chain|overlap"),
     (["a", "b"], [("a", "b"), ("b", "a")], "cycle"),
 ])
 def test_unsupported_structures_raise(nodes, edges, match):
@@ -218,10 +227,10 @@ def test_traced_vit_equals_builtin_vit():
 def test_traced_bert_keeps_both_residuals():
     x = torch.randn(1, 128, 768)
     full = cf.models.from_torch(Bert(2).eval(), x)
-    assert sorted(n.op_type for n in full.nodes if n.op_type != "Input") == sorted(n.op_type for n in cf.models.bert(2).nodes)
+    assert sorted(n.op_type for n in full.nodes if n.op_type != "Input") == sorted(n.op_type for n in cf.models.bert(2).nodes if n.op_type != "Input")
     g = cf.models.from_torch(Bert(2).eval(), x, qkv_projection=False)
     assert g.nodes[0].op_type == "Input"
-    assert len(find_sese_regions(g)) == len(find_sese_regions(full)) == 4
+    assert len(find_sese_regions(g)) == 4 and len(find_sese_regions(full)) == 6     # + V's region per block
     ops = sorted(n.op_type for n in g.nodes if n.op_type != "Input")
     assert ops == sorted(n.op_type for n in cf.models.bert_paper(2).nodes)
     plan = _compile(g)
@@ -255,6 +264,6 @@ def test_huggingface_bert_encoder():
     enc = BertEncoder(transformers.BertConfig(num_hidden_layers=2)).eval()
     x = torch.randn(1, 128, 768)
     full = cf.models.from_torch(enc, x)
-    assert sorted(n.op_type for n in full.nodes if n.op_type != "Input") == sorted(n.op_type for n in cf.models.bert(2).nodes)
+    assert sorted(n.op_type for n in full.nodes if n.op_type != "Input") == sorted(n.op_type for n in cf.models.bert(2).nodes if n.op_type != "Input")
     g = cf.models.from_torch(enc, x, qkv_projection=False)
     assert _compile(g).cost["total_ms"] == pytest.approx(_compile(cf.models.bert_paper(2)).cost["total_ms"])

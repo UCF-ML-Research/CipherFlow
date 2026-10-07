@@ -50,6 +50,13 @@ def _files(stem: str, ext: str) -> list:
     return out
 
 
+def _has_any(stem: str, ext: str = "jsonl") -> bool:
+    try:
+        return bool(_files(stem, ext))
+    except FileNotFoundError:
+        return False
+
+
 def _where(stem: str, ext: str) -> str:
     return ", ".join(sorted({f"raw/{f.parent.name}" for f in _files(stem, ext)}))
 
@@ -112,7 +119,7 @@ def _conversions(raw, mpc):
                          "server_ms": c["server_ms"], "client_ms": c["client_ms"],
                          "ciphertexts": c["ciphertexts"], "max_abs_err": c["max_abs_err"],
                          "measured_for_ring": "SCI 2^37, 12 fractional bits",
-                         "mpc_backend": mpc},
+                         "mpc_backend": mpc, "protocol": "slot mask (not hardened)"},
         })
     return out
 
@@ -167,6 +174,10 @@ BERT_SHAPES = {        # op -> (input shape, output shape) for BERT-base at 128 
     "Attention_V_MatMul": ([1, 12, 128, 128], [1, 128, 768]),
 }
 GELU_DEGREE = "Chebyshev degree 27"     # 6 levels: FFN_Linear_2 can follow without a bootstrap
+# he_ops kernel variants -> profile op types (native/openfhe/NONLINEAR.md); shapes of the base op
+VARIANTS = {"GeLU_wide": "GeLU.wide", "Softmax_wide": "Softmax.wide", "LayerNorm_wide": "LayerNorm.wide"}
+# the wide Softmax is priced at its largest number of rounds (cipherflow.kernel_params.SOFTMAX_WIDE_KMAX)
+SOFTMAX_WIDE_PRICED = "k 4,"
 
 
 def _openfhe(raw: Path, mode: str, mpc: str):
@@ -178,28 +189,46 @@ def _openfhe(raw: Path, mode: str, mpc: str):
     for r in rows:
         if r["op"] == "GeLU" and GELU_DEGREE not in r.get("approx", ""):
             continue
-        if r["op"] in BERT_SHAPES:
-            i, o = BERT_SHAPES[r["op"]]
-            he[r["op"]] = json.loads(json.dumps(openfhe_record(r["op"], i, o, mode, r).to_json()))
+        if r["op"] == "Softmax_wide" and SOFTMAX_WIDE_PRICED not in r.get("approx", ""):
+            continue
+        name = VARIANTS.get(r["op"], r["op"])
+        if r["op"] == "LayerNorm_wide" and "Newton 6" in r.get("approx", ""):
+            name = "LayerNorm.wider"                     # the 6-step kernel (variance ratios to 1e4)
+        if name in he and r["op"].endswith("_wide") and he[name]["local_compute_ms"] >= float(r["ms"]):
+            continue                                     # several runs of a variant: the dearest prices it
+        if name.split(".", 1)[0] in BERT_SHAPES:
+            i, o = BERT_SHAPES[name.split(".", 1)[0]]
+            he[name] = json.loads(json.dumps(openfhe_record(name, i, o, mode, r).to_json()))
     boot = json.loads(_find(f"openfhe_bootstrap_{mode}.jsonl").read_text().splitlines()[0])
     convs = []
-    for c in sorted(_jsonl(f"openfhe_conversion_{mpc}_{mode}", lambda c: (c["direction"], c["numel"])),
-                    key=lambda c: (c["numel"], c["direction"])):
+    hardened = _has_any(f"openfhe_conversion_hardened_{mpc}_{mode}")
+    stem = f"openfhe_conversion_hardened_{mpc}_{mode}" if hardened else f"openfhe_conversion_{mpc}_{mode}"
+    for c in sorted(_jsonl(stem, lambda c: (c["direction"], c["numel"])), key=lambda c: (c["numel"], c["direction"])):
         shape = CONV_SHAPES.get(c["numel"])
         if shape is None:
             continue
         he2mpc = c["direction"] == "HE->MPC"
+        meta = {"source": "native/openfhe/" + ("conv_hardened" if hardened else "conv_bench"),
+                "server_ms": c["server_ms"], "client_ms": c["client_ms"], "ciphertexts": c["ciphertexts"],
+                "max_abs_err": c["max_abs_err"]}
+        if hardened:
+            meta["protocol"] = "hardened"
+            meta.update({k: c[k] for k in ("towers_sent", "min_levels_left", "mask_bits", "kappa", "bound_bits",
+                                           "log2_values", "levels_left", "wrap_levels", "reduced_ring_bits", "delta", "noise_rms",
+                                           "degree") if k in c})
+        else:
+            meta.update(protocol="slot mask (not hardened)",
+                        note="mask in the slot domain: protocol costs, not secure")
         convs.append({"from_domain": "HE" if he2mpc else "MPC", "to_domain": "MPC" if he2mpc else "HE",
-                      "method": "openfhe_mask_decrypt" if he2mpc else "openfhe_share_encrypt",
+                      "method": ("openfhe_hardened_" if hardened else "openfhe_") +
+                                ("mask_decrypt" if he2mpc else "share_encrypt"),
                       "tensor_shape": shape, "local_compute_ms": c["server_ms"] + c["client_ms"],
-                      "comm_bytes": int(c["bytes"]), "comm_rounds": int(c["rounds"]),
-                      "metadata": {"source": "native/openfhe/conv_bench", "server_ms": c["server_ms"],
-                                   "client_ms": c["client_ms"], "ciphertexts": c["ciphertexts"],
-                                   "max_abs_err": c["max_abs_err"],
-                                   "note": "mask in the slot domain: protocol costs; a hardened version masks "
-                                           "coefficients with noise flooding"}})
+                      "comm_bytes": int(c["bytes"]), "comm_rounds": int(c["rounds"]), "metadata": meta})
     bootstrap = {"method": f"openfhe_bootstrap_{mode}", "local_compute_ms": float(boot["ms"]), "comm_bytes": 0,
                  "comm_rounds": 0, "metadata": {"source": f"native/openfhe/he_ops ({mode})", "slots": 32768,
+                                                # he_ops bootlevel: needs one level left; error flat up to
+                                                # |x| = 32, ~cubic beyond (raw/2026-10-05/README.md)
+                                                "min_level_in": 1, "flat_range": 32,
                                                 "levels_after": boot["level_out"], "max_abs_err": boot["max_abs_err"],
                                                 "approx": boot.get("approx", "")}}
     return list(he.values()), bootstrap, convs, int(boot["level_out"])
@@ -256,8 +285,11 @@ def build(raw: Path):
                     "he_source": "measured with native/openfhe/he_ops, " + _where(f"openfhe_ops_{mode}", "jsonl"),
                     "mpc_source": "measured, " + (_where("sci_microbench_profile", "json") if mpc == "sci"
                                                   else _where("shaft2pc_cpu_TFP", "json")),
-                    "conversion_source": "measured with native/openfhe/conv_bench, "
-                                         + _where(f"openfhe_conversion_{mpc}_{mode}", "jsonl"),
+                    "conversion_source": ("measured with native/openfhe/conv_hardened, "
+                                          + _where(f"openfhe_conversion_hardened_{mpc}_{mode}", "jsonl"))
+                                         if _has_any(f"openfhe_conversion_hardened_{mpc}_{mode}") else
+                                         ("measured with native/openfhe/conv_bench (not hardened), "
+                                          + _where(f"openfhe_conversion_{mpc}_{mode}", "jsonl")),
                 },
             }
             (HERE / fname).write_text(json.dumps(out, indent=2))

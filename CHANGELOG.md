@@ -1,5 +1,97 @@
 # Changelog
 
+## v0.3.0 (2026-10-07)
+
+Plans checked and emulated on real data; calibration and value contracts; a hardened HE<->MPC
+conversion; wide-range GeLU, Softmax and LayerNorm kernels for OpenFHE, chosen per node.
+
+- V is a separate edge: the Q/K/V projections feed QK^T with Q and K (`[2,B,S,H]`) and Attn*V with V
+  (`[B,S,H]`), so a plan that runs QK^T and Attn*V in different domains pays for converting V
+  (it appears in two-party SCI plans at 300 Mbps and above). The planner handles nested regions
+  (V's region inside the attention residual) and prices each branch's conversions and bootstraps
+  at the join on that branch's tensor. The built-in BERT graph starts with an `Input` node (the
+  first block's residual). The paper's graphs are unchanged.
+- A conversion record of the same number of values is exact for any shape.
+- Plan actions record the edge they apply to (`action.edge`: producer and consumer; consumer `"*"`
+  for a region's exit, which applies to the producer's output for all its consumers).
+- `cipherflow.runtime` (needs PyTorch): `check_plan` follows every edge through the plan's actions
+  (domains and levels); `emulate(plan, module, x)` runs a traced PyTorch model on real data as the
+  plan places it, with the backends' numerical models (OpenFHE kernels' Chebyshev interpolations and
+  measured bootstrapping noise; MPC fixed point; conversions), and reports the error against the
+  plaintext model and the approximation ranges the data falls outside of.
+- Value contracts: `cipherflow.runtime.calibrate(model, inputs)` records each operator's value
+  statistics on real inputs (`cf.Calibration`, JSON); `compile(..., calibration=cal)` keeps operators
+  whose inputs fall outside an HE kernel's approximation out of HE (`cipherflow.kernel_params`), and
+  HE non-linear operators of backends whose approximation ranges are unknown (NEXUS). Without a
+  calibration, plans that use HE GeLU / LayerNorm / Softmax carry a warning. On a fine-tuned
+  BERT-base (SST-2) the OpenFHE kernels' ranges do not hold (scores [-33, 30] vs [-6, 6], LayerNorm
+  variances up to 1442 vs 25, GeLU inputs [-61, 129] vs [-8, 8]): calibrated plans keep the
+  non-linear operators in MPC and match the plaintext model; uncalibrated ones do not.
+- `python -m cipherflow.runtime.glue`: GLUE accuracy of calibrated (and uncalibrated) plans by
+  emulation (BERT-base fine-tuned per task).
+- Hardened HE<->MPC conversion for the OpenFHE backend (`native/openfhe/conv_hardened.cpp`,
+  `CONVERSION.md`): HE -> MPC masks every complex slot with a statistically hiding mask (kappa = 40)
+  and decodes exactly in quadruple precision, which needs 2 levels left on the ciphertext (3 towers
+  sent); MPC -> HE removes the share wrap in HE (the previous protocol left it: wrong values about
+  half the time with uniform shares). The planner bootstraps before an HE -> MPC conversion when
+  fewer levels are left (`min_levels_left` in the profile's conversion records); `check_plan` and the
+  emulator follow. Profiles whose conversions are not hardened (NEXUS/SEAL) carry a warning.
+  The protocol assumes |x| < 2^12 (a fine-tuned BERT-base reaches ~1060 in its residual stream);
+  with a calibration, `compile` warns when values crossing a conversion reach the bound, and the
+  emulator reports them. The `cpu-openfhe-*` profiles price the hardened protocol (MPC -> HE:
+  ~2.8 s and 22 MB per ciphertext; HE -> MPC: ~0.43 s and 3.15 MB). Calibrated BERT-base plans on
+  SCI become 6-28% slower and stay 10-80x faster than all-MPC.
+- Kernel variants chosen per node from a calibration: a backend can offer further HE kernels for an
+  operator (`HEBackend.variants`, priced as `"<op>.<variant>"` profile records); `compile(...,
+  calibration=)` gives each node the first kernel whose range covers its calibrated inputs, and the
+  plan records it (`node.kernel`, e.g. `{"kernel": "wide", "bound": 64}`), which the emulator follows.
+- Wide-range GeLU for the OpenFHE backend (`native/openfhe/NONLINEAR.md`): GeLU(x) = x h(f1(x / B))
+  with f1 (degree 59) and h (degree 27) fitted jointly (`native/openfhe/fit_gelu_wide.py`), one
+  bootstrap per ciphertext between them, B in {32, 64, 128, 256} per node. Max error 2.9-4.9e-4
+  (fast) on [-B, B], same as the [-8, 8] kernel. A fine-tuned BERT-base's GeLU inputs ([-61, 135])
+  now fit; at 10 Mbps (SCI) calibrated plans run every GeLU in HE.
+- Wide-range Softmax for the OpenFHE backend (`native/openfhe/NONLINEAR.md`,
+  `native/openfhe/fit_softmax_wide.py`): scores shifted by a calibrated bound c (no row max),
+  exp((x - c) / 2^k), then k rounds of square-and-normalise; the 1536 row sums are inverted in one
+  packed ciphertext (rough inverses in the middle rounds, Newton steps on the unbootstrapped sums in
+  the last); k (3-4 on SST-2) and c per node from the calibration (which now records each Softmax
+  node's smallest row maximum). Max error 1.1-3.1e-3 (fast), ~1e-5 (precise). With both wide
+  kernels, calibrated SST-2 plans on SCI at 10 Mbps run every GeLU and Softmax in HE (56,625 s ->
+  28,300 s, fast) and the emulated predictions equal the plaintext model's.
+- Wide-range LayerNorm for the OpenFHE backend (`native/openfhe/fit_layernorm_wide.py`): an initial
+  1/sqrt from the bootstrapped variances, Newton steps on the exact ones; two variants per node from
+  the calibration ("wide": variance ratios to ~400, 2 steps; "wider": to ~4400, 6 steps). Max error
+  4e-4-1.4e-3 (fast; the base kernel: 2e-2), ~1e-7 (precise). With the three wide kernels,
+  calibrated SST-2 plans on SCI at 10 Mbps run every GeLU, Softmax and LayerNorm in HE (56,619 s ->
+  21,157 s, fast; 56,591 s -> 43,131 s, precise) and the emulated predictions equal the plaintext
+  model's.
+- Margins on every kernel's calibrated ranges, set from measured gaps between training
+  calibrations and GLUE dev sets (STS-B is the worst: LayerNorm variances 1.9x above a 2048-sentence
+  calibration): GeLU |x| x1.5, LayerNorm variances /1.5 and x2.5, Softmax scores +0.2 / -0.5 of
+  their span, scaled bootstraps x2. Base kernels had none, which turned 26 of STS-B's 1500 dev
+  predictions into NaN at 10 Mbps; `cipherflow.runtime.glue` now calibrates on 2048 sentences. With
+  the margins, STS-B's plan runs every dev pair within range (Pearson equal to the plaintext
+  model's); SST-2's fast plan at 10 Mbps costs 23,489 s (21,157 s before).
+- The fast wide LayerNorm bootstraps its normalised variances 16x larger (more of the flat range), so
+  that variance ratios near 1e4 converge on a 9.4-bit build too.
+- Bootstrapping is much less precise for vectors with a large mean or a structure repeated in every
+  128-slot block (`he_ops bootlevel`); the emulator counts a mean m as an amplitude of 30 |m|, and
+  calibrations record each node's largest |mean| (`out_absmean`) for the scaled bootstraps.
+- Bootstrapping limits (`he_ops bootlevel`): OpenFHE cannot bootstrap a ciphertext with no level
+  left, and its error grows ~cubically above |x| = 32 (wrong beyond ~100). The OpenFHE profiles say
+  so (`min_level_in`, `flat_range`): the planner, static baselines and `check_plan` no longer
+  bootstrap at level 0 and, with a calibration, bootstrap larger values scaled (x / s, bootstrap,
+  * s; one more level). The emulator models the bootstrapping error accordingly (flat, then cubic;
+  s times larger when scaled). Kernels that end with no level left (fast Softmax, precise
+  LayerNorm) can therefore not be followed by a bootstrap or a conversion; plans avoid them.
+- With `he="auto"`, plans that convert with an unhardened protocol (NEXUS profiles) rank after all
+  others (they were chosen on underpriced conversions); plans of equal cost go to the backend pair
+  with fewer warnings.
+- Static baselines (`compile(..., safe=True)`) name the edge of every conversion and bootstrap,
+  bootstrap HE values before converting them when the conversion needs more levels, and place the
+  model input in its consumers' domain; the static policies place `Linear_QKV` with the other
+  linear operators.
+
 ## v0.2.0 (2026-10-04)
 
 Planning with several HE and MPC backends, on costs measured end to end.

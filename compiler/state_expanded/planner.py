@@ -34,10 +34,12 @@ from .sese import (
     RegionPlan,
     RegionTransferTable,
     SeseRegion,
+    NestedRegion,
     compute_region_transfer,
     dijkstra_chain,
     find_sese_regions,
     _backtrack,
+    _edge_shape_attr,
 )
 from .state_graph import level_out, ChainOp, State, TransitionEdge
 
@@ -169,6 +171,9 @@ def compile_plan(
     spine = _linearise(graph, regions)
 
     node_map = {n.node_id: n for n in graph.nodes}
+    graph_preds: Dict[str, List[str]] = {}
+    for e in graph.edges:
+        graph_preds.setdefault(e.dst, []).append(e.src)
     # Build a linear chain of ChainOps that includes the fork nodes
     # (executed as ordinary operators on the spine); each region is
     # represented by a *macro-edge* inserted *between* its fork and the
@@ -187,8 +192,13 @@ def compile_plan(
         State(0, "MPC", L)
     ]
     transfer_tables: Dict[str, RegionTransferTable] = {}
-    for r in regions:
-        tt = compute_region_transfer(r, graph, level_deltas, cm, net, L, boundary_states)
+    # nested regions first (fewest interior nodes); a region's branches use the tables of the
+    # regions nested in them
+    interior = {r.region_id: set(r.main_path) | set(r.skip_path) for r in regions}
+    for r in sorted(regions, key=lambda r: (len(interior[r.region_id]), r.region_id)):
+        nested = {q.fork: NestedRegion(q, transfer_tables[q.region_id]) for q in regions
+                  if q is not r and q.fork in interior[r.region_id] and q.region_id in transfer_tables}
+        tt = compute_region_transfer(r, graph, level_deltas, cm, net, L, boundary_states, nested)
         transfer_tables[r.region_id] = tt
 
     # Walk the spine and compute cost-aware shortest path.
@@ -244,6 +254,8 @@ def compile_plan(
                 output_shape=node.output_shape,
                 he_level_delta=level_deltas.get(node.op_type, 0),
                 he_level_out=level_out(level_deltas, node.op_type),
+                edge_shape=_edge_shape_attr(node),
+                pred=graph_preds[nid][0] if len(graph_preds.get(nid, [])) == 1 else None,
             )
             # Allow conversions/bootstrap at this position before exec.
             from .state_graph import outgoing as _out
@@ -477,6 +489,7 @@ POLICY_LINEAR_MPC_NONLINEAR_HE: Dict[str, Domain] = {
     # CryptoNets / polynomial-approximation-style: nonlinearities
     # replaced by HE polynomials; linear ops run over secret shares to
     # avoid HE ciphertext slot blow-up on big matmuls.
+    "Linear_QKV":          "MPC",
     "Attention_QK_MatMul": "MPC",
     "Attention_V_MatMul":  "MPC",
     "Out_Projection":      "MPC",
@@ -492,6 +505,7 @@ POLICY_ATTN_MPC_FFN_HE: Dict[str, Domain] = {
     # "Attention@MPC, FFN@HE": attention has small matrices (BxSxS
     # scores) where MPC is competitive, while FFN has the large
     # 768<->3072 matmul which packs well on HE ciphertexts.
+    "Linear_QKV":          "MPC",
     "Attention_QK_MatMul": "MPC",
     "Attention_V_MatMul":  "MPC",
     "Out_Projection":      "MPC",
@@ -546,12 +560,17 @@ def _materialise_static_plan(
     """Build a CompiledPlan for a fixed-placement baseline.
 
     Cost and assignment are computed from the same cost model. Level
-    budget is respected: if a fixed-HE op would exceed the budget,
-    bootstraps are inserted linearly until it fits. No conversions are
-    inserted beyond the edges implied by the fixed placement.
+    budget is respected: an HE op's inputs whose level is below what the
+    op needs are bootstrapped first (one bootstrap per input edge), and
+    so are HE outputs converted to MPC with fewer levels left than the
+    conversion needs. No conversions are inserted beyond the edges
+    implied by the fixed placement; every step names its edge. A source
+    node with no policy (the model input) takes its first consumer's
+    domain: the client provides it in that domain.
     """
     cm = StateExpandedCostModel(profile)
     L = profile.he_level_budget
+    min_conv = cm.he_to_mpc_min_level
 
     # Topological order.
     indeg = {n.node_id: 0 for n in graph.nodes}
@@ -579,10 +598,42 @@ def _materialise_static_plan(
     bs_cost = 0.0
     he_level: Dict[str, int] = {nid: L for nid in topo}
 
+    def infeasible() -> CompiledPlan:
+        return CompiledPlan(
+            network=net,
+            node_assignment=assignment,
+            total_cost_ms=float("inf"),
+            node_cost_ms=float("inf"),
+            conversion_cost_ms=conv_cost,
+            bootstrap_cost_ms=bs_cost,
+            steps=steps,
+            strategy_used=strategy_label,
+        )
+
+    def bootstrap(shape, detail, level, producer) -> bool:
+        nonlocal bs_cost
+        bs_est = cm.estimate_bootstrap_at(net, shape, level, producer)
+        if bs_est.resolution == "infeasible":
+            return False
+        bs_cost += bs_est.latency_ms
+        steps.append(
+            TransitionEdge(
+                src=None, dst=None,
+                cost_ms=bs_est.latency_ms,
+                action="bootstrap",
+                detail=detail,
+            )  # type: ignore[arg-type]
+        )
+        return True
+
     for nid in topo:
         node = node_map[nid]
-        d = domain_of_op.get(node.op_type, "HE")
+        d = domain_of_op.get(node.op_type) or domain_of_op.get(node.op_type.split(".", 1)[0])   # kernel variants
+        if d is None:
+            first = next((node_map[c] for c in out_adj[nid]), None) if not in_adj[nid] else None
+            d = domain_of_op.get(first.op_type, "HE") if first is not None else "HE"
         assignment[nid] = d
+        delta = level_deltas.get(node.op_type, 0)
 
         # Insert conversion on each incoming edge whose source has a
         # different domain.
@@ -598,6 +649,9 @@ def _materialise_static_plan(
                 node.input_shape,
             )
             if src_d != d:
+                if src_d == "HE" and he_level[p] < min_conv:
+                    if not bootstrap(edge_shape, f"pre-conversion edge={p}->{nid}", he_level[p], p):
+                        return infeasible()
                 est = cm.estimate_conversion(src_d, d, edge_shape, net)
                 conv_cost += est.latency_ms
                 steps.append(
@@ -605,43 +659,22 @@ def _materialise_static_plan(
                         src=None, dst=None,
                         cost_ms=est.latency_ms,
                         action="he2mpc" if d == "MPC" else "mpc2he",
-                        detail=f"{p}->{nid} shape={edge_shape}",
+                        detail=f"{p}->{nid} shape={edge_shape} edge={p}->{nid}",
                     )  # type: ignore[arg-type]
                 )
                 # After conversion to HE, the receiving side has fresh
                 # level L; after conversion to MPC, level is irrelevant.
-                preds_levels.append(L if d == "HE" else L)
+                preds_levels.append(L)
+            elif d == "HE" and he_level[p] < delta:
+                # For HE ops, ensure sufficient level by bootstrapping the input.
+                if not bootstrap(edge_shape, f"before {nid} edge={p}->{nid}", he_level[p], p):
+                    return infeasible()
+                preds_levels.append(L)
             else:
                 preds_levels.append(he_level[p])
 
-        # For HE ops, ensure sufficient level by bootstrapping if needed.
-        delta = level_deltas.get(node.op_type, 0)
         if d == "HE":
             current_l = min(preds_levels) if preds_levels else L
-            if current_l < delta:
-                bs_est = cm.estimate_bootstrap(net, node.input_shape)
-                if bs_est.resolution != "infeasible":
-                    bs_cost += bs_est.latency_ms
-                    current_l = L
-                    steps.append(
-                        TransitionEdge(
-                            src=None, dst=None,
-                            cost_ms=bs_est.latency_ms,
-                            action="bootstrap",
-                            detail=f"before {nid}",
-                        )  # type: ignore[arg-type]
-                    )
-                else:
-                    return CompiledPlan(
-                        network=net,
-                        node_assignment=assignment,
-                        total_cost_ms=float("inf"),
-                        node_cost_ms=float("inf"),
-                        conversion_cost_ms=conv_cost,
-                        bootstrap_cost_ms=bs_cost,
-                        steps=steps,
-                        strategy_used=strategy_label,
-                    )
             reset = level_out(level_deltas, node.op_type)
             he_level[nid] = reset if reset is not None else current_l - delta
         else:
@@ -650,16 +683,7 @@ def _materialise_static_plan(
         # Node cost.
         est = cm.estimate_operator(node.op_type, d, node.input_shape, node.output_shape, net)
         if est.resolution == "infeasible":
-            return CompiledPlan(
-                network=net,
-                node_assignment=assignment,
-                total_cost_ms=float("inf"),
-                node_cost_ms=float("inf"),
-                conversion_cost_ms=conv_cost,
-                bootstrap_cost_ms=bs_cost,
-                steps=steps,
-                strategy_used=strategy_label,
-            )
+            return infeasible()
         node_cost += est.latency_ms
         steps.append(
             TransitionEdge(

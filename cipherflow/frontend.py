@@ -27,6 +27,7 @@ model is never planned with parts of it silently missing.
 from __future__ import annotations
 
 import inspect
+from dataclasses import dataclass
 import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -218,9 +219,28 @@ def _concrete_value(ph, ca: Dict[str, Any]):
     return ph.args[0] if ph.args else None
 
 
+@dataclass
+class TraceResult:
+    """What the executor needs besides the graph: the traced fx module, how to run it, and which
+    CipherFlow operator each fx node belongs to (Q/K/V projections belong to Linear_QKV)."""
+    graph: OperatorGraph
+    gm: Any
+    run_args: List[Any]
+    kind: Dict[str, str]                 # fx node -> input | const | skip | op | unsupported
+    op: Dict[str, str]                   # fx op node -> Linear | MatMul | LayerNorm | ...
+    owner: Dict[str, str]                # fx node -> CipherFlow node id ("MHA:<name>" for MultiheadAttention)
+
+
 def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]] = None,
                graph_id: Optional[str] = None, qkv_projection: bool = True) -> OperatorGraph:
     """Trace `module` (an encoder stack taking hidden states) into an OperatorGraph."""
+    return trace_torch(module, example_inputs, concrete_args=concrete_args, graph_id=graph_id,
+                       qkv_projection=qkv_projection).graph
+
+
+def trace_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]] = None,
+                graph_id: Optional[str] = None, qkv_projection: bool = True) -> TraceResult:
+    """from_torch, keeping the traced module and the fx node -> operator mapping."""
     try:
         import torch
         import torch.fx as fx
@@ -261,11 +281,13 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
     order: List[str] = []
     edges: List[DataEdge] = []
     folded = set()
+    proj_of: Dict[str, str] = {}        # Q/K/V projection fx node -> its QK^T
 
     # ---------------------------------------------------------------- attention
     mats = [n for n in t.nodes if t.kind[n.name] == "op" and t.op[n.name] == "MatMul"]
     roles: Dict[str, str] = {}
     qk_inputs: Dict[str, Any] = {}      # qk name -> (X producer, arrival node)
+    av_of: Dict[str, str] = {}          # qk name -> its Attn*V
     for qk in mats:
         sms = [c for c in t.consumers(qk) if t.op.get(c.name) == "Softmax"]
         if not sms:
@@ -288,9 +310,11 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
                            "(cross-attention, rotary embeddings, KV cache, ...)", []).append(qk.name)
             continue
         folded.update(p.name for p in uniq)
+        proj_of.update({p.name: qk.name for p in uniq})
         x, arrival = srcs[uniq[0].name][0]
         qk_inputs[qk.name] = (x, arrival)
         roles[qk.name], roles[sm.name], roles[av.name] = "Attention_QK_MatMul", "Softmax", "Attention_V_MatMul"
+        av_of[qk.name] = av.name
     for m in mats:
         if m.name not in roles:
             bad.setdefault("matmul outside self-attention", []).append(m.name)
@@ -331,6 +355,7 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
             att = {"heads": h, "head_dim": E // h}
             if qkv_projection:
                 emit(f"{n.name}_qkv", "Linear_QKV", (B, S, E), (3, B, S, E))
+                att = dict(att, in_edge_shape=(2, B, S, E))
             emit(f"{n.name}_qk", "Attention_QK_MatMul", (3, B, S, E), (B, h, S, S), att)
             emit(f"{n.name}_sm", "Softmax", (B, h, S, S), (B, h, S, S), {"axis": -1})
             emit(f"{n.name}_av", "Attention_V_MatMul", (B, h, S, S), (B, S, E), att)
@@ -341,10 +366,11 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
             if r == "Attention_QK_MatMul":
                 x, a = qk_inputs[n.name]
                 scores = _shape(n)
+                attrs = {"heads": scores[1], "head_dim": arrival_shape(x, a)[-1] // scores[1]}
                 if qkv_projection:
                     emit(f"{n.name}_qkv", "Linear_QKV", arrival_shape(x, a), (3,) + arrival_shape(x, a))
-                emit(n.name, r, (3,) + arrival_shape(x, a), scores,
-                     {"heads": scores[1], "head_dim": arrival_shape(x, a)[-1] // scores[1]})
+                    attrs["in_edge_shape"] = (2,) + arrival_shape(x, a)
+                emit(n.name, r, (3,) + arrival_shape(x, a), scores, attrs)
             elif r == "Softmax":
                 emit(n.name, r, in_shape, _shape(n), {"axis": -1})
             else:
@@ -403,7 +429,9 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
             for p, a in t.producers(n):
                 add_edge(src_of(p), qk_in, arrival_shape(p, a))
             if qkv_projection:
-                add_edge(qk_in, f"{n.name}_qk", nodes[qk_in].output_shape)
+                B, S, E = nodes[qk_in].input_shape
+                add_edge(qk_in, f"{n.name}_qk", (2, B, S, E))
+                add_edge(qk_in, f"{n.name}_av", (B, S, E))
             B, h, S, _ = nodes[f"{n.name}_qk"].output_shape
             add_edge(f"{n.name}_qk", f"{n.name}_sm", (B, h, S, S))
             add_edge(f"{n.name}_sm", f"{n.name}_av", (B, h, S, S))
@@ -413,7 +441,8 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
             x, a = qk_inputs[n.name]
             if qkv_projection:
                 add_edge(src_of(x), f"{n.name}_qkv", arrival_shape(x, a))
-                add_edge(f"{n.name}_qkv", n.name, (3,) + arrival_shape(x, a))
+                add_edge(f"{n.name}_qkv", n.name, (2,) + arrival_shape(x, a))
+                add_edge(f"{n.name}_qkv", av_of[n.name], arrival_shape(x, a))      # V
             else:
                 add_edge(src_of(x), n.name, arrival_shape(x, a))
             continue
@@ -431,7 +460,19 @@ def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]
                 nodes[name] = OperatorNode(name, node.op_type, node.input_shape, s, attributes=node.attributes)
 
     gid = graph_id or f"torch_{type(module).__name__}"
-    return OperatorGraph(gid, [nodes[i] for i in order], edges)
+    owner: Dict[str, str] = {}
+    for nid in order:
+        src = nodes[nid].attributes.get("source_fx_node")
+        if src in t.by_name and t.op.get(src) == "MHA":
+            owner[src] = f"MHA:{src}"
+        elif src in t.by_name:
+            owner[src] = nid
+    for ph, nid in input_ids.items():
+        owner[ph] = nid
+    for proj, qk in proj_of.items():
+        owner[proj] = f"{qk}_qkv" if qkv_projection else qk
+    return TraceResult(OperatorGraph(gid, [nodes[i] for i in order], edges), gm, args, dict(t.kind),
+                       dict(t.op), owner)
 
 
 def prods_shape(t, n, roles):

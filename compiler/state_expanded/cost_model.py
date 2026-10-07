@@ -28,7 +28,7 @@ deployments.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Tuple
+from typing import Dict, Iterable, Optional, Tuple
 
 from .profile_schema import (
     BootstrapRecord,
@@ -181,11 +181,23 @@ class StateExpandedCostModel:
                 f"No conversion record for {from_domain}->{to_domain}"
             )
         target_numel = _shape_size(tensor_shape)
+        # a conversion's cost depends only on how many values it carries (the number of
+        # ciphertexts / shares), so a record of the same size is exact for any shape
+        same = [r for r in candidates if _shape_size(r.tensor_shape) == target_numel]
+        if same:
+            return same[0], "exact"
         nearest = min(
             candidates,
             key=lambda r: abs(_shape_size(r.tensor_shape) - target_numel),
         )
         return nearest, "nearest"
+
+    @property
+    def he_to_mpc_min_level(self) -> int:
+        """Levels an HE ciphertext must have left to be converted to MPC (the hardened protocol
+        sends masked values that need headroom); 0 when the profile does not say."""
+        return max([int((c.metadata or {}).get("min_levels_left", 0))
+                    for c in self.profile.conversions if c.from_domain == "HE"] or [0])
 
     def estimate_conversion(
         self,
@@ -232,6 +244,34 @@ class StateExpandedCostModel:
         if not slots or shape is None:
             return 1
         return max(1, -(-_shape_size(shape) // slots))
+
+    @property
+    def bootstrap_min_level(self) -> int:
+        """Levels a ciphertext must have left to be bootstrapped (OpenFHE: 1, its pending rescale);
+        the bootstrap record's metadata["min_level_in"], 0 when it does not say."""
+        rec = self.profile.bootstrap
+        return int((rec.metadata or {}).get("min_level_in", 0)) if rec is not None else 0
+
+    @property
+    def scaled_bootstrap(self) -> Dict[str, float]:
+        """producer node -> s: its values exceed the bootstrapping range (calibration), so they are
+        bootstrapped as x / s, bootstrap, * s, which needs one more level."""
+        return dict((self.profile.metadata or {}).get("scaled_bootstrap", {}))
+
+    def bootstrap_min_level_for(self, producer: Optional[str]) -> int:
+        return self.bootstrap_min_level + (1 if producer is not None and producer in self.scaled_bootstrap else 0)
+
+    def estimate_bootstrap_at(self, net: NetworkSetting, shape, level: Optional[int],
+                              producer: Optional[str] = None) -> CostEstimate:
+        """estimate_bootstrap for a value at HE `level` produced by node `producer` (or the edge
+        "producer->consumer"): infeasible when the value has fewer levels than bootstrapping needs."""
+        if producer is not None and "->" in producer:
+            producer = producer.split("->", 1)[0]
+        est = self.estimate_bootstrap(net, shape)
+        if level is not None and level < self.bootstrap_min_level_for(producer):
+            return CostEstimate(latency_ms=float("inf"), local_compute_ms=est.local_compute_ms,
+                                comm_bytes=est.comm_bytes, comm_rounds=est.comm_rounds, resolution="infeasible")
+        return est
 
     def estimate_bootstrap(self, net: NetworkSetting, shape: Iterable[int] | None = None) -> CostEstimate:
         rec = self.profile.bootstrap
