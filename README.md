@@ -13,7 +13,7 @@
   <a href="cipherflow/README.md#api"><b>API</b></a> |
   <a href="cipherflow/README.md#plan-format"><b>Plan format</b></a> |
   <a href="ROADMAP.md"><b>Roadmap</b></a> |
-  <a href="https://claude.ai/artifact/Jp7U6k8hTuWgWgk2PRcKZF"><b>Website</b></a>
+  <a href="https://claude.ai/artifact/DZBuQxQxf73muUsyQ19ZtS"><b>Website</b></a>
   <!-- | <a href="PAPER_URL"><b>Paper (NeurIPS 2026)</b></a> -->
 </p>
 
