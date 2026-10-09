@@ -1,15 +1,16 @@
 """Embed demo_data.json into template.html.
 
 Outputs
-  cipherflow/demo/cipherflow_demo.html   artifact body (the viewer adds the document skeleton)
-  cipherflow/demo/site/index.html        standalone page for GitHub Pages / any static host
+  docs/index.html                  the standalone page, served by GitHub Pages (any static host works)
+  demo/web/cipherflow_demo.html    artifact body (the viewer adds the document skeleton; not tracked)
 
 Usage (from the repository root):
-    python -m cipherflow.demo.build_page
+    python -m demo.web.build_page
 """
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+SITE = HERE.parents[1] / "docs"
 
 SKELETON_HEAD = """<!doctype html>
 <html lang="en">
@@ -36,11 +37,9 @@ def main() -> None:
     # Standalone: move <title>, font links and <style> into <head>; the rest goes into <body>.
     split = body.index("<div class=\"wrap\">")
     head_part, body_part = body[:split], body[split:]
-    site = HERE / "site"
-    site.mkdir(exist_ok=True)
-    (site / "index.html").write_text(SKELETON_HEAD + head_part + "</head>\n<body>\n" + body_part + "\n</body>\n</html>\n")
-    (site / ".nojekyll").write_text("")
-    print(f"wrote {art} and {site / 'index.html'} ({len(body) / 1e6:.2f} MB)")
+    (SITE / "index.html").write_text(SKELETON_HEAD + head_part + "</head>\n<body>\n" + body_part + "\n</body>\n</html>\n")
+    (SITE / ".nojekyll").write_text("")
+    print(f"wrote {SITE / 'index.html'} and {art} ({len(body) / 1e6:.2f} MB)")
 
 
 if __name__ == "__main__":

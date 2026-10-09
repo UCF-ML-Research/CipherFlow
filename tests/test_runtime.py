@@ -29,7 +29,7 @@ def _plan(net="10Mbps/20ms", security="2pc-dealer", **kw):
 # ------------------------------------------------------------ numerical models vs the measured kernels
 
 def test_he_operators_reproduce_the_measured_kernel_errors():
-    """he_ops's inputs; measured max |error| (development machine): GeLU 5.6e-4, LayerNorm 1.8-2.2e-2
+    """he_ops's inputs; measured max |error| (one CPU, OpenFHE 1.4.2): GeLU 5.6e-4, LayerNorm 1.8-2.2e-2
     (fast) and 5.0-5.3e-3 (precise), Softmax 5.7e-4-9.2e-4 (fast)."""
     torch.manual_seed(1234)
     gen = torch.Generator().manual_seed(1)

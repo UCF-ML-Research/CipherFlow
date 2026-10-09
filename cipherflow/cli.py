@@ -1,4 +1,4 @@
-"""Command-line interface: `cipherflow compile | explain | backends | profile | profiles | selfcheck`."""
+"""Command-line interface: `cipherflow compile | explain | backends | profile | profiles | netbench | selfcheck`."""
 from __future__ import annotations
 
 import argparse
@@ -12,14 +12,56 @@ from .plan import Plan
 from .planning import compile as cf_compile
 
 
+def _torch_module(spec: str):
+    """FILE.py:NAME or package.module:NAME -> the nn.Module (NAME: a module, or a class or
+    function that builds one without arguments)."""
+    import importlib
+    import importlib.util
+    from pathlib import Path
+
+    import torch
+    path, _, name = spec.rpartition(":")
+    if not path or not name:
+        raise ValueError(f"--torch expects FILE.py:NAME or package.module:NAME, got {spec!r}")
+    if path.endswith(".py"):
+        if not Path(path).is_file():
+            raise ValueError(f"--torch: no such file {path}")
+        loader = importlib.util.spec_from_file_location(Path(path).stem, path)
+        mod = importlib.util.module_from_spec(loader)
+        loader.loader.exec_module(mod)
+    else:
+        mod = importlib.import_module(path)
+    obj = getattr(mod, name)
+    module = obj if isinstance(obj, torch.nn.Module) else obj()
+    if not isinstance(module, torch.nn.Module):
+        raise ValueError(f"--torch: {spec} is not an nn.Module and does not build one")
+    return module.eval()
+
+
 def _graph(a):
+    if getattr(a, "torch", None):
+        import torch
+        shape = tuple(int(d) for d in a.input_shape.split(","))
+        return models.from_torch(_torch_module(a.torch), torch.randn(*shape), qkv_projection=not a.no_qkv)
     return getattr(models, a.model)(num_blocks=a.blocks, **({"seq": a.seq} if a.model.startswith("bert") else {"tokens": a.seq}))
 
 
+def _network(a):
+    """--network as given, or measured to --peer (then printed, and kept in a.measured)."""
+    a.measured = None
+    if getattr(a, "peer", None):
+        from .netbench import measure
+        a.measured = measure(a.peer, seconds=a.net_seconds, streams=a.net_streams)
+        print(a.measured.summary())
+        return a.measured.network()
+    return Network.parse(a.network)
+
+
 def _deployment(a):
+    net = _network(a)
     if a.hardware == "local":
-        return Deployment.local(Network.parse(a.network), device=a.device or ""), a.profile or "auto"
-    return Deployment.of(a.hardware, Network.parse(a.network)), a.profile or a.hardware
+        return Deployment.local(net, device=a.device or ""), a.profile or "auto"
+    return Deployment.of(a.hardware, net), a.profile or a.hardware
 
 
 def _cmd_compile(a) -> int:
@@ -29,7 +71,9 @@ def _cmd_compile(a) -> int:
         warnings.simplefilter("ignore", CostExtrapolationWarning)   # explain() prints them
         plan = cf_compile(graph, dep, profile=prof, he=a.he, mpc=a.mpc, security=a.security,
                           min_precision=a.min_precision, strict=a.strict)
-    print(plan.explain())
+    if a.measured is not None:
+        plan.deployment["network_measured"] = a.measured.to_dict()
+    print(plan.explain(steps=a.steps))
     if a.output:
         plan.to_json(a.output)
         print(f"wrote {a.output}")
@@ -37,7 +81,7 @@ def _cmd_compile(a) -> int:
 
 
 def _cmd_explain(a) -> int:
-    print(Plan.from_json(a.plan).explain())
+    print(Plan.from_json(a.plan).explain(steps=a.steps))
     return 0
 
 
@@ -77,6 +121,32 @@ def _cmd_profile(a) -> int:
     return 0
 
 
+def _cmd_netbench(a) -> int:
+    from . import netbench
+    if a.serve:
+        srv = netbench.Server(a.host, a.port)
+        print(f"netbench server on {srv.host}:{srv.port}; on the client: cipherflow netbench --ip THIS_HOST:{srv.port} "
+              f"(or cipherflow compile ... --ip THIS_HOST:{srv.port}). Ctrl-C stops.", flush=True)
+        try:
+            srv.serve()
+        except KeyboardInterrupt:
+            pass
+        return 0
+    if not a.peer:
+        print("cipherflow netbench: give --serve (server side) or --peer HOST[:PORT] (client side)", file=sys.stderr)
+        return 2
+    print(netbench.measure(a.peer, port=a.port, rounds=a.rounds, seconds=a.seconds, streams=a.streams).summary())
+    return 0
+
+
+def _peer_args(p) -> None:
+    p.add_argument("--peer", "--ip", dest="peer", default=None, metavar="HOST[:PORT]",
+                   help="measure the network to a `cipherflow netbench --serve` at HOST (the other party) "
+                        "and plan with it, instead of --network")
+    p.add_argument("--net-seconds", type=float, default=2.0, help="with --peer: seconds of transfer each way")
+    p.add_argument("--net-streams", type=int, default=1, help="with --peer: parallel TCP streams")
+
+
 def _cmd_profiles(a) -> int:
     for k, v in profiles.list_builtin().items():
         print(f"{k:16s} {v}")
@@ -104,19 +174,29 @@ def main(argv=None) -> int:
                         "(no Q/K/V projections; for the paper's profiles)")
     c.add_argument("--blocks", type=int, default=12)
     c.add_argument("--seq", type=int, default=None, help="sequence length / tokens (default 128 / 197)")
+    c.add_argument("--torch", default=None, metavar="FILE.py:NAME",
+                   help="plan a PyTorch encoder instead of --model: NAME is an nn.Module or builds one, e.g. "
+                        "demo/transformer.py:bert (needs PyTorch)")
+    c.add_argument("--input-shape", default="1,128,768", help="with --torch: the hidden states' shape B,S,H")
+    c.add_argument("--no-qkv", action="store_true",
+                   help="with --torch: leave the Q/K/V projections out, as the paper's graphs and profiles do")
     c.add_argument("--hardware", default="cpu",
                    help="cpu | gpu (built-in profiles, one per MPC backend), a built-in profile name "
                         "(e.g. cpu-nexus-sci), or 'local' to plan for this machine")
     c.add_argument("--device", default=None, help="with --hardware local: cpu | cuda (default: detected)")
     c.add_argument("--profile", default=None, help="profile JSON path or 'auto' (overrides --hardware)")
     c.add_argument("--network", default="100Mbps/20ms", help="BANDWIDTH/RTT, e.g. 10Mbps/1ms")
+    _peer_args(c)
     _backend_args(c)
     c.add_argument("--strict", action="store_true",
                    help="refuse cost entries that are not in the profile instead of scaling them")
     c.add_argument("-o", "--output", default=None, help="write plan.json")
+    c.add_argument("--steps", action="store_true",
+                   help="also print the plan operator by operator, with the conversions and bootstraps")
     c.set_defaults(func=_cmd_compile)
     e = sub.add_parser("explain", help="summarize a plan.json")
     e.add_argument("plan")
+    e.add_argument("--steps", action="store_true", help="also print the plan operator by operator")
     e.set_defaults(func=_cmd_explain)
     b = sub.add_parser("backends", help="list MPC backends; with --model, which ones fit a deployment")
     b.add_argument("--model", choices=["bert", "vit", "bert_paper", "vit_paper"], default=None)
@@ -137,6 +217,15 @@ def main(argv=None) -> int:
     m.add_argument("--he", default="nexus", help="HE backend to measure (default: nexus)")
     m.add_argument("--dry-run", action="store_true", help="only report what is missing from the cache")
     m.set_defaults(func=_cmd_profile)
+    n = sub.add_parser("netbench", help="measure the network between the two parties (bandwidth, RTT)")
+    n.add_argument("--serve", action="store_true", help="server side: wait for measurements")
+    n.add_argument("--peer", "--ip", dest="peer", default=None, metavar="HOST[:PORT]", help="client side: measure to HOST")
+    n.add_argument("--host", default="0.0.0.0", help="with --serve: address to listen on")
+    n.add_argument("--port", type=int, default=7787)
+    n.add_argument("--seconds", type=float, default=2.0, help="seconds of transfer each way")
+    n.add_argument("--streams", type=int, default=1, help="parallel TCP streams")
+    n.add_argument("--rounds", type=int, default=50, help="round trips for the RTT")
+    n.set_defaults(func=_cmd_netbench)
     p = sub.add_parser("profiles", help="list built-in profiles")
     p.set_defaults(func=_cmd_profiles)
     sub.add_parser("selfcheck", add_help=False,
@@ -150,7 +239,7 @@ def main(argv=None) -> int:
         a.seq = 128 if a.model.startswith("bert") else 197
     try:
         return a.func(a)
-    except ValueError as exc:            # UnsupportedGraph / UnsupportedOperator / CostExtrapolationError ...
+    except (ValueError, ConnectionError) as exc:   # UnsupportedGraph / UnsupportedOperator / no netbench server ...
         print(f"cipherflow: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
 

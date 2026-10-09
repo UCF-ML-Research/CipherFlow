@@ -459,6 +459,7 @@ def trace_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any
             if s != node.output_shape and _numel(s) == _numel(node.output_shape):
                 nodes[name] = OperatorNode(name, node.op_type, node.input_shape, s, attributes=node.attributes)
 
+    _name_sources(nodes, t, input_ids, proj_of)
     gid = graph_id or f"torch_{type(module).__name__}"
     owner: Dict[str, str] = {}
     for nid in order:
@@ -473,6 +474,53 @@ def trace_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any
         owner[proj] = f"{qk}_qkv" if qkv_projection else qk
     return TraceResult(OperatorGraph(gid, [nodes[i] for i in order], edges), gm, args, dict(t.kind),
                        dict(t.op), owner)
+
+
+_MHA_PARTS = {"qkv": ": q/k/v in_proj", "qk": ": q @ k^T", "sm": ": softmax", "av": ": attn @ v", "op": ".out_proj"}
+
+
+def _where(f) -> str:
+    """Where an fx node sits in the PyTorch model: its module path, and the function for calls."""
+    if f.op == "call_module":
+        return str(f.target)
+    fn = f.target if f.op == "call_method" else _fn_name(f.target)
+    stack = list((f.meta.get("nn_module_stack") or {}).keys())
+    return f"{stack[-1]}: {fn}" if stack else str(fn)
+
+
+def _join(paths: List[str]) -> str:
+    """["a.attn.q", "a.attn.k", "a.attn.v"] -> "a.attn.{q,k,v}"."""
+    if len(paths) == 1:
+        return paths[0]
+    head = paths[0].rsplit(".", 1)[0] + "."
+    if all(p.startswith(head) and "." not in p[len(head):] for p in paths):
+        return head + "{" + ",".join(p[len(head):] for p in paths) + "}"
+    return ", ".join(paths)
+
+
+def _name_sources(nodes, t, input_ids, proj_of) -> None:
+    """Record in each operator's attributes["source"] where it is in the PyTorch model, e.g.
+    "blocks.0.attn.{q,k,v}" (Linear_QKV), "blocks.0.attn: softmax", "blocks.0.mlp.f1"."""
+    by = t.by_name
+    projs: Dict[str, List[str]] = {}
+    for p, qk in proj_of.items():
+        projs.setdefault(qk, []).append(p)
+    mha = {f"{name}_{part}": (name, text) for name in by if t.op.get(name) == "MHA"
+           for part, text in _MHA_PARTS.items()}
+    for nid, node in nodes.items():
+        src = node.attributes.get("source_fx_node")
+        if node.op_type == "Input":
+            where = "input " + ", ".join(ph for ph, i in input_ids.items() if i == nid)
+        elif nid in mha:
+            name, text = mha[nid]
+            where = f"{by[name].target}{text}"
+        elif node.op_type == "Linear_QKV" and nid[:-len("_qkv")] in projs:
+            where = _join([_where(by[p]) for p in projs[nid[:-len("_qkv")]]])
+        elif src in by:
+            where = _where(by[src])
+        else:
+            continue
+        node.attributes["source"] = where
 
 
 def prods_shape(t, n, roles):

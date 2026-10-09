@@ -1,5 +1,41 @@
 # Changelog
 
+## v0.4.0 (2026-10-08)
+
+A Transformer written in PyTorch in, the plan operator by operator out: plans name each operator's place
+in the PyTorch code, the CLI plans PyTorch files and can measure the network between the two parties,
+and the demo, the README and a roadmap are organized around this input and output.
+
+- README: the logo and subtitle with links (demo, roadmap, API); the figure shows each layer's concrete
+  inputs and outputs (PyTorch model, deployment given or measured, `cf.compile`, `plan.json`, backends,
+  `cipherflow.runtime`); sections regrouped (about, demo, quick start, models, backends,
+  running a plan, status, layout, measuring costs). `cipherflow/README.md` drops its status table
+  ([ROADMAP.md](ROADMAP.md) lists what is done and planned); its sections are `API` and `Plan format`.
+- `ROADMAP.md`: what is done and what is planned, along the demo's path (model in, plan out, running it).
+- Plans say where each operator is in the PyTorch code: `from_torch` records it per operator
+  (`"blocks.0.attn.{q,k,v}"`, `"blocks.0.attn: softmax"`, `"blocks.0.mlp.fc1"`), and plan nodes carry
+  it (`node.source`, also in `plan.json`).
+- `plan.steps()` / `plan.explain(steps=True)` / `--steps`: the plan in execution order, every operator
+  with its domain, CKKS levels, kernel and PyTorch location, and the conversions and bootstraps before it.
+- `cipherflow compile --torch FILE.py:NAME --input-shape B,S,H [--no-qkv]` plans a PyTorch encoder
+  from the command line.
+- The network can be measured instead of given: `cipherflow netbench --serve` on the server (another
+  terminal or machine), then `cipherflow compile ... --ip SERVER[:PORT]` (alias `--peer`) on the client
+  measures the RTT (median of one-byte round trips) and the bandwidth each way (bulk TCP transfer,
+  timed at the receiver), plans with the slower direction, and records the measurement in the plan
+  (`deployment.network_measured`). `cipherflow netbench --ip SERVER` only measures, and prints the
+  equivalent `--network` value.
+- The demo is its own folder, `demo/` (was `cipherflow/demo/`, inside the package): the input models
+  (`demo/transformer.py`), the demo as a script (`python -m demo.plan_pytorch_model`), and the page
+  builder (`python -m demo.web.build_data`, `python -m demo.web.build_page`, which now writes
+  `docs/index.html` directly); `demo/README.md` describes its input and output.
+- Demo: its input is PyTorch code (`demo/transformer.py`, BERT-base and ViT-B/16, traced
+  with `from_torch`), shown on the page; its output adds the plan operator by operator (per block, with
+  the conversions and bootstraps before each operator) and a JSON download. The traced BERT keeps the
+  first block's residual (an `Input` node, as `cf.models.bert()` with Q/K/V projections), which the
+  paper's BERT graph leaves out: plans change by up to 1.8% at some settings; ViT plans are unchanged.
+  The reproduce command now uses the paper's profiles (`--profile paper-<hw> --security 2pc-dealer`).
+
 ## v0.3.0 (2026-10-07)
 
 Plans checked and emulated on real data; calibration and value contracts; a hardened HE<->MPC

@@ -54,7 +54,7 @@ class HENumerics:
 
 
 # bootstrap_sigma: the measured max |error| over 32768 random values in [-1, 1] / 4.56 (expected max of
-# 32768 Gaussian samples). Development machine (OpenFHE 1.4.2): fast 6.6e-4, precise 8.4e-8.
+# 32768 Gaussian samples). Measured on one CPU (OpenFHE 1.4.2): fast 6.6e-4, precise 8.4e-8.
 HE_NUMERICS: Dict[str, HENumerics] = {
     "openfhe-fast": HENumerics("openfhe-fast", bootstrap_sigma=1.45e-4),
     "openfhe-precise": HENumerics("openfhe-precise", sm_exp_degree=13, sm_bootstrap_inverse=True,

@@ -77,29 +77,44 @@ td.n, th.n { text-align: right; font-family: var(--font-mono); }
 #tip { position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: var(--surface); font-size: 12px; line-height: 1.45; padding: 7px 9px; border-radius: 5px; max-width: 280px; }
 #tip b { font-weight: 600; }
 .hint { font-size: 12px; color: var(--muted); }
+.code { margin: 0; font-family: var(--font-mono); font-size: 12px; line-height: 1.55; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; max-height: 340px; overflow: auto; white-space: pre; tab-size: 4; }
+.code-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.code-head code, td code { font-family: var(--font-mono); font-size: 12px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); max-height: 520px; overflow-y: auto; }
+.tablewrap table th { position: sticky; top: 0; background: var(--surface); }
+td.dom { font-family: var(--font-mono); font-weight: 500; white-space: nowrap; }
+td.dom .sw { margin-right: 5px; }
+td.acts { color: var(--ink); font-size: 12px; }
+td.acts div { white-space: nowrap; }
+h3 { margin: 0; font-size: 14px; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">CipherFlow v0.1 · demo</div>
+    <div class="eyebrow" id="eyebrow">CipherFlow · demo</div>
     <h1>CipherFlow Planner</h1>
-    <p>Pick a model and a deployment profile; CipherFlow decides, operator by operator, whether to run in homomorphic encryption (HE) or secure multi-party computation (MPC), and where to convert between them or refresh a ciphertext. Every plan shown here was computed by <code>cipherflow.compile</code>.</p>
-    <p class="hint" style="margin-top:6px"><a href="https://github.com/UCF-ML-Research/CipherFlow#where-cipherflow-fits" style="color:inherit">Where CipherFlow fits in the private-inference stack, and its inputs and outputs</a> · <a href="https://github.com/UCF-ML-Research/CipherFlow" style="color:inherit">Code on GitHub</a></p>
+    <p><b>Input:</b> a Transformer written in PyTorch, and a deployment (hardware, bandwidth, round-trip time). <b>Output:</b> CipherFlow's plan — for every operator of the model, whether it runs in homomorphic encryption (HE) or secure multi-party computation (MPC), and where the plan converts between them or refreshes a ciphertext. Every plan shown here was computed by <code>cipherflow.compile</code> on the PyTorch code below.</p>
+    <p class="hint" style="margin-top:6px"><a href="https://github.com/UCF-ML-Research/CipherFlow#about" style="color:inherit">Where CipherFlow fits in the private-inference stack, and its inputs and outputs</a> · <a href="https://github.com/UCF-ML-Research/CipherFlow" style="color:inherit">Code on GitHub</a></p>
   </header>
 
   <section class="panel" aria-labelledby="h-in">
     <div class="panel-head">
-      <div><div class="eyebrow">① Input</div><h2 id="h-in">Model graph</h2></div>
+      <div><div class="eyebrow">① Input</div><h2 id="h-in">Transformer in PyTorch</h2></div>
       <button class="toggle" id="tg-in" aria-pressed="true"><span class="knob"></span>Visualize input</button>
     </div>
     <div class="row">
       <div class="field"><span class="lbl">Model</span><div class="seg" id="seg-model" role="group" aria-label="Model"></div></div>
     </div>
+    <div>
+      <div class="code-head"><code id="code-file"></code><button class="copy" id="copy-code">Copy code</button></div>
+      <pre class="code" id="code" tabindex="0" aria-label="PyTorch code of the model"></pre>
+    </div>
     <div class="facts" id="model-facts"></div>
+    <p class="note" id="trace-note"></p>
     <div id="in-view">
       <div class="diagram" id="dg-in"></div>
-      <div class="legend" style="margin-top:8px"><span>Each column is one encoder block (ViT adds a patch-embedding column and a final LayerNorm); arcs and cross-column links are residual connections. Hover an operator for its tensor shapes.</span></div>
+      <div class="legend" style="margin-top:8px"><span>The traced operator graph. Each column is one encoder block (the client's input, ViT's patch projection and its final LayerNorm get their own columns); arcs and cross-column links are residual connections. Hover an operator for where it is in the code and its tensor shapes.</span></div>
     </div>
   </section>
 
@@ -154,6 +169,15 @@ td.n, th.n { text-align: right; font-family: var(--font-mono); }
         </div>
       </div>
     </div>
+    <div style="display:grid; gap:10px; min-width:0">
+      <div class="panel-head">
+        <h3>Operator by operator</h3>
+        <button class="copy" id="dl">Download this plan (JSON)</button>
+      </div>
+      <div class="row"><div class="field"><span class="lbl">Show</span><div class="seg" id="seg-blk" role="group" aria-label="Encoder block"></div></div></div>
+      <div class="tablewrap"><table id="steps" aria-label="Plan operator by operator"></table></div>
+      <span class="hint" id="steps-hint">Rows are in execution order. Conversions (⇄) and bootstraps (↻) run before the operator in their row, on the output of the operator they name.</span>
+    </div>
   </section>
 </div>
 <div id="tip" hidden></div>
@@ -162,8 +186,8 @@ td.n, th.n { text-align: right; font-family: var(--font-mono); }
 <script>
 (() => {
   const D = JSON.parse(document.getElementById('data').textContent);
-  const TYPE_LABEL = {Attention_QK_MatMul:'Attention QKᵀ', Softmax:'Softmax', Attention_V_MatMul:'Attention ·V', Out_Projection:'Output projection', Residual_Add:'Residual add', LayerNorm:'LayerNorm', FFN_Linear_1:'FFN linear 1', GeLU:'GeLU', FFN_Linear_2:'FFN linear 2'};
-  const state = { model: 'bert', hw: 'gpu', bw: 4, rtt: 3, showIn: true, showOut: true };
+  const TYPE_LABEL = {Input:'Input', Linear_QKV:'Q/K/V projections', Attention_QK_MatMul:'Attention QKᵀ', Softmax:'Softmax', Attention_V_MatMul:'Attention ·V', Out_Projection:'Output projection', Residual_Add:'Residual add', LayerNorm:'LayerNorm', FFN_Linear_1:'FFN linear 1', GeLU:'GeLU', FFN_Linear_2:'FFN linear 2'};
+  const state = { model: 'bert', hw: 'gpu', bw: 4, rtt: 3, showIn: true, showOut: true, blk: 1 };
   try { const s = JSON.parse(localStorage.getItem('cf-demo') || '{}'); Object.assign(state, s); } catch (e) {}
   const save = () => { try { localStorage.setItem('cf-demo', JSON.stringify(state)); } catch (e) {} };
   const $ = (id) => document.getElementById(id);
@@ -171,6 +195,7 @@ td.n, th.n { text-align: right; font-family: var(--font-mono); }
 
   const fmtS = (ms) => { const s = ms / 1000; return s >= 1000 ? (s / 1000).toFixed(s >= 1e4 ? 1 : 2) + ' ks' : s >= 100 ? s.toFixed(0) + ' s' : s.toFixed(1) + ' s'; };
   const fmtShape = (a) => '[' + a.join(', ') + ']';
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
   const bwText = (b) => b.replace('Mbps', ' Mbps').replace('Gbps', ' Gbps');
 
   function seg(el, items, cur, onPick) {
@@ -235,7 +260,7 @@ td.n, th.n { text-align: right; font-family: var(--font-mono); }
         ct.textContent = c;
       });
       const show = (ev) => {
-        const lines = [`<b>${TYPE_LABEL[n.op] || n.op}</b> · ${n.group}`, `in ${fmtShape(n.in)} → out ${fmtShape(n.out)}`];
+        const lines = [`<b>${TYPE_LABEL[n.op] || n.op}</b> · ${n.group}`, `PyTorch: <code>${esc(n.src)}</code>`, `in ${fmtShape(n.in)} → out ${fmtShape(n.out)}`];
         if (dom) {
           lines.push(`runs in <b>${dom[i] === 'H' ? 'HE' : 'MPC'}</b>`);
           if (dom[i] === 'H' && plan.lv[i] >= 0) lines.push(`CKKS level after: ${plan.lv[i]} / ${D.he_level_budget}`);
@@ -276,25 +301,77 @@ td.n, th.n { text-align: right; font-family: var(--font-mono); }
     $('chart').innerHTML = s;
   }
 
+  const blocks = (model) => [...new Set(model.nodes.map(n => n.group).filter(g => g.startsWith('block')))];
+  // which rows a block view shows: the block, plus the input/embedding with the first block and the output with the last
+  function inView(model, n) {
+    if (state.blk === 0) return true;
+    const bs = blocks(model), g = bs[state.blk - 1];
+    return n.group === g || (state.blk === 1 && (n.group === 'input' || n.group === 'embed')) || (state.blk === bs.length && n.group === 'output');
+  }
+
+  function actText(a) {        // [kind, before, src, dst, producer, consumer, cost_ms]
+    const of = a[4] >= 0 ? ` of #${a[4]}` : '';
+    return a[0] === 'c' ? `⇄ ${a[2]} → ${a[3]}${of} · ${fmtS(a[6])}` : `↻ bootstrap${of} · ${fmtS(a[6])}`;
+  }
+
+  function drawSteps(model, plan) {
+    const before = new Map();
+    for (const a of plan.act) { const k = a[1]; if (!before.has(k)) before.set(k, []); before.get(k).push(a); }
+    const rows = model.nodes.map((n, i) => [n, i]).filter(([n]) => inView(model, n)).map(([n, i]) => {
+      const d = plan.dom[i] === 'H' ? 'HE' : 'MPC', c = d === 'HE' ? 'var(--he)' : 'var(--mpc)';
+      const lv = d === 'HE' && plan.lv[i] >= 0 ? plan.lv[i] + ' / ' + D.he_level_budget : '—';
+      const acts = (before.get(i) || []).map(a => `<div>${esc(actText(a))}</div>`).join('');
+      return `<tr><td class="n">${i}</td><td><code>${esc(n.src)}</code></td><td>${TYPE_LABEL[n.op] || n.op}</td>` +
+        `<td class="dom"><span class="sw" style="background:color-mix(in oklab, ${c} 30%, var(--surface)); border-color:${c}"></span>${d}${n.op === 'Input' ? (d === 'HE' ? ' (encrypted)' : ' (shared)') : ''}</td>` +
+        `<td class="n">${lv}</td><td class="acts">${acts}</td></tr>`;
+    });
+    const tail = (before.get(-1) || []).map(a => esc(actText(a))).join(' · ');
+    $('steps').innerHTML = `<thead><tr><th class="n">#</th><th>PyTorch</th><th>Operator</th><th>Runs in</th><th class="n">CKKS level after</th><th>Before it</th></tr></thead><tbody>${rows.join('')}` +
+      (tail && (state.blk === 0 || state.blk === blocks(model).length) ? `<tr><td></td><td colspan="4">before the output reaches the client</td><td class="acts">${tail}</td></tr>` : '') + '</tbody>';
+  }
+
+  function planJson(model, plan) {
+    const bwL = D.bandwidths[state.bw], rtt = D.rtts[state.rtt];
+    return {
+      model: model.label, pytorch: model.torch, input_shape: model.input_shape.split(',').map(Number),
+      deployment: { hardware: D.hardware[state.hw].label, profile: D.hardware[state.hw].detail, bandwidth: bwL, rtt_ms: rtt },
+      cost_ms: plan.cost, strategy: plan.strategy,
+      operators: model.nodes.map((n, i) => ({ step: i, pytorch: n.src, operator: n.op, domain: plan.dom[i] === 'H' ? 'HE' : 'MPC',
+        ckks_level_after: plan.dom[i] === 'H' && plan.lv[i] >= 0 ? plan.lv[i] : null })),
+      actions: plan.act.map(a => ({ kind: a[0] === 'c' ? 'convert' : 'bootstrap', before_step: a[1] >= 0 ? a[1] : 'output',
+        src: a[2] || null, dst: a[3] || null, of_step: a[4] >= 0 ? a[4] : null,
+        to_step: a[5] >= 0 ? a[5] : (a[4] >= 0 ? 'all consumers' : null), cost_ms: a[6] })),
+    };
+  }
+
   function render() {
     const model = D.models[state.model];
     const bwL = D.bandwidths[state.bw], rtt = D.rtts[state.rtt];
     const plan = D.plans[`${state.model}|${state.hw}|${bwL}|${rtt}`];
+    $('eyebrow').textContent = `CipherFlow v${D.cipherflow_version} · demo`;
     seg($('seg-model'), Object.entries(D.models).map(([k, v]) => [k, v.label]), state.model, (k) => { state.model = k; save(); render(); });
     seg($('seg-hw'), Object.entries(D.hardware).map(([k, v]) => [k, v.label]), state.hw, (k) => { state.hw = k; save(); render(); });
+    const nb = blocks(model).length;
+    if (state.blk > nb) state.blk = 0;
+    seg($('seg-blk'), [...blocks(model).map((g, k) => [k + 1, String(k + 1)]), [0, 'All']], state.blk, (k) => { state.blk = k; save(); render(); });
     const hw = D.hardware[state.hw];
     $('hw-note').textContent = hw.detail + (state.hw.includes('_x') ? '. Projected profiles scale local compute only; communication bytes and rounds stay the same.' : '.');
     $('bw').value = state.bw; $('rtt').value = state.rtt;
     $('bw-val').textContent = bwText(bwL); $('rtt-val').textContent = rtt + ' ms';
-    const nOps = model.nodes.length, nRes = model.residual_regions;
-    $('model-facts').innerHTML = `<span>${model.detail}</span><span><b>${nOps}</b> operators</span><span><b>${nRes}</b> residual connections</span><span>token tensor <b>${fmtShape(model.nodes.find(n => n.op === 'LayerNorm').in)}</b></span>`;
+    $('code-file').textContent = model.torch.split(':')[0];
+    $('code').textContent = model.code;
+    const ops = model.nodes.filter(n => n.op !== 'Input'), nOps = ops.length, nRes = model.residual_regions;
+    $('model-facts').innerHTML = `<span>${model.detail}</span><span><b>${nOps}</b> operators</span><span><b>${nRes}</b> residual connections</span><span>input <b>${fmtShape(model.input_shape.split(','))}</b></span>`;
+    $('trace-note').textContent = `cf.models.from_torch traces this code into ${nOps} operators (the graph below; one box per operator). ` +
+      'The q, k, v projections are left out of the plan (qkv_projection=False), as in the paper: its profiles have no cost for them.';
     $('in-view').hidden = !state.showIn; $('tg-in').setAttribute('aria-pressed', String(state.showIn));
     $('out-view').hidden = !state.showOut; $('tg-out').setAttribute('aria-pressed', String(state.showOut));
     if (state.showIn) drawGraph($('dg-in'), model, null);
     if (!plan) { $('stats').textContent = 'No plan computed for this setting.'; return; }
     if (state.showOut) drawGraph($('dg-out'), model, plan);
 
-    const he = [...plan.dom].filter(c => c === 'H').length, conv = plan.act.filter(a => a[0] === 'c').length, boot = plan.act.filter(a => a[0] === 'b').length;
+    const he = model.nodes.filter((n, i) => n.op !== 'Input' && plan.dom[i] === 'H').length;
+    const conv = plan.act.filter(a => a[0] === 'c').length, boot = plan.act.filter(a => a[0] === 'b').length;
     const hybrid = Math.min(plan.base.BumbleBee, plan.base.BOLT, plan.base.BLB);
     const bestStatic = Math.min(...Object.values(plan.base));
     const spH = hybrid / plan.cost.total_ms, spS = bestStatic / plan.cost.total_ms;
@@ -309,17 +386,19 @@ td.n, th.n { text-align: right; font-family: var(--font-mono); }
 
     drawChart(plan);
     const byType = {};
-    model.nodes.forEach((n, i) => { const t = byType[n.op] || (byType[n.op] = { H: 0, M: 0 }); t[plan.dom[i]]++; });
+    model.nodes.forEach((n, i) => { if (n.op === 'Input') return; const t = byType[n.op] || (byType[n.op] = { H: 0, M: 0 }); t[plan.dom[i]]++; });
     $('optable').innerHTML = `<thead><tr><th>Operator type</th><th class="n">HE</th><th class="n">MPC</th></tr></thead><tbody>` +
       Object.entries(byType).map(([k, v]) => `<tr><td>${TYPE_LABEL[k] || k}</td><td class="n">${v.H}</td><td class="n">${v.M}</td></tr>`).join('') + '</tbody>';
+    drawSteps(model, plan);
     const net = `${bwL}/${rtt}ms`;
+    const src = `--torch ${model.torch} --input-shape ${model.input_shape} --no-qkv`;
     if (state.hw === 'cpu' || state.hw === 'gpu') {
-      $('cmd').textContent = `cipherflow compile --model ${state.model} --hardware ${state.hw} --network ${net} -o plan.json`;
-      $('cmd-hint').textContent = 'Runs the same planner on the built-in profile.';
+      $('cmd').textContent = `cipherflow compile ${src} --hardware ${state.hw} --profile paper-${state.hw} --security 2pc-dealer --network ${net} --steps`;
+      $('cmd-hint').textContent = 'Runs the same planner on the paper\'s profile and prints this plan operator by operator.';
     } else {
       const f = state.hw.split('_x')[1];
-      $('cmd').textContent = `cf.compile(cf.models.${state.model}(), cf.Deployment.of("gpu", "${net}"), profile=cf.profiles.scale_compute(cf.load_profile("gpu"), ${f}))`;
-      $('cmd-hint').textContent = 'Python API: projected profiles are built with profiles.scale_compute.';
+      $('cmd').textContent = `cf.compile(cf.models.from_torch(${model.torch.split(':')[1]}(), torch.randn(${model.input_shape}), qkv_projection=False), cf.Deployment.of("gpu", "${net}"), profile=cf.profiles.scale_compute(cf.load_profile("paper-gpu"), ${f}), security="2pc-dealer")`;
+      $('cmd-hint').textContent = 'Python API (with from demo.transformer import ' + model.torch.split(':')[1] + '): projected profiles are built with profiles.scale_compute.';
     }
   }
 
@@ -330,6 +409,17 @@ td.n, th.n { text-align: right; font-family: var(--font-mono); }
   $('rtt').addEventListener('input', (e) => { state.rtt = +e.target.value; save(); render(); });
   $('tg-in').addEventListener('click', () => { state.showIn = !state.showIn; save(); render(); });
   $('tg-out').addEventListener('click', () => { state.showOut = !state.showOut; save(); render(); });
+  $('copy-code').addEventListener('click', () => {
+    navigator.clipboard?.writeText($('code').textContent).then(() => { $('copy-code').textContent = 'Copied'; setTimeout(() => $('copy-code').textContent = 'Copy code', 1400); }).catch(() => {});
+  });
+  $('dl').addEventListener('click', () => {
+    const model = D.models[state.model], plan = D.plans[`${state.model}|${state.hw}|${D.bandwidths[state.bw]}|${D.rtts[state.rtt]}`];
+    if (!plan) return;
+    const blob = new Blob([JSON.stringify(planJson(model, plan), null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = `cipherflow_${state.model}_${state.hw}_${D.bandwidths[state.bw]}_${D.rtts[state.rtt]}ms.json`;
+    document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
   $('copy').addEventListener('click', () => {
     const t = $('cmd').textContent;
     navigator.clipboard?.writeText(t).then(() => { $('copy').textContent = 'Copied'; setTimeout(() => $('copy').textContent = 'Copy', 1400); })

@@ -393,6 +393,9 @@ def _plan_with(graph, deployment, cand: Candidate, *, safe, strict, verbose, cal
                 else compile_plan(graph, prof, net, level_deltas=deltas))
     plan = Plan.from_compiled(compiled, graph, prof, deployment)
     base_ops = {n.node_id: n.op_type for n in base_graph.nodes}
+    sources = {n.node_id: (n.attributes or {}).get("source") for n in base_graph.nodes}
+    for n in plan.nodes:                         # where each operator is in the PyTorch model
+        n.source = sources.get(n.id)
     for n in plan.nodes:
         if n.id in kernels:                      # back to the model's op type; the kernel says which
             n.op_type = base_ops[n.id]

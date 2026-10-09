@@ -24,6 +24,8 @@ class NodePlacement:
     cost_source: Optional[str] = None  # "exact" profile record, "scaled" from the nearest shape, or "input"
     backend: Optional[str] = None      # the HE or MPC backend name, or "client" (Input)
     kernel: Optional[Dict] = None      # HE kernel variant and its parameters, e.g. {"kernel": "wide", "bound": 64}
+    source: Optional[str] = None       # where the operator is in the PyTorch model (from_torch), e.g.
+                                       # "blocks.0.attn.{q,k,v}", "blocks.0.attn: softmax"
 
 
 @dataclass
@@ -119,7 +121,8 @@ class Plan:
         for n in graph.nodes:
             dom = compiled.node_assignment[n.node_id]
             lin, lout = levels.get(n.node_id, (None, None))
-            nodes.append(NodePlacement(n.node_id, n.op_type, dom, lin, lout))
+            nodes.append(NodePlacement(n.node_id, n.op_type, dom, lin, lout,
+                                       source=(n.attributes or {}).get("source")))
 
         hw = deployment.hardware
         return cls(
@@ -165,7 +168,62 @@ class Plan:
             "bootstraps": sum(a.kind == "bootstrap" for a in self.actions),
         }
 
-    def explain(self) -> str:
+    def steps(self) -> List[Dict]:
+        """The plan in execution order: every operator with its domain, CKKS levels, kernel and
+        place in the PyTorch model, each preceded by the conversions and bootstraps that run before
+        it (an action's `edge` names the tensor it applies to); actions on the output come last."""
+        before: Dict[str, List[Action]] = {}
+        for a in self.actions:
+            before.setdefault(a.before, []).append(a)
+
+        def action(a: Action) -> Dict:
+            d = {"step": a.kind, "edge": a.edge, "cost_ms": a.cost_ms}
+            if a.kind == "convert":
+                d.update(src=a.src, dst=a.dst, tensor_shape=a.tensor_shape)
+            else:
+                d.update(level_in=a.level_in)
+            return d
+
+        out: List[Dict] = []
+        for n in self.nodes:
+            out += [action(a) for a in before.get(n.id, [])]
+            out.append({"step": "operator", "id": n.id, "op_type": n.op_type, "domain": n.domain,
+                        "level_in": n.level_in, "level_out": n.level_out, "kernel": n.kernel,
+                        "source": n.source})
+        out += [action(a) for a in before.get("<output>", [])]
+        return out
+
+    def explain_steps(self) -> str:
+        """steps() as a table: one line per operator, conversions and bootstraps indented above it."""
+        lines = [f"  {'#':>4}  {'operator':22s} {'domain':6s} {'CKKS level':10s} "
+                 + ("PyTorch" if any(n.source for n in self.nodes) else "node")]
+        steps = self.steps()
+        num = {s["id"]: i for i, s in enumerate(t for t in steps if t["step"] == "operator")}
+        k = 0
+        for s in steps:
+            if s.get("edge"):
+                p, c = s["edge"]
+                edge = f"(#{num.get(p, p)} -> " + ("all its consumers)" if c == "*" else f"#{num.get(c, c)})")
+            else:
+                edge = ""
+            if s["step"] == "convert":
+                lines.append(f"  {'':4s}    convert {s['src']} -> {s['dst']}  {s['tensor_shape']}  "
+                             f"{edge}  {s['cost_ms'] / 1e3:.2f} s")
+            elif s["step"] == "bootstrap":
+                lines.append(f"  {'':4s}    bootstrap at level {s['level_in']}  {edge}  {s['cost_ms'] / 1e3:.2f} s")
+            else:
+                lv = f"{s['level_in']} -> {s['level_out']}" if s["level_in"] is not None else ""
+                where = s["source"] or s["id"]
+                if s["op_type"] == "Input":
+                    where += f" ({'encrypted' if s['domain'] == 'HE' else 'secret-shared'} by the client)"
+                kern = s["kernel"]
+                op = s["op_type"] + (f" [{kern['kernel']}]" if kern else "")
+                lines.append(f"  {k:4d}  {op:22s} {s['domain']:6s} {lv:10s} {where}")
+                k += 1
+        return "\n".join(lines)
+
+    def explain(self, steps: bool = False) -> str:
+        """Summary of the plan; steps=True adds the operator-by-operator table (explain_steps)."""
         c, k = self.cost, self.counts()
         d = self.deployment
         lines = [
@@ -177,6 +235,11 @@ class Plan:
             f"{k['conversions']} conversions, {k['bootstraps']} bootstraps, "
             f"{c['comm_bytes'] / 2**30:.2f} GiB online communication",
         ]
+        m = d.get("network_measured")
+        if m:
+            lines.append(f"  network measured to {m['peer']}: RTT {m['rtt_ms']:.3g} ms, client->server "
+                         f"{m['up_bps'] / 1e6:.1f} Mbps, server->client {m['down_bps'] / 1e6:.1f} Mbps "
+                         "(planned with the slower direction)")
         if self.he_backend:
             from .backends import HE_BACKENDS
             hb = HE_BACKENDS.get(self.he_backend)
@@ -202,6 +265,9 @@ class Plan:
             by_type.setdefault(n.op_type, {"HE": 0, "MPC": 0})[n.domain] += 1
         for op, cnt in by_type.items():
             lines.append(f"    {op:22s} HE {cnt['HE']:3d}  MPC {cnt['MPC']:3d}")
+        if steps:
+            lines += ["  operator by operator (execution order; conversions and bootstraps run before the "
+                      "operator below them):", self.explain_steps()]
         return "\n".join(lines)
 
     # ------------------------------------------------------------ serialization

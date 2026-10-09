@@ -1,48 +1,68 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="840" viewBox="0 0 1100 840" role="img" aria-label="CipherFlow in the private-inference stack: inputs and outputs">
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="990" viewBox="0 0 1120 990" role="img" aria-label="CipherFlow in the private-inference stack: inputs and outputs">
 <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2328"/></marker></defs>
-<rect x="270" y="20" width="580" height="100" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
-<line x1="270" y1="64" x2="850" y2="64" stroke="#d1d9e0" stroke-width="1.4"/>
-<text x="560.0" y="50" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Model Layer</text>
-<text x="560" y="100" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Model graph / IR</text>
-<line x1="560" y1="120" x2="560" y2="176" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
-<text x="574" y="155" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="18" font-weight="600" fill="#1f2328" text-anchor="start">① Graph G = (V, E)</text>
-<rect x="270" y="178" width="580" height="236" rx="10" fill="#ddf4ff" stroke="#0969da" stroke-width="2.2"/>
-<line x1="270" y1="222" x2="850" y2="222" stroke="#0969da" stroke-width="2.2"/>
-<text x="560.0" y="208" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Planning Layer</text>
-<text x="560" y="262" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="24" font-weight="700" fill="#1f2328" text-anchor="middle">CipherFlow</text>
-<rect x="284" y="284" width="164" height="54" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
-<text x="366.0" y="317" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="middle">MicroBench</text>
-<rect x="478" y="284" width="164" height="54" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
-<text x="560.0" y="317" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="middle">State expansion</text>
-<line x1="451" y1="311" x2="475" y2="311" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
-<rect x="672" y="284" width="164" height="54" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
-<text x="754.0" y="317" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="middle">BlockFold</text>
-<line x1="645" y1="311" x2="669" y2="311" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
-<text x="560" y="390" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="middle">plan = cipherflow.compile(graph, deployment, profile)</text>
-<rect x="20" y="224" width="222" height="146" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
-<line x1="20" y1="268" x2="242" y2="268" stroke="#d1d9e0" stroke-width="1.4"/>
-<text x="131.0" y="254" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Deployment</text>
-<text x="36" y="300" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="start">② D = (HW, BW, RTT)</text>
-<text x="36" y="328" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#59636e" text-anchor="start">hardware: CPU or GPU</text>
-<text x="36" y="352" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#59636e" text-anchor="start">network bandwidth · RTT</text>
-<line x1="242" y1="297" x2="268" y2="297" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
-<line x1="390" y1="414" x2="390" y2="508" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
-<text x="404" y="468" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="18" font-weight="600" fill="#1f2328" text-anchor="start">④ deploy plan</text>
-<line x1="700" y1="508" x2="700" y2="416" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
-<text x="714" y="468" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="18" font-weight="600" fill="#1f2328" text-anchor="start">③ methods + measured costs</text>
-<rect x="270" y="510" width="580" height="156" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
-<line x1="270" y1="554" x2="850" y2="554" stroke="#d1d9e0" stroke-width="1.4"/>
-<text x="560.0" y="540" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Backend Layer</text>
-<rect x="288" y="570" width="262" height="80" rx="10" fill="#dcf3ea" stroke="#1a8f6e" stroke-width="1.8"/>
-<text x="419.0" y="604" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="middle">HE: SEAL · Phantom</text>
-<text x="419.0" y="630" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#59636e" text-anchor="middle">CPU · CUDA</text>
-<rect x="570" y="570" width="262" height="80" rx="10" fill="#fde9e0" stroke="#eb6834" stroke-width="1.8"/>
-<text x="701.0" y="604" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="middle">MPC: SCI · CrypTen</text>
-<text x="701.0" y="630" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#59636e" text-anchor="middle">CPU · GPU</text>
-<line x1="560" y1="666" x2="560" y2="702" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
-<rect x="270" y="704" width="580" height="116" rx="10" fill="none" stroke="#d1d9e0" stroke-width="1.4" stroke-dasharray="6 5"/>
-<line x1="270" y1="748" x2="850" y2="748" stroke="#d1d9e0" stroke-width="1.4" stroke-dasharray="6 5"/>
-<text x="560.0" y="734" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Execution / Serving</text>
-<text x="560" y="780" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="400" fill="#1f2328" text-anchor="middle">runtime consume plan</text>
-<text x="560" y="806" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="400" fill="#1f2328" text-anchor="middle">runtime adapter</text>
+<rect x="290" y="20" width="580" height="128" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
+<line x1="290" y1="64" x2="870" y2="64" stroke="#d1d9e0" stroke-width="1.4"/>
+<text x="580.0" y="50" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Model Layer</text>
+<text x="580" y="92" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">PyTorch model → operator graph</text>
+<text x="580" y="116" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">nn.Module, e.g. demo/transformer.py (BERT-base, ViT-B/16)</text>
+<text x="580" y="138" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">traced by cf.models.from_torch into operators + residuals</text>
+<line x1="580" y1="148" x2="580" y2="204" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="594" y="172" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="18" font-weight="600" fill="#1f2328" text-anchor="start">① graph G = (V, E)</text>
+<text x="594" y="194" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">operators · tensor shapes · residual edges</text>
+<rect x="290" y="206" width="580" height="262" rx="10" fill="#ddf4ff" stroke="#0969da" stroke-width="2.2"/>
+<line x1="290" y1="250" x2="870" y2="250" stroke="#0969da" stroke-width="2.2"/>
+<text x="580.0" y="236" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Planning Layer</text>
+<text x="580" y="286" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="24" font-weight="700" fill="#1f2328" text-anchor="middle">CipherFlow</text>
+<rect x="302" y="304" width="168" height="64" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
+<text x="386.0" y="331" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="16" font-weight="600" fill="#1f2328" text-anchor="middle">MicroBench</text>
+<text x="386.0" y="353" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13" font-weight="400" fill="#59636e" text-anchor="middle">measures missing costs</text>
+<rect x="496" y="304" width="168" height="64" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
+<text x="580.0" y="331" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="16" font-weight="600" fill="#1f2328" text-anchor="middle">State expansion</text>
+<text x="580.0" y="353" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13" font-weight="400" fill="#59636e" text-anchor="middle">domain × CKKS level</text>
+<line x1="473" y1="336" x2="493" y2="336" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="690" y="304" width="168" height="64" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
+<text x="774.0" y="331" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="16" font-weight="600" fill="#1f2328" text-anchor="middle">BlockFold</text>
+<text x="774.0" y="353" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13" font-weight="400" fill="#59636e" text-anchor="middle">folds residual blocks</text>
+<line x1="667" y1="336" x2="687" y2="336" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="580" y="424" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="600" fill="#1f2328" text-anchor="middle">plan = cf.compile(graph, deployment, profile, calibration=None)</text>
+<text x="580" y="450" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">returns plan.json · plan.explain(steps=True) · plan.steps()</text>
+<rect x="14" y="238" width="256" height="196" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
+<line x1="14" y1="282" x2="270" y2="282" stroke="#d1d9e0" stroke-width="1.4"/>
+<text x="142.0" y="268" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Deployment</text>
+<text x="28" y="310" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="start">② D = (HW, BW, RTT)</text>
+<text x="28" y="334" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">HW: cpu | gpu profile,</text>
+<text x="44" y="354" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">or this machine (MicroBench)</text>
+<text x="28" y="378" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">BW/RTT: --network 10Mbps/1ms,</text>
+<text x="44" y="398" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">or measured: --ip SERVER</text>
+<text x="28" y="422" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">security: 2pc | 2pc-dealer</text>
+<line x1="270" y1="336" x2="288" y2="336" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
+<line x1="400" y1="468" x2="400" y2="576" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="414" y="500" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="18" font-weight="600" fill="#1f2328" text-anchor="start">④ plan.json</text>
+<text x="414" y="522" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">each operator: HE | MPC, level, kernel</text>
+<text x="414" y="542" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">each edge: conversions, bootstraps</text>
+<line x1="720" y1="576" x2="720" y2="470" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="734" y="500" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="18" font-weight="600" fill="#1f2328" text-anchor="start">③ methods + measured costs</text>
+<text x="734" y="522" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">per operator and domain: time,</text>
+<text x="734" y="542" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">bytes, rounds, CKKS levels used</text>
+<rect x="290" y="578" width="580" height="196" rx="10" fill="#f6f8fa" stroke="#d1d9e0" stroke-width="1.4"/>
+<line x1="290" y1="622" x2="870" y2="622" stroke="#d1d9e0" stroke-width="1.4"/>
+<text x="580.0" y="608" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Backend Layer</text>
+<rect x="300" y="636" width="272" height="96" rx="10" fill="#dcf3ea" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="436.0" y="666" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="middle">HE: OpenFHE · NEXUS</text>
+<text x="436.0" y="690" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">OpenFHE CKKS (CPU)</text>
+<text x="436.0" y="712" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">NEXUS: SEAL (CPU), Phantom (CUDA)</text>
+<rect x="588" y="636" width="272" height="96" rx="10" fill="#fde9e0" stroke="#eb6834" stroke-width="1.8"/>
+<text x="724.0" y="666" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="600" fill="#1f2328" text-anchor="middle">MPC: SCI · SHAFT</text>
+<text x="724.0" y="690" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">SCI/BOLT: 2PC (CPU)</text>
+<text x="724.0" y="712" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">SHAFT: 2PC + dealer (CPU, GPU)</text>
+<text x="580" y="758" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">HE ⇄ MPC conversions (hardened for OpenFHE) · bootstrapping</text>
+<line x1="580" y1="774" x2="580" y2="808" stroke="#1f2328" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="594" y="796" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">runs the plan</text>
+<rect x="290" y="810" width="580" height="160" rx="10" fill="none" stroke="#d1d9e0" stroke-width="1.4"/>
+<line x1="290" y1="854" x2="870" y2="854" stroke="#d1d9e0" stroke-width="1.4"/>
+<text x="580.0" y="840" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="21" font-weight="700" fill="#1f2328" text-anchor="middle">Execution / Serving</text>
+<text x="580" y="882" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="16" font-weight="600" fill="#1f2328" text-anchor="middle">cipherflow.runtime: the plan on real inputs</text>
+<text x="580" y="906" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">check_plan (domains, levels) · calibrate (value ranges)</text>
+<text x="580" y="928" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">emulate: error vs PyTorch, GLUE accuracy (no cryptography)</text>
+<text x="580" y="952" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="middle">encrypted two-party execution: planned (ROADMAP.md §6)</text>
 </svg>

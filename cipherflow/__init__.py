@@ -24,7 +24,7 @@ __all__ = ["compile", "Deployment", "Hardware", "Network", "Plan", "models", "pr
            "UnsupportedOperator", "UnsupportedGraph", "UnsupportedModel", "CostExtrapolationError",
            "CostExtrapolationWarning", "check_graph", "errors", "match", "UnsupportedBackend",
            "Calibration"]
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 
 def __getattr__(name):                  # cipherflow.runtime needs PyTorch: import it on first use

@@ -17,7 +17,7 @@ cd CipherFlow
 pip install -e .
 ```
 
-## Python
+## API
 
 ```python
 import cipherflow as cf
@@ -126,40 +126,46 @@ cipherflow profile --model bert --device cpu --dry-run  # what this machine stil
 cipherflow profile --model bert --device cpu            # measure it (MicroBench)
 cipherflow compile --model bert --hardware local --device cpu --network 100Mbps/20ms
 cipherflow explain plan.json
+cipherflow explain plan.json --steps                    # operator by operator
+
+# measure the network to the other party instead of giving --network
+cipherflow netbench --serve                             # on the server (another terminal or machine)
+cipherflow netbench --ip SERVER_IP                      # on the client: RTT and bandwidth each way
+cipherflow compile --model bert --ip SERVER_IP -o plan.json   # measure, then plan with it
+
+# a Transformer written in PyTorch (FILE.py:NAME or package.module:NAME; NAME is an nn.Module or builds one)
+cipherflow compile --torch demo/transformer.py:bert --input-shape 1,128,768 \
+    --hardware cpu --network 10Mbps/1ms --steps -o plan.json
 ```
 
-## Plan format (`cipherflow.plan/v1`)
+`--steps` (and `plan.explain(steps=True)`, `plan.steps()` in Python) lists the plan in execution
+order: every operator with its domain, CKKS levels and kernel, where it is in the PyTorch code
+(for `--torch` / `from_torch` models), and the conversions and bootstraps that run before it:
+
+```
+     #  operator               domain CKKS level PyTorch
+     0  Input                  HE     8 -> 8     input x (encrypted by the client)
+     1  Linear_QKV             HE     8 -> 7     blocks.0.attn.{q,k,v}
+          convert HE -> MPC  [2, 1, 128, 768]  (#1 -> #2)  2.76 s
+     2  Attention_QK_MatMul    MPC               blocks.0.attn: matmul
+     3  Softmax                MPC               blocks.0.attn: softmax
+```
+
+## Plan format
+
+Plans are JSON with the schema `cipherflow.plan/v1`.
 
 `nodes` lists each operator with its `domain` and, for HE, `level_in` / `level_out`;
 `actions` lists conversions (`src` → `dst`, tensor shape) and bootstraps, each attached
 to the operator it precedes; `cost` gives total latency, its breakdown, and online
 HE–MPC communication. Each node's `cost_source` is `exact` (profile record) or `scaled`
-(nearest profiled shape); `warnings` lists scaled entries and contract exclusions.
-
-## Status
-
-| | |
-|---|---|
-| planner (StateExp + BlockFold), cost model, profiles, plan.json, CLI | done |
-| explicit limits: cost-source report and `strict`, method contracts, graph check | done (v0.1.1) |
-| several MPC backends (`mpc=`, `security=`, `cf.match`): `sci`, `shaft` | done (v0.2.0) |
-| several HE backends (`he=`, `min_precision=`), per-ciphertext bootstrapping, methods that bootstrap internally | done (v0.2.0) |
-| measured profiles: SCI and SHAFT two-party operators, HE<->MPC conversion with SEAL | done (v0.2.0) |
-| OpenFHE HE backend: ten operators, bootstrapping and conversions on one 128-bit CKKS parameter set, measured | done (v0.2.0) |
-| Q/K/V projections as an operator (`Linear_QKV`), measured on every backend; paper graphs kept as `bert_paper` / `vit_paper` | done (v0.2.0) |
-| plan checks and emulation on real data (`cipherflow.runtime`: `check_plan`, `emulate`, GLUE by emulation) | done (v0.3.0) |
-| calibration and value contracts (`runtime.calibrate`, `compile(..., calibration=)`), margins from measured dev-set gaps | done (v0.3.0) |
-| hardened HE<->MPC conversion (OpenFHE): statistically hiding masks, exact decoding, wrap-free MPC -> HE | done (v0.3.0) |
-| wide-range OpenFHE kernels (GeLU, Softmax, LayerNorm), chosen per node from the calibration | done (v0.3.0) |
-| bootstrapping's level and amplitude limits in the planner, static baselines and emulator | done (v0.3.0) |
-| NEXUS on one executable parameter set; hardened NEXUS (SEAL) conversion; SPU (Cheetah, 2PC) backend | planned |
-| `from_torch` for encoder stacks (hand-written, `nn.MultiheadAttention`, HF `BertEncoder`/`ViTEncoder`) | done (v0.1.1) |
-| automatic MicroBench (`profile="auto"`, cached, incremental) | done on CPU (NEXUS-CKKS, SCI/BOLT); GPU: pass a measured profile |
-| decoder LLMs, `from_onnx`, embeddings / task heads | planned (see the roadmap) |
-| encrypted execution of a plan (runtime adapter) | planned |
+(nearest profiled shape); `warnings` lists scaled entries and contract exclusions. For models
+from PyTorch, each node's `source` says where it is in the code (`"blocks.0.attn.{q,k,v}"`,
+`"blocks.0.attn: softmax"`, `"blocks.0.mlp.fc1"`).
 
 ## Demo
 
-`python -m cipherflow.demo.build_data` precomputes plans over a grid of models,
-hardware profiles, bandwidths and RTTs; `python -m cipherflow.demo.build_page`
-embeds them into `cipherflow/demo/cipherflow_demo.html`.
+[`demo/`](../demo) (repository root) holds the demo: Transformers written in PyTorch
+(`demo/transformer.py`) as the input, and the plan operator by operator as the output, from the
+command line (`python -m demo.plan_pytorch_model`) or in the interactive page (`docs/index.html`,
+built by `demo/web`). See [`demo/README.md`](../demo/README.md).
