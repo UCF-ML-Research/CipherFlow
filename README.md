@@ -30,7 +30,7 @@ network, which is either given or measured between the two parties. It returns a
 operator, whether it runs in HE or MPC and where to convert or bootstrap, with the expected latency and
 communication. It also checks that plan and emulates it on real inputs.
 
-CipherFlow plans against an abstraction of the backends rather than their internals. A backend is a set of
+CipherFlow plans against an abstraction of the backends. A backend is a set of
 *methods*, each one operator in one domain with the CKKS levels it consumes, the shapes and value ranges it
 accepts, and its measured cost. The backend also supplies the measured cost of its HE↔MPC conversions and
 bootstrapping. A library plugs in by registering its methods and a cost profile, which MicroBench can
@@ -45,11 +45,11 @@ SHAFT/CrypTen (two parties and a trusted dealer, CPU and GPU). SPU is planned ([
 
 | | interface | contents |
 |---|---|---|
-| ① input | operator graph `G = (V, E)` | `cf.models.from_torch(module, example)` traces a PyTorch `nn.Module` (e.g. [`demo/transformer.py`](demo/transformer.py)) into operators: Q/K/V projections, attention matmuls, Softmax, LayerNorm, GeLU, linear layers, residual adds. It records their tensor shapes, the residual edges, and where each operator is in the code. Built-in graphs (`cf.models.bert()`, `vit()`) give the same graphs without PyTorch. |
-| ② input | deployment `D = (HW, BW, RTT)` | The hardware: a built-in `cpu` or `gpu` profile, or this machine measured by MicroBench. The network: given as `--network 10Mbps/1ms`, or measured to the other party (`cipherflow netbench`, `--ip SERVER`). The security model: `2pc` (no third party) or `2pc-dealer`. |
-| ③ input | backend methods + measured costs | For each operator and domain: local time, bytes and rounds, CKKS levels consumed, shape and value contracts, and kernel variants (e.g. wide-range GeLU). Also the costs of HE↔MPC conversions (hardened for OpenFHE) and bootstrapping. |
-| optional input | calibration | `cf.runtime.calibrate(model, inputs)` records each operator's value ranges on real inputs. With it, operators stay out of HE where an approximation would not hold, and each node gets its HE kernel (see [Running a plan on real data](#running-a-plan-on-real-data)). |
-| ④ output | `plan.json` (`cipherflow.plan/v1`) | For each operator: its domain, CKKS levels, HE kernel and place in the PyTorch code. On each edge: the conversions and bootstraps. Also the latency with its breakdown, and the online communication. `plan.explain(steps=True)` prints it operator by operator; `cipherflow.runtime` checks it and emulates it on real inputs. |
+| ① input | operator graph `G = (V, E)` | operators, tensor shapes and residual edges, traced from a PyTorch `nn.Module` by `cf.models.from_torch` (or built in: `cf.models.bert()`, `vit()`) |
+| ② input | deployment `D = (HW, BW, RTT)` | hardware profile (`cpu`, `gpu`, or measured by MicroBench); network (`--network 10Mbps/1ms`, or measured with `--ip SERVER`); security model (`2pc`, `2pc-dealer`) |
+| ③ input | backend methods + measured costs | per operator and domain: time, bytes, rounds, CKKS levels, contracts; costs of HE↔MPC conversions and bootstrapping |
+| optional input | calibration | value ranges on real inputs (`cf.runtime.calibrate`), so operators stay out of HE where an approximation would not hold |
+| ④ output | `plan.json` | per operator: HE or MPC, CKKS levels, kernel; per edge: conversions and bootstraps; latency and communication |
 
 ## Demo
 
