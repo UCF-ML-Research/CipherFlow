@@ -167,5 +167,5 @@ from PyTorch, each node's `source` says where it is in the code (`"blocks.0.attn
 
 [`demo/`](../demo) (repository root) holds the demo: Transformers written in PyTorch
 (`demo/transformer.py`) as the input, and the plan operator by operator as the output, from the
-command line (`python -m demo.plan_pytorch_model`) or in the interactive page (`docs/index.html`,
+command line (`python -m demo.plan_pytorch_model`) or in the interactive page (`docs/planner/index.html`,
 built by `demo/web`). See [`demo/README.md`](../demo/README.md).

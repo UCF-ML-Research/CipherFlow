@@ -1,9 +1,9 @@
 """Render the demo's terminal sessions as animated GIFs, from real runs of the commands.
 
-    python demo/assets/make_terminal_gifs.py          # from the repository root; needs Pillow
+    python demo/make_terminal_gifs.py          # from the repository root; needs Pillow
 
-writes demo/assets/demo_network_given.gif (one terminal: the network given with --network) and
-demo/assets/demo_network_measured.gif (two terminals: `cipherflow netbench --serve`, then the
+writes docs/assets/demo_network_given.gif (one terminal: the network given with --network) and
+docs/assets/demo_network_measured.gif (two terminals: `cipherflow netbench --serve`, then the
 client plans with the network it measures to it; both on this host, so the link is loopback).
 The text in the frames is the commands' actual output (stderr, i.e. warnings, left out); only the
 pacing -- typing, and output appearing line by line -- is staged.
@@ -18,8 +18,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-REPO = Path(__file__).resolve().parents[2]
-OUT = Path(__file__).resolve().parent
+REPO = Path(__file__).resolve().parents[1]
+OUT = REPO / "docs" / "assets"                     # served with the website; README and demo/README use them
 FONT = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 14)
 BOLD = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 14)
 CW, LH, PAD, BAR = 8.43, 18, 14, 30                 # char width, line height, padding, title bar

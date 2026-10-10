@@ -56,7 +56,7 @@ SHAFT/CrypTen (two parties and a trusted dealer, CPU and GPU). SPU is planned ([
 A Transformer written in PyTorch goes in. The plan comes out operator by operator: HE or MPC, CKKS levels,
 the conversions and bootstraps before each operator, and where each operator is in the code.
 
-![Terminal: python -m demo.plan_pytorch_model --model bert --blocks 1 --network 10Mbps/1ms prints the plan's latency and placement, then every operator with HE or MPC, its CKKS levels, its place in the PyTorch code, and the conversions and bootstraps before it](demo/assets/demo_network_given.gif)
+![Terminal: python -m demo.plan_pytorch_model --model bert --blocks 1 --network 10Mbps/1ms prints the plan's latency and placement, then every operator with HE or MPC, its CKKS levels, its place in the PyTorch code, and the conversions and bootstraps before it](docs/assets/demo_network_given.gif)
 
 ```bash
 python -m demo.plan_pytorch_model --model bert --network 10Mbps/1ms -o plan.json   # the network given
@@ -65,7 +65,7 @@ python -m demo.plan_pytorch_model --model bert --ip SERVER_IP -o plan.json      
 
 - [`demo/`](demo) has the input models and the two-terminal setup for measuring the network
   (`cipherflow netbench --serve` on the server).
-- The [interactive demo](https://ucf-ml-research.github.io/CipherFlow/) shows the PyTorch code, a deployment
+- The [interactive visualization](https://ucf-ml-research.github.io/CipherFlow/planner/) shows the PyTorch code, a deployment
   picker, the plan as a graph and as a table for each block, and its latency against static placements.
 
 ## Installation
@@ -260,7 +260,7 @@ Known limitations:
 | `backends/` | HE (NEXUS) adapters used by the MicroBench profilers |
 | `native/` | measured kernels: OpenFHE HE operators, bootstrapping and conversions (`native/openfhe`), SEAL conversions (`native/conversion`) |
 | `demo/` | the demo: PyTorch Transformers in, plans operator by operator out (script, web page builder, terminal recordings) |
-| `docs/` | the demo page served by GitHub Pages (built by `demo/web`), the logo and the README figure (`docs/assets/`) |
+| `docs/` | the [website](https://ucf-ml-research.github.io/CipherFlow/) and the plan visualization (`docs/planner/`), served by GitHub Pages and built by `demo/web`; the logo, the README figure and the terminal recordings (`docs/assets/`) |
 
 ## Measuring costs on your machine
 

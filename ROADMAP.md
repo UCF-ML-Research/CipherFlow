@@ -14,11 +14,35 @@ out operator by operator. This roadmap follows that path:
 Done items are checked, with the release that delivered them.
 Planned items are unchecked.
 
+The path has three stages:
+1. **Discriminative Transformers (done):** BERT and ViT encoders, from PyTorch to measured plans.
+2. **Generative models (next):** GPT-2, then LLaMA-style decoders ([section 7](#7-generative-models-next)).
+3. **Private inference runtime (then):** plans executed under encryption by the two parties
+   ([section 6](#6-running-the-plan)), on more backends ([section 3](#3-backends-and-costs)).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/cipherflow-roadmap-dark.svg">
+  <img alt="CipherFlow roadmap. Done: discriminative Transformers (BERT-base, ViT-B/16): PyTorch front end, measured HE and MPC backends, plans, calibration and emulation. Next: generative models (GPT-2, then LLaMA-style decoders): backend operators for decoders, a torch.export front end, prefill and decode plans. Then: a private inference runtime: a two-party runtime, encrypted execution from BERT to LLMs, GPU backends and SPU. Below, the details of the next stage: step 1 adds the backend operators, step 2 brings in the models; a LLaMA-style decoder block marks which operators exist today and which step 1 adds." src="docs/assets/cipherflow-roadmap-light.svg" width="100%">
+</picture>
+
+### Details
+
+**② Generative models (next)** comes in two steps:
+- **Step 1, backend operators.** Causal mask, RoPE, RMSNorm, SwiGLU, the KV cache, embedding lookup, LM head
+  and sampling. Each gets HE kernels, MPC protocols and costs measured by MicroBench.
+- **Step 2, the models.** A `torch.export` front end; prefill and decode planned separately, with the KV
+  cache as state; per-token latency and communication. GPT-2 small first, then a LLaMA-style model.
+
+**③ Private inference runtime (then):**
+- A two-party runtime: the parties' keys, the transport, and the conversion protocol across processes.
+- Encrypted execution of plans: one BERT-base layer first, then whole models, then LLMs.
+- More backends: GPU kernels for OpenFHE, and SPU.
+
 ## 1. Model input: PyTorch front end
 
 Today the input is an encoder (BERT, ViT) written in PyTorch. Anything outside the operator set fails
 explicitly instead of being planned with parts missing. Next comes a front end for general models, and
-decoder LLMs above all (section 7).
+generative models above all (section 7).
 
 - [x] Built-in graphs: BERT-base, ViT-B/16, and the paper's graphs (`bert_paper`, `vit_paper`) (v0.1, v0.2.0)
 - [x] `cf.models.from_torch`: encoder stacks traced with torch.fx (hand-written blocks, `nn.MultiheadAttention`, Hugging Face `BertEncoder` / `ViTEncoder`) (v0.1.1)
@@ -117,12 +141,29 @@ of its cryptographic kernels exist as measured benchmarks; what is missing is th
 - [ ] First milestone: one BERT-base layer under encryption, matching PyTorch to the error the emulation predicts
 - [ ] A full BERT-base model on one input, end to end
 
-## 7. Decoder LLMs
+## 7. Generative models (next)
 
-- [ ] Operators: causal mask, RoPE, RMSNorm, SwiGLU
-- [ ] KV cache as state; prefill and decode steps planned separately
-- [ ] LM head and sampling
+Generative models come in two stages. First, the backends gain the operators that decoders add over
+encoders: each one gets HE kernels, MPC protocols and measured costs. Then decoder models are traced from
+PyTorch and planned.
+
+### Step 1: backend operators
+
+- [ ] Causal attention mask
+- [ ] RoPE (rotary position embedding)
+- [ ] RMSNorm
+- [ ] SwiGLU: SiLU and the gated product of two projections
+- [ ] KV cache: appending keys and values, attention over the cached ones
+- [ ] Embedding lookup, LM head (vocabulary-size projection) and sampling
+- [ ] For each operator: HE kernels with calibrated ranges, MPC protocols, and costs measured by MicroBench at prefill and decode shapes
+
+### Step 2: the models
+
+- [ ] `torch.export` front end for decoder models
+- [ ] Prefill and decode planned separately, with the KV cache as state
+- [ ] Per-token latency and communication for every deployment
 - [ ] GPT-2 small, then a LLaMA-style model
+- [ ] Plan checks and emulation on real prompts
 - [ ] A general tensor IR: operand ownership (client, server, public), symbolic shapes, layouts
 
 ## 8. Demo and documentation

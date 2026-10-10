@@ -18,7 +18,7 @@ come from a trusted dealer, so plans are compiled with security="2pc-dealer".
 
 Usage (from the repository root):
     python -m demo.web.build_data            # about 7 min on 6 workers: 350 plans
-    python -m demo.web.build_page            # -> docs/index.html
+    python -m demo.web.build_page            # -> docs/index.html (website), docs/planner/index.html
 """
 from __future__ import annotations
 

@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="600" viewBox="0 0 1120 600" role="img" aria-label="CipherFlow roadmap: discriminative Transformers (done), generative models (next), a private inference runtime (then); below, the two steps of the next stage">
+<defs><marker id="ra" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#59636e"/></marker></defs>
+<line x1="205" y1="62" x2="560" y2="62" stroke="#1a8f6e" stroke-width="3"/>
+<line x1="560" y1="62" x2="915" y2="62" stroke="#59636e" stroke-width="2" stroke-dasharray="6 6"/>
+<circle cx="205" cy="62" r="15" fill="#1a8f6e"/>
+<path d="M198,62 l5,5 l9,-10" fill="none" stroke="#f6f8fa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="560" cy="62" r="15" fill="#ddf4ff" stroke="#0969da" stroke-width="3"/>
+<circle cx="560" cy="62" r="5.5" fill="#0969da"/>
+<circle cx="915" cy="62" r="15" fill="#f6f8fa" stroke="#59636e" stroke-width="2" stroke-dasharray="4 4"/>
+<text x="205" y="30" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="700" fill="#1a8f6e" text-anchor="middle">DONE · v0.1–v0.4</text>
+<text x="560" y="30" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="700" fill="#0969da" text-anchor="middle">NEXT</text>
+<text x="915" y="30" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="700" fill="#59636e" text-anchor="middle">THEN</text>
+<rect x="40" y="104" width="330" height="176" rx="12" fill="#dcf3ea" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="58" y="138" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="19" font-weight="700" fill="#1f2328" text-anchor="start">① Discriminative Transformers</text>
+<text x="58" y="162" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">BERT-base, ViT-B/16</text>
+<circle cx="64" cy="195" r="3" fill="#1a8f6e"/>
+<text x="76" y="200" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#1f2328" text-anchor="start">PyTorch front end</text>
+<circle cx="64" cy="225" r="3" fill="#1a8f6e"/>
+<text x="76" y="230" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#1f2328" text-anchor="start">HE and MPC backends, measured</text>
+<circle cx="64" cy="255" r="3" fill="#1a8f6e"/>
+<text x="76" y="260" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#1f2328" text-anchor="start">plans, calibration, emulation</text>
+<line x1="373" y1="192.0" x2="392" y2="192.0" stroke="#59636e" stroke-width="1.8" marker-end="url(#ra)"/>
+<rect x="395" y="104" width="330" height="176" rx="12" fill="#ddf4ff" stroke="#0969da" stroke-width="2.4"/>
+<text x="413" y="138" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="19" font-weight="700" fill="#1f2328" text-anchor="start">② Generative models</text>
+<text x="413" y="162" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">GPT-2, then LLaMA-style decoders</text>
+<circle cx="419" cy="195" r="3" fill="#0969da"/>
+<text x="431" y="200" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#1f2328" text-anchor="start">backend operators for decoders</text>
+<circle cx="419" cy="225" r="3" fill="#0969da"/>
+<text x="431" y="230" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#1f2328" text-anchor="start">torch.export front end</text>
+<circle cx="419" cy="255" r="3" fill="#0969da"/>
+<text x="431" y="260" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#1f2328" text-anchor="start">prefill and decode plans</text>
+<line x1="728" y1="192.0" x2="747" y2="192.0" stroke="#59636e" stroke-width="1.8" marker-end="url(#ra)"/>
+<rect x="750" y="104" width="330" height="176" rx="12" fill="#f6f8fa" stroke="#59636e" stroke-width="1.6" stroke-dasharray="7 6"/>
+<text x="768" y="138" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="19" font-weight="700" fill="#1f2328" text-anchor="start">③ Private inference runtime</text>
+<text x="768" y="162" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="14" font-weight="400" fill="#59636e" text-anchor="start">plans executed under encryption</text>
+<circle cx="774" cy="195" r="3" fill="#59636e"/>
+<text x="786" y="200" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#1f2328" text-anchor="start">two-party runtime: keys, transport</text>
+<circle cx="774" cy="225" r="3" fill="#59636e"/>
+<text x="786" y="230" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#1f2328" text-anchor="start">encrypted execution, BERT to LLMs</text>
+<circle cx="774" cy="255" r="3" fill="#59636e"/>
+<text x="786" y="260" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="400" fill="#1f2328" text-anchor="start">GPU backends and SPU</text>
+<line x1="560" y1="282" x2="560" y2="296" stroke="#0969da" stroke-width="1.6" stroke-dasharray="3 4"/>
+<text x="40" y="326" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="17" font-weight="700" fill="#1f2328" text-anchor="start">Details · ② Generative models</text>
+<text x="326" y="326" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#59636e" text-anchor="start">two steps: the operators decoders need, then the models</text>
+<rect x="40.0" y="340" width="503.0" height="86" rx="10" fill="#f6f8fa" stroke="#0969da" stroke-width="1.6"/>
+<text x="56.0" y="366" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="700" fill="#1f2328" text-anchor="start">Step 1 · backend operators</text>
+<text x="56.0" y="390" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#59636e" text-anchor="start">causal mask, RoPE, RMSNorm, SwiGLU, KV cache, embedding,</text>
+<text x="56.0" y="410" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#59636e" text-anchor="start">LM head, sampling: HE kernels, MPC protocols, measured costs</text>
+<line x1="547.0" y1="383" x2="573.0" y2="383" stroke="#59636e" stroke-width="1.8" marker-end="url(#ra)"/>
+<rect x="577.0" y="340" width="503.0" height="86" rx="10" fill="#f6f8fa" stroke="#59636e" stroke-width="1.6" stroke-dasharray="6 5"/>
+<text x="593.0" y="366" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15" font-weight="700" fill="#1f2328" text-anchor="start">Step 2 · the models</text>
+<text x="593.0" y="390" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#59636e" text-anchor="start">torch.export front end; prefill and decode planned separately,</text>
+<text x="593.0" y="410" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#59636e" text-anchor="start">KV cache as state; per-token latency; GPT-2, then LLaMA-style</text>
+<text x="40" y="462" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="15.5" font-weight="700" fill="#1f2328" text-anchor="start">Step 1 in one LLaMA-style decoder block</text>
+<rect x="580" y="449" width="16" height="16" rx="4" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="604" y="462" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#59636e" text-anchor="start">supported today</text>
+<rect x="730" y="449" width="16" height="16" rx="4" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="754" y="462" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#59636e" text-anchor="start">added in step 1</text>
+<text x="898" y="462" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#59636e" text-anchor="start">(execution order)</text>
+<rect x="40" y="484" width="95.60000000000001" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="87.80000000000001" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">Embedding</text>
+<line x1="138.60000000000002" y1="503" x2="150.22000000000003" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="153.22" y="484" width="78.80000000000001" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="192.62" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">RMSNorm</text>
+<line x1="235.02" y1="503" x2="246.64000000000001" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="249.64" y="484" width="98.0" height="38" rx="8" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="298.64" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="middle">Q/K/V proj</text>
+<line x1="350.64" y1="503" x2="362.26" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="365.26" y="484" width="56" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="393.26" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">RoPE</text>
+<line x1="424.26" y1="503" x2="435.88" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="438.88" y="484" width="56" height="38" rx="8" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="466.88" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="middle">QKᵀ</text>
+<line x1="497.88" y1="503" x2="509.5" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="512.5" y="484" width="112.4" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="568.7" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">causal mask</text>
+<line x1="627.9" y1="503" x2="639.52" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="642.52" y="484" width="74.6" height="38" rx="8" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="679.8199999999999" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="middle">Softmax</text>
+<line x1="720.12" y1="503" x2="731.74" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="734.74" y="484" width="66.8" height="38" rx="8" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="768.14" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="middle">Attn·V</text>
+<line x1="804.54" y1="503" x2="816.16" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="819.16" y="484" width="87.2" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="862.76" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">KV cache</text>
+<line x1="909.36" y1="503" x2="920.98" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="923.98" y="484" width="82.4" height="38" rx="8" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="965.1800000000001" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="middle">Out proj</text>
+<line x1="1009.38" y1="503" x2="1021.0" y2="503" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="1024.0" y="484" width="56" height="38" rx="8" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="1052.0" y="508" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="middle">Add</text>
+<rect x="40" y="546" width="78.80000000000001" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="79.4" y="570" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">RMSNorm</text>
+<line x1="121.80000000000001" y1="565" x2="170.62857142857143" y2="565" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="173.62857142857143" y="546" width="113.6" height="38" rx="8" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="230.42857142857144" y="570" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="middle">Gate/Up proj</text>
+<line x1="290.2285714285714" y1="565" x2="339.0571428571428" y2="565" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="342.0571428571428" y="546" width="56" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="370.0571428571428" y="570" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">SiLU</text>
+<line x1="401.0571428571428" y1="565" x2="449.88571428571424" y2="565" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="452.88571428571424" y="546" width="95.60000000000001" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="500.68571428571425" y="570" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">Gate × Up</text>
+<line x1="551.4857142857143" y1="565" x2="600.3142857142857" y2="565" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="603.3142857142857" y="546" width="90.2" height="38" rx="8" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="648.4142857142857" y="570" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="middle">Down proj</text>
+<line x1="696.5142857142857" y1="565" x2="745.3428571428572" y2="565" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="748.3428571428572" y="546" width="56" height="38" rx="8" fill="#f6f8fa" stroke="#1a8f6e" stroke-width="1.8"/>
+<text x="776.3428571428572" y="570" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="middle">Add</text>
+<line x1="807.3428571428572" y1="565" x2="856.1714285714286" y2="565" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="859.1714285714286" y="546" width="78.80000000000001" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="898.5714285714286" y="570" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">LM head</text>
+<line x1="940.9714285714285" y1="565" x2="989.8" y2="565" stroke="#59636e" stroke-width="1.4" marker-end="url(#ra)"/>
+<rect x="992.8" y="546" width="87.2" height="38" rx="8" fill="#ddf4ff" stroke="#0969da" stroke-width="1.8" stroke-dasharray="4 3"/>
+<text x="1036.3999999999999" y="570" font-family="'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', cursive" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="middle">Sampling</text>
+</svg>

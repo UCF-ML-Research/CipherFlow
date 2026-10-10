@@ -1,0 +1,624 @@
+<title>CipherFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a white lattice hero (one light theme) holds the thesis as a live two-lane plan (client / server); the reading column below
+   walks from results to ideas, pipeline, demo and code. One light palette for every viewer. */
+:root {
+  --bg: #ffffff; --surface: #ffffff; --sunk: #f3f5fa; --ink: #0f1130; --muted: #5a5f7c; --line: #e5e7f0;
+  --brand: #22249a; --teal: #047f78; --he: #13997a; --he-fill: #ddf3ec; --mpc: #dd5a28; --mpc-fill: #fde7dd;
+  --series-static: #9aa0b8; --code-bg: #0e1030; --code-ink: #e9ebfb; --code-muted: #8d92b8; --code-line: #262a55;
+  --hero-bg: #ffffff; --hero-ink: #0f1130; --hero-muted: #5a5f7c; --hero-line: #e3e6f0;
+  --hero-brand: #22249a; --hero-teal: #047f78; --hero-he: #13997a; --hero-mpc: #e0612f; --hero-panel: #ffffff;
+  --img-light: block; --img-dark: none;
+  --display: "Bricolage Grotesque", "Geist", system-ui, sans-serif;
+  --body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--body); margin: 0; -webkit-font-smoothing: antialiased; }
+a { color: var(--brand); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 6px; }
+img { max-width: 100%; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--sunk); border-radius: 5px; padding: 1px 6px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 24px; }
+.mono { font-family: var(--mono); }
+
+/* ---------- hero (fixed dark world) ---------- */
+.hero { background: var(--hero-bg); color: var(--hero-ink); position: relative; overflow: hidden; isolation: isolate; border-bottom: 1px solid var(--hero-line); }
+.hero::before { /* lattice: points of a skewed integer lattice, the ground CKKS security stands on */
+  content: ""; position: absolute; inset: -40px; z-index: -1; opacity: 0.55;
+  background-image: radial-gradient(circle at 1px 1px, rgba(34, 36, 154, 0.16) 1px, transparent 1.6px);
+  background-size: 26px 26px; transform: skewX(-14deg) rotate(-2deg);
+  mask-image: radial-gradient(ellipse 80% 70% at 70% 30%, #000 30%, transparent 75%);
+}
+.hero::after { content: ""; position: absolute; z-index: -1; width: 760px; height: 760px; right: -220px; top: -320px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(4, 127, 120, 0.09), rgba(34, 36, 154, 0.05) 55%, transparent); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--hero-bg); }
+.top.scrolled { background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(10px); border-bottom: 1px solid var(--hero-line); }
+.top .wrap { display: flex; align-items: center; gap: 24px; padding-block: 14px; }
+.mark { font: 700 19px/1 var(--display); letter-spacing: -0.01em; color: var(--hero-ink); text-decoration: none; }
+.mark b { color: var(--hero-teal); font-weight: 700; }
+.top nav { margin-left: auto; display: flex; gap: 22px; align-items: center; font-size: 14px; }
+.top nav a { color: var(--hero-muted); text-decoration: none; }
+.top nav a:hover { color: var(--hero-ink); }
+.top nav a.gh { color: var(--hero-ink); border: 1px solid var(--hero-line); border-radius: 999px; padding: 5px 12px; display: inline-flex; gap: 7px; align-items: center; }
+.top nav a.gh svg { width: 15px; height: 15px; fill: currentColor; }
+@media (max-width: 760px) { .top nav a.opt { display: none; } }
+
+.hero-in { display: grid; gap: 28px; padding-block: 56px 64px; }
+.pill { display: inline-flex; gap: 10px; align-items: center; width: fit-content; font: 500 12px var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--hero-muted); border: 1px solid var(--hero-line); border-radius: 999px; padding: 5px 12px; }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--hero-teal); box-shadow: 0 0 0 4px rgba(4, 127, 120, 0.14); }
+.hero h1 { margin: 0; line-height: 0; }
+.hero h1 img { width: min(600px, 100%); height: auto; }
+.tagline { margin: 0; font: 600 clamp(26px, 3.6vw, 42px)/1.12 var(--display); letter-spacing: -0.02em; max-width: 22ch; text-wrap: balance; }
+.tagline em { font-style: normal; color: var(--hero-teal); }
+.pitch { margin: 0; color: var(--hero-muted); font-size: 17.5px; max-width: 62ch; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 500 15px var(--body); padding: 10px 18px; border-radius: 10px; text-decoration: none; transition: transform .15s, background .15s, border-color .15s; }
+.btn svg { width: 16px; height: 16px; fill: currentColor; }
+.btn.solid { background: var(--hero-brand); color: #ffffff; }
+.btn.solid:hover { transform: translateY(-1px); }
+.btn.ghost { color: var(--hero-ink); border: 1px solid var(--hero-line); background: #ffffff; }
+.btn.ghost:hover { border-color: rgba(34, 36, 154, 0.35); }
+.btn.soon { cursor: default; color: var(--hero-muted); }
+.btn.soon:hover { border-color: var(--hero-line); }
+.btn small { font: 500 10.5px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--hero-teal); border: 1px solid rgba(4, 127, 120, 0.35); border-radius: 999px; padding: 0 7px; }
+
+/* live plan */
+.live { background: var(--hero-panel); border: 1px solid var(--hero-line); border-radius: 18px; padding: 20px 20px 16px; display: grid; gap: 14px; backdrop-filter: blur(6px); min-width: 0;
+  box-shadow: 0 1px 2px rgba(15, 17, 48, 0.04), 0 24px 60px -32px rgba(34, 36, 154, 0.22); }
+.live-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 28px; align-items: center; }
+@media (max-width: 860px) { .live-head { grid-template-columns: minmax(0, 1fr); } }
+.live-title { display: grid; gap: 2px; }
+.live-title b { font: 600 15px var(--display); letter-spacing: 0.01em; }
+.live-title span { font-size: 13px; color: var(--hero-muted); }
+.ctrls { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--hero-line); border-radius: 9px; padding: 3px; gap: 3px; }
+.seg button { font: 500 13px var(--body); color: var(--hero-muted); background: transparent; border: 0; border-radius: 6px; padding: 6px 13px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--hero-ink); color: var(--hero-bg); }
+.bwc { display: grid; gap: 4px; width: min(340px, 100%); }
+.bwc .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--hero-muted); }
+.bwc .row b { font: 500 16px var(--mono); color: var(--hero-ink); }
+.bwc input { width: 100%; accent-color: var(--hero-teal); }
+.bwc .ticks { display: flex; justify-content: space-between; font: 10.5px var(--mono); color: var(--hero-muted); }
+.stage { overflow-x: auto; border-radius: 12px; background: #f8f9fd; border: 1px solid var(--hero-line); }
+.stage canvas { display: block; min-width: 700px; width: 100%; height: 260px; }
+.live-foot { display: flex; flex-wrap: wrap; gap: 14px 36px; align-items: end; justify-content: space-between; }
+.kpis { display: flex; flex-wrap: wrap; gap: 12px 40px; }
+.kpi { display: grid; gap: 0; }
+.kpi .v { font: 600 30px/1.1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kpi .v.lead { color: var(--hero-teal); }
+.kpi .k { font-size: 12.5px; color: var(--hero-muted); }
+.keys { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12.5px; color: var(--hero-muted); align-items: center; }
+.keys i { display: inline-block; vertical-align: -1px; margin-right: 6px; }
+.k-he { width: 11px; height: 11px; border-radius: 3px; background: var(--hero-he); box-shadow: 0 0 0 2px rgba(19, 153, 122, 0.22); }
+.k-mpc { width: 9px; height: 9px; border-radius: 50%; background: var(--hero-mpc); }
+.k-cv { font: 600 11px var(--mono); font-style: normal; color: var(--hero-ink); border: 1px solid var(--hero-muted); border-radius: 4px; padding: 0 4px; }
+.hero .src { font-size: 12px; color: var(--hero-muted); margin: 0; }
+.hero .src a { color: var(--hero-brand); }
+.hero code { background: var(--sunk); }
+
+/* ---------- page ---------- */
+main { display: grid; gap: 104px; padding-block: 88px 72px; }
+section { display: grid; gap: 22px; min-width: 0; scroll-margin-top: 72px; }
+.kicker { font: 500 12px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--teal); }
+h2 { font: 600 clamp(28px, 3.4vw, 42px)/1.1 var(--display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; max-width: 24ch; }
+h3 { font: 600 19px/1.3 var(--display); margin: 0; letter-spacing: -0.005em; }
+p { margin: 0; }
+.lede { color: var(--muted); font-size: 17.5px; max-width: 64ch; }
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start; }
+@media (max-width: 880px) { .split { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
+
+/* results */
+.big { display: grid; gap: 22px; }
+.big .n { font: 600 clamp(64px, 8vw, 104px)/0.9 var(--display); letter-spacing: -0.04em; color: var(--brand); font-variant-numeric: tabular-nums; }
+.big .n small { font-size: 0.42em; letter-spacing: 0; color: var(--muted); font-weight: 500; margin-left: 6px; }
+.big .row { display: grid; gap: 6px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.big .row:last-of-type { border-bottom: 0; }
+.big p { color: var(--muted); font-size: 14.5px; }
+.chartbox { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px 12px; display: grid; gap: 10px; min-width: 0; }
+.chartbox .hd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; }
+.chartbox .hd b { font: 600 15px var(--display); }
+.chartbox .hd span { font-size: 12.5px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--muted); }
+.legend svg { display: inline-block; width: 22px; height: 8px; vertical-align: middle; margin-right: 6px; }
+#chart svg { width: 100%; height: auto; display: block; }
+#chart text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+#chart .lab { font-family: var(--body); font-size: 12px; fill: var(--ink); }
+.note { font-size: 12.5px; color: var(--muted); }
+#tip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--bg); font: 12px/1.5 var(--body); padding: 8px 10px; border-radius: 8px; max-width: 260px; }
+
+/* ideas */
+.ideas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--surface); }
+@media (max-width: 880px) { .ideas { grid-template-columns: minmax(0, 1fr); } }
+.idea { padding: 26px 24px 28px; display: grid; gap: 12px; align-content: start; border-right: 1px solid var(--line); position: relative; }
+.idea:last-child { border-right: 0; }
+@media (max-width: 880px) { .idea { border-right: 0; border-bottom: 1px solid var(--line); } .idea:last-child { border-bottom: 0; } }
+.idea .num { font: 500 12px var(--mono); color: var(--teal); letter-spacing: 0.1em; }
+.idea p { color: var(--muted); font-size: 15px; }
+.idea svg { width: 100%; height: 64px; }
+
+/* pipeline */
+.figure { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; overflow-x: auto; }
+.figure img { width: 100%; min-width: 600px; height: auto; display: block; }
+.figure img.lt { display: var(--img-light); }
+.figure img.dk { display: var(--img-dark); }
+.io { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 960px) { .io { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .io { grid-template-columns: minmax(0, 1fr); } }
+.io div { display: grid; gap: 4px; align-content: start; padding-top: 12px; border-top: 1px solid var(--line); min-width: 0; }
+.io div.out { border-top: 2px solid var(--brand); }
+.io .t { font: 500 11.5px var(--mono); color: var(--muted); letter-spacing: 0.04em; }
+.io b { font: 600 15.5px var(--display); }
+.io p { font-size: 14px; color: var(--muted); }
+
+/* demo + code */
+.term { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #16181d; box-shadow: 0 30px 60px -40px rgba(15, 17, 48, 0.45); }
+.term img { display: block; width: 100%; height: auto; }
+details { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+details summary { cursor: pointer; padding: 12px 16px; font-weight: 500; }
+details img { display: block; width: 100%; height: auto; border-radius: 0 0 12px 12px; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; overflow: hidden; min-width: 0; border: 1px solid var(--code-line); }
+.code .bar { display: flex; align-items: center; gap: 2px; padding: 8px 10px 0; border-bottom: 1px solid var(--code-line); }
+.code .bar button.tab { font: 500 13px var(--body); color: var(--code-muted); background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px 9px; cursor: pointer; }
+.code .bar button.tab[aria-selected="true"] { color: var(--code-ink); border-bottom-color: var(--hero-teal); }
+.code .bar .copy { margin-left: auto; font: 500 12px var(--body); color: var(--code-muted); background: transparent; border: 1px solid var(--code-line); border-radius: 7px; padding: 4px 10px; cursor: pointer; margin-bottom: 6px; }
+.code .bar .copy:hover { color: var(--code-ink); }
+.code pre { margin: 0; padding: 18px 20px 20px; overflow-x: auto; font: 13.5px/1.7 var(--mono); }
+.code .c { color: var(--code-muted); }
+.code .k { color: #9fa4ff; }
+.code .s { color: #5fe0c9; }
+
+/* backends + roadmap */
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.card .hd { display: flex; align-items: center; gap: 10px; }
+.card .sq { width: 12px; height: 12px; border-radius: 3px; }
+.card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.card li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; font-size: 15px; }
+.card li .m { font: 600 13px var(--mono); color: var(--teal); line-height: 1.7; }
+.card li.todo .m { color: var(--muted); }
+.card li span small { display: block; color: var(--muted); font-size: 13.5px; }
+footer { border-top: 1px solid var(--line); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 26px; padding-block: 26px 40px; font-size: 14px; color: var(--muted); align-items: center; }
+footer a { color: var(--muted); }
+footer .mk { font: 700 16px var(--display); color: var(--ink); }
+footer .mk b { color: var(--teal); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="mark" href="#">Cipher<b>Flow</b></a>
+    <nav aria-label="Sections">
+      <a class="opt" href="#results">Results</a>
+      <a class="opt" href="#ideas">Ideas</a>
+      <a class="opt" href="#how">How it works</a>
+      <a class="opt" href="#demo">Demo</a>
+      <a class="opt" href="#start">Quick start</a>
+      <a class="gh" href="https://github.com/UCF-ML-Research/CipherFlow"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap hero-in">
+    <span class="pill"><i></i>NeurIPS 2026 · Apache-2.0</span>
+    <h1><img src="assets/cipherflow-logo-light.png" width="1000" height="192" alt="CipherFlow"></h1>
+    <p class="tagline">A hardware-aware compiler framework for <em>efficient secure inference</em></p>
+    <p class="pitch">Private inference splits a model between homomorphic encryption and secure multi-party computation. CipherFlow finds the split for your hardware and network: for every operator of a PyTorch model, where it runs, where to convert, and where to bootstrap.</p>
+    <div class="cta">
+      <a class="btn solid" href="https://github.com/UCF-ML-Research/CipherFlow"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+      <!-- arXiv paper: when the link exists, replace this <span> with
+           <a class="btn ghost" href="https://arxiv.org/abs/XXXX.XXXXX"> ...same icon... arXiv</a> -->
+      <span class="btn ghost soon" aria-disabled="true" title="The paper link will be added here"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1.5h5.6L13 4.9V13a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 13V3A1.5 1.5 0 0 1 4.5 1.5Zm5 1.2V5.2c0 .3.2.5.5.5h2.4L9 2.7ZM5.2 8.3l1.3 1.9-1.4 2.1h1.1l.9-1.4.9 1.4h1.1l-1.4-2.1 1.3-1.9H7.9l-.8 1.2-.8-1.2H5.2Zm5 0v4h1v-4h-1Z"/></svg>arXiv<small>soon</small></span>
+      <a class="btn ghost" href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md">View roadmap</a>
+      <a class="btn ghost" href="#start">Quick start</a>
+    </div>
+
+    <div class="live" aria-labelledby="live-title">
+      <div class="live-head">
+        <div class="live-title"><b id="live-title">Live plan · BERT-base, encoder block 1</b><span>Operators in execution order. Round-trip time 40 ms.</span></div>
+        <div class="ctrls">
+          <div class="seg" id="seg-hw" role="group" aria-label="Server hardware"></div>
+          <div class="bwc">
+            <div class="row"><label for="bw">Bandwidth</label><b id="bw-val"></b></div>
+            <input type="range" id="bw" min="0" max="6" step="1" value="4">
+            <div class="ticks" id="bw-ticks"></div>
+          </div>
+        </div>
+      </div>
+      <div class="stage"><canvas id="flow" role="img" aria-label="The plan for block 1: each operator on the client and server lanes"></canvas></div>
+      <div class="live-foot">
+        <div class="kpis" id="kpis"></div>
+        <div class="keys"><span><i class="k-he"></i>HE ciphertext, on the server</span><span><i class="k-mpc"></i>MPC shares, one per party</span><span><i class="k-cv">⇄</i>conversion</span></div>
+      </div>
+      <p class="src">Plans by <code>cipherflow.compile</code> with the paper's profiles (HE: NEXUS; MPC: SHAFT, two parties and a trusted dealer). Latency is the whole 12-block model, estimated from measured costs.</p>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <section id="results" aria-labelledby="h-results">
+    <div class="kicker">Results</div>
+    <h2 id="h-results">Faster than any fixed split</h2>
+    <div class="split">
+      <div class="big">
+        <div class="row"><div class="n">16.5<small>×</small></div><p>speedup on BERT-base over state-of-the-art static hybrid placements (BumbleBee, BOLT, BLB)</p></div>
+        <div class="row"><div class="n">22<small>×</small></div><p>speedup on ViT, measured on commodity CPU and GPU platforms in the NeurIPS 2026 evaluation</p></div>
+      </div>
+      <div class="chartbox">
+        <div class="hd"><b>Estimated latency, whole model</b><span id="chart-sub"></span></div>
+        <div class="legend" aria-hidden="true"><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--brand)" stroke-width="2.6"/></svg>CipherFlow</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series-static)" stroke-width="2"/></svg>Best static hybrid</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series-static)" stroke-width="2" stroke-dasharray="5 4"/></svg>Best single primitive</span></div>
+        <div id="chart"></div>
+        <p class="note">Follows the hardware and bandwidth chosen above; click a bandwidth to select it. CipherFlow is never slower than the best static plan, and where a single primitive is best it chooses that plan.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="ideas" aria-labelledby="h-ideas">
+    <div class="kicker">Ideas</div>
+    <h2 id="h-ideas">Measure, expand, fold</h2>
+    <div class="ideas">
+      <div class="idea">
+        <span class="num">01 · MicroBench</span>
+        <svg viewBox="0 0 300 64" aria-hidden="true"><g fill="none" stroke="var(--line)"><line x1="0" y1="56" x2="300" y2="56"/></g>
+          <g fill="var(--brand)"><rect x="8" y="30" width="22" height="26" rx="3"/><rect x="40" y="14" width="22" height="42" rx="3" opacity=".75"/><rect x="72" y="38" width="22" height="18" rx="3" opacity=".55"/></g>
+          <g fill="var(--teal)"><rect x="118" y="22" width="22" height="34" rx="3"/><rect x="150" y="6" width="22" height="50" rx="3" opacity=".75"/><rect x="182" y="34" width="22" height="22" rx="3" opacity=".55"/></g>
+          <g fill="var(--series-static)"><rect x="228" y="26" width="22" height="30" rx="3"/><rect x="260" y="42" width="22" height="14" rx="3" opacity=".7"/></g></svg>
+        <h3>Costs measured where you deploy</h3>
+        <p>Every operator, conversion and bootstrap is timed on the target hardware, with its bytes and rounds, so the plan follows measured costs instead of a fixed rule.</p>
+      </div>
+      <div class="idea">
+        <span class="num">02 · State expansion</span>
+        <svg viewBox="0 0 300 64" aria-hidden="true"><g stroke="var(--line)" stroke-width="1.2" fill="none"><path d="M20 14 L80 14 L140 32 L200 32 L260 50"/><path d="M20 32 L80 14"/><path d="M20 50 L80 50 L140 32"/><path d="M80 50 L140 50 L200 32"/><path d="M200 50 L260 50"/><path d="M140 14 L200 14 L260 32"/></g>
+          <path d="M20 32 L80 14 L140 32 L200 32 L260 50" fill="none" stroke="var(--teal)" stroke-width="2.4"/>
+          <g fill="var(--surface)" stroke="var(--muted)" stroke-width="1.2"><circle cx="20" cy="14" r="4"/><circle cx="20" cy="50" r="4"/><circle cx="80" cy="50" r="4"/><circle cx="140" cy="14" r="4"/><circle cx="140" cy="50" r="4"/><circle cx="200" cy="14" r="4"/><circle cx="200" cy="50" r="4"/><circle cx="260" cy="32" r="4"/></g>
+          <g fill="var(--teal)"><circle cx="20" cy="32" r="5"/><circle cx="80" cy="14" r="5"/><circle cx="140" cy="32" r="5"/><circle cx="200" cy="32" r="5"/><circle cx="260" cy="50" r="5"/></g></svg>
+        <h3>One search over domains and levels</h3>
+        <p>Each operator's state is its domain and, in HE, the CKKS levels left. Placement, conversions and bootstraps become one shortest-path search over these states.</p>
+      </div>
+      <div class="idea">
+        <span class="num">03 · BlockFold</span>
+        <svg viewBox="0 0 300 64" aria-hidden="true"><g fill="none" stroke="var(--line)" stroke-width="1.2"><path d="M14 32 H286"/></g>
+          <g fill="none" stroke="var(--brand)" stroke-width="1.6"><path d="M40 32 C60 6, 110 6, 130 32"/><path d="M40 32 C60 58, 110 58, 130 32"/></g>
+          <g fill="var(--brand)"><circle cx="40" cy="32" r="4.5"/><circle cx="130" cy="32" r="4.5"/></g>
+          <path d="M150 32 H168" stroke="var(--muted)" stroke-width="1.4" marker-end="none"/><path d="M166 27 L172 32 L166 37" fill="none" stroke="var(--muted)" stroke-width="1.4"/>
+          <rect x="190" y="20" width="76" height="24" rx="12" fill="var(--he-fill)" stroke="var(--teal)" stroke-width="1.6"/><text x="228" y="36" text-anchor="middle" font-family="Geist Mono, monospace" font-size="11" fill="var(--teal)">block</text></svg>
+        <h3>Residual blocks folded into steps</h3>
+        <p>Each residual block is a single-entry, single-exit region. Folding it into one step contains the growth from branching joins and keeps planning tractable on Transformer-scale graphs.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" aria-labelledby="h-how">
+    <div class="kicker">How it works</div>
+    <h2 id="h-how">From a PyTorch model to a placement plan</h2>
+    <p class="lede">CipherFlow plans against an abstraction of the backends: methods, each one operator in one domain with the CKKS levels it consumes, the inputs it accepts and its measured cost. A library plugs in by registering its methods and a cost profile.</p>
+    <div class="figure">
+      <img class="lt" src="assets/cipherflow-ecosystem-light.svg" width="1120" height="990" alt="CipherFlow in the private-inference stack: a PyTorch model is traced into an operator graph; the deployment gives hardware, network and security model; CipherFlow plans with MicroBench, state expansion and BlockFold; HE and MPC backends report methods and measured costs and receive plan.json; cipherflow.runtime checks the plan and emulates it on real inputs.">
+      <img class="dk" src="assets/cipherflow-ecosystem-dark.svg" width="1120" height="990" alt="">
+    </div>
+    <div class="io">
+      <div><span class="t">① input</span><b>Operator graph</b><p>Operators, shapes and residual edges, traced from an <code>nn.Module</code>.</p></div>
+      <div><span class="t">② input</span><b>Deployment</b><p>Hardware profile; bandwidth and RTT, given or measured; security model.</p></div>
+      <div><span class="t">③ input</span><b>Measured costs</b><p>Per operator and domain: time, bytes, rounds, CKKS levels.</p></div>
+      <div><span class="t">optional</span><b>Calibration</b><p>Value ranges on real inputs, so approximations hold where HE runs.</p></div>
+      <div class="out"><span class="t">④ output</span><b>plan.json</b><p>HE or MPC per operator; conversions and bootstraps; latency.</p></div>
+    </div>
+  </section>
+
+  <section id="demo" aria-labelledby="h-demo">
+    <div class="kicker">Demo</div>
+    <h2 id="h-demo">A Transformer in, the plan out</h2>
+    <div class="split">
+      <div style="display:grid; gap:18px; align-content:start">
+        <p class="lede">Plan a BERT-base encoder written in PyTorch and read the plan operator by operator: HE or MPC, the CKKS levels, the conversions and bootstraps before each operator, and where each operator is in the code.</p>
+        <div class="code" data-tabs>
+          <div class="bar" role="tablist"><button class="tab" role="tab" aria-selected="true">Network given</button><button class="tab" role="tab" aria-selected="false">Network measured</button><button class="copy" type="button">Copy</button></div>
+          <pre>python -m demo.plan_pytorch_model \
+    --model bert --network 10Mbps/1ms</pre>
+          <pre hidden><span class="c"># on the server</span>
+cipherflow netbench --serve
+<span class="c"># on the client</span>
+python -m demo.plan_pytorch_model \
+    --model bert --ip SERVER_IP</pre>
+        </div>
+      </div>
+      <div style="display:grid; gap:14px; min-width:0">
+        <div class="term"><img src="assets/demo_network_given.gif" width="1004" height="691" loading="lazy" alt="Terminal: python -m demo.plan_pytorch_model --model bert --blocks 1 --network 10Mbps/1ms prints the plan's latency and placement, then every operator with HE or MPC, its CKKS levels, its place in the PyTorch code, and the conversions and bootstraps before it."></div>
+        <details><summary>Two terminals: the network measured between client and server</summary><img src="assets/demo_network_measured.gif" width="1004" height="756" loading="lazy" alt="Two terminals: the server runs cipherflow netbench --serve; the client measures the round-trip time and the bandwidth each way, then prints the plan for that network."></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="start" aria-labelledby="h-start">
+    <div class="kicker">Quick start</div>
+    <h2 id="h-start">Plan your own model</h2>
+    <div class="code" data-tabs>
+      <div class="bar" role="tablist"><button class="tab" role="tab" aria-selected="true">Python</button><button class="tab" role="tab" aria-selected="false">Command line</button><button class="tab" role="tab" aria-selected="false">Install</button><button class="copy" type="button">Copy</button></div>
+      <pre><span class="k">import</span> torch
+<span class="k">import</span> cipherflow <span class="k">as</span> cf
+<span class="k">from</span> demo.transformer <span class="k">import</span> bert                    <span class="c"># any encoder written in PyTorch</span>
+
+graph = cf.models.from_torch(bert(), torch.randn(<span class="s">1, 128, 768</span>))
+plan  = cf.compile(graph, cf.Deployment.of(<span class="s">"cpu"</span>, <span class="s">"10Mbps/1ms"</span>))
+print(plan.explain(steps=<span class="k">True</span>))                      <span class="c"># the plan, operator by operator</span>
+plan.to_json(<span class="s">"plan.json"</span>)</pre>
+      <pre hidden>cipherflow compile --torch demo/transformer.py:bert --input-shape 1,128,768 \
+    --network 10Mbps/1ms --steps -o plan.json
+cipherflow explain plan.json --steps
+cipherflow backends                      <span class="c"># HE and MPC backends, and which pairs fit</span></pre>
+      <pre hidden>git clone https://github.com/UCF-ML-Research/CipherFlow.git
+cd CipherFlow
+pip install -e .                          <span class="c"># PyTorch for from_torch, the demo and the runtime</span></pre>
+    </div>
+  </section>
+
+  <section id="backends" aria-labelledby="h-backends">
+    <div class="kicker">Backends</div>
+    <h2 id="h-backends">Measured HE and MPC backends</h2>
+    <div class="cols">
+      <div class="card">
+        <div class="hd"><span class="sq" style="background:var(--he)"></span><h3>Homomorphic encryption</h3></div>
+        <ul>
+          <li><span class="m">✓</span><span><b>OpenFHE</b> CKKS<small>All operators on one 128-bit parameter set, fast and precise bootstrapping, hardened HE↔MPC conversion, wide-range GeLU, Softmax and LayerNorm</small></span></li>
+          <li><span class="m">✓</span><span><b>NEXUS</b><small>SEAL on CPU, Phantom on CUDA; reference-scaled costs</small></span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="hd"><span class="sq" style="background:var(--mpc)"></span><h3>Secure multi-party computation</h3></div>
+        <ul>
+          <li><span class="m">✓</span><span><b>SCI / BOLT</b> (EzPC)<small>Two parties, no third party; CPU</small></span></li>
+          <li><span class="m">✓</span><span><b>SHAFT</b> (CrypTen)<small>Two parties and a trusted dealer; CPU and GPU</small></span></li>
+          <li class="todo"><span class="m">○</span><span><b>SPU</b><small>Cheetah and SEMI2K; planned</small></span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="roadmap" aria-labelledby="h-roadmap">
+    <div class="kicker">Roadmap</div>
+    <h2 id="h-roadmap">From encoders to generative models</h2>
+    <p class="lede">BERT and ViT encoders are done. Generative models come next, first the backend operators decoders need and then the models; after them, a runtime that executes plans under encryption.</p>
+    <div class="figure">
+      <img class="lt" src="assets/cipherflow-roadmap-light.svg" width="1120" height="600" loading="lazy" alt="CipherFlow roadmap. Done: discriminative Transformers (BERT-base, ViT-B/16). Next: generative models (GPT-2, then LLaMA-style decoders): backend operators for decoders, a torch.export front end, prefill and decode plans. Then: a private inference runtime. Below, the two steps of the next stage and a LLaMA-style decoder block marked by which operators exist today.">
+      <img class="dk" src="assets/cipherflow-roadmap-dark.svg" width="1120" height="600" loading="lazy" alt="">
+    </div>
+    <p><a href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md">The full roadmap</a> lists every done and planned item.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="mk">Cipher<b>Flow</b></span>
+    <span id="ver"></span>
+    <a href="https://github.com/UCF-ML-Research/CipherFlow">GitHub</a>
+    <a href="planner/">Plan explorer</a>
+    <a href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md">Roadmap</a>
+    <span>Apache License 2.0</span>
+  </div>
+</footer>
+<div id="tip" hidden></div>
+
+<script type="application/json" id="data">__SITE_DATA__</script>
+<script>
+(() => {
+  const D = JSON.parse(document.getElementById('data').textContent);
+  const $ = (id) => document.getElementById(id);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const state = { hw: 'gpu', bw: 4 };
+  try { Object.assign(state, JSON.parse(localStorage.getItem('cf-site') || '{}')); } catch (e) {}
+  if (!D.plans[state.hw]) state.hw = 'gpu';
+  if (!(state.bw >= 0 && state.bw < D.bandwidths.length)) state.bw = 4;
+  const save = () => { try { localStorage.setItem('cf-site', JSON.stringify(state)); } catch (e) {} };
+  const fmtS = (ms) => { const s = ms / 1000; return s >= 1000 ? Math.round(s).toLocaleString('en-US') + ' s' : s >= 100 ? s.toFixed(0) + ' s' : s.toFixed(1) + ' s'; };
+  const bwText = (b) => b.replace('Mbps', ' Mbps').replace('Gbps', ' Gbps');
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  $('ver').textContent = 'v' + D.version;
+  $('bw-ticks').innerHTML = D.bandwidths.map(b => `<span>${b.replace('bps', '')}</span>`).join('');
+
+  // ---- sticky header turns solid once the page scrolls
+  const top = $('top');
+  const onScroll = () => top.classList.toggle('scrolled', window.scrollY > 8);
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  // ---- the live two-lane plan (canvas)
+  const cv = $('flow'), ctx = cv.getContext('2d');
+  let W = 0, H = 260, dpr = 1, nodes = [], parts = [], last = 0, spawnAt = 0;
+  const COL = {};
+  function colors() { for (const k of ['--hero-he', '--hero-mpc', '--hero-ink', '--hero-muted', '--hero-teal', '--hero-brand']) COL[k] = css(k); }
+  const hex = (h) => { const n = parseInt(h.replace('#', ''), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const mix = (a, b, t) => { const x = hex(a), y = hex(b); return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(',')})`; };
+  const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const geo = () => ({ yC: 74, yS: 170, L: 132, R: 34 });
+
+  function layout() {
+    const r = cv.getBoundingClientRect(); dpr = window.devicePixelRatio || 1;
+    W = Math.max(700, r.width); cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function plan() { return D.plans[state.hw][state.bw]; }
+  function setTargets(instant) {
+    const p = plan();
+    D.ops.forEach((name, i) => {
+      const m = i === 0 ? -1 : (p.dom[i] === 'M' ? 1 : 0);          // -1: the client's input
+      if (!nodes[i]) nodes[i] = { m, t: m };
+      nodes[i].t = m; if (instant) nodes[i].m = m;
+    });
+  }
+  const xOf = (i) => { const g = geo(); return g.L + i * (W - g.L - g.R) / (D.ops.length - 1); };
+  const lanesOf = (i) => { const d = plan().dom; return i === 0 ? ['C'] : (d[i] === 'M' ? ['C', 'S'] : ['S']); };
+  const yLane = (l) => l === 'C' ? geo().yC : geo().yS;
+
+  function drawStatic(now) {
+    const g = geo();
+    ctx.clearRect(0, 0, W, H);
+    // lanes
+    ctx.font = '500 11px "Geist Mono", ui-monospace, monospace'; ctx.textBaseline = 'middle';
+    for (const [lab, sub, y] of [['CLIENT', 'input, keys', g.yC], ['SERVER', 'weights', g.yS]]) {
+      ctx.strokeStyle = 'rgba(34,36,154,0.18)'; ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
+      ctx.beginPath(); ctx.moveTo(g.L - 22, y); ctx.lineTo(W - 12, y); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = COL['--hero-ink']; ctx.fillText(lab, 16, y - 7);
+      ctx.fillStyle = COL['--hero-muted']; ctx.font = '400 10.5px "Geist Mono", ui-monospace, monospace'; ctx.fillText(sub, 16, y + 8);
+      ctx.font = '500 11px "Geist Mono", ui-monospace, monospace';
+    }
+    // conversion / bootstrap markers from the plan
+    const acts = plan().act;
+    for (const a of acts) {
+      const x = xOf(a[0]) - (W - g.L - g.R) / (D.ops.length - 1) / 2, y = (g.yC + g.yS) / 2;
+      ctx.fillStyle = '#ffffff'; ctx.strokeStyle = COL['--hero-muted']; ctx.lineWidth = 1;
+      roundRect(x - 11, y - 9, 22, 18, 5); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = COL['--hero-ink']; ctx.textAlign = 'center'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace';
+      ctx.fillText(a[1] === 'c' ? '⇄' : '↻', x, y + 0.5); ctx.textAlign = 'start';
+    }
+    // nodes
+    D.ops.forEach((name, i) => {
+      const n = nodes[i], x = xOf(i), r = 15;
+      if (n.m < 0) {                                               // the client's input
+        ctx.fillStyle = 'rgba(34,36,154,0.06)'; ctx.strokeStyle = COL['--hero-ink']; ctx.lineWidth = 1.4;
+        roundRect(x - 17, g.yC - 13, 34, 26, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = COL['--hero-ink']; ctx.textAlign = 'center'; ctx.font = '500 13px "Geist Mono", ui-monospace, monospace'; ctx.fillText('x', x, g.yC + 0.5);
+      } else {
+        const m = n.m, top = g.yS - (g.yS - g.yC) * m, col = mix(COL['--hero-he'], COL['--hero-mpc'], m);
+        ctx.fillStyle = col.replace('rgb', 'rgba').replace(')', ',0.12)'); ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+        roundRect(x - r, top - r, 2 * r, g.yS - top + 2 * r, r); ctx.fill(); ctx.stroke();
+      }
+      ctx.fillStyle = COL['--hero-muted']; ctx.textAlign = 'center'; ctx.font = '500 11px "Geist", sans-serif';
+      ctx.fillText(name, x, g.yS + 34);
+      if (i > 0) { ctx.font = '500 10px "Geist Mono", monospace'; ctx.fillStyle = n.t > 0.5 ? COL['--hero-mpc'] : COL['--hero-he']; ctx.fillText(n.t > 0.5 ? 'MPC' : 'HE', x, g.yS + 50); }
+      ctx.textAlign = 'start';
+    });
+  }
+  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+  // a particle is one value moving through the chain; it is drawn once per lane it occupies
+  function drawParticle(p) {
+    const k = Math.floor(p.t), f = p.t - k;
+    if (k >= D.ops.length - 1) return;
+    const A = lanesOf(k), B = lanesOf(k + 1), x = xOf(k) + (xOf(k + 1) - xOf(k)) * f, e = ease(Math.min(1, Math.max(0, (f - 0.15) / 0.7)));
+    const pairs = A.length === B.length ? A.map((a, j) => [a, B[j]]) : A.length < B.length ? B.map(b => [A[0], b]) : A.map(a => [a, B[0]]);
+    const dstMPC = B.length === 2 && k + 1 > 0, srcMPC = A.length === 2, srcInput = k === 0;
+    const asMPC = f < 0.5 ? (srcInput ? null : srcMPC) : dstMPC;
+    const ys = pairs.map(([a, b]) => yLane(a) + (yLane(b) - yLane(a)) * e);
+    if (asMPC && ys.length === 2) { ctx.strokeStyle = 'rgba(224,97,47,0.38)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(x, ys[0]); ctx.lineTo(x, ys[1]); ctx.stroke(); ctx.setLineDash([]); }
+    for (const y of ys) {
+      if (asMPC === null) { ctx.fillStyle = COL['--hero-ink']; ctx.beginPath(); ctx.arc(x, y, 3.2, 0, 7); ctx.fill(); }
+      else if (asMPC) { ctx.fillStyle = COL['--hero-mpc']; ctx.beginPath(); ctx.arc(x, y, 3.6, 0, 7); ctx.fill(); }
+      else { ctx.fillStyle = COL['--hero-he']; roundRect(x - 5, y - 5, 10, 10, 2.5); ctx.fill(); ctx.strokeStyle = 'rgba(19,153,122,0.28)'; ctx.lineWidth = 3; roundRect(x - 7, y - 7, 14, 14, 4); ctx.stroke(); }
+    }
+  }
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
+    for (const n of nodes) n.m += (n.t - n.m) * Math.min(1, dt * 7);
+    if (now > spawnAt) { parts.push({ t: 0 }); spawnAt = now + 520; }
+    for (const p of parts) p.t += dt * 1.15;
+    parts = parts.filter(p => p.t < D.ops.length - 1);
+    drawStatic(now); parts.forEach(drawParticle);
+    requestAnimationFrame(frame);
+  }
+  function still() {                                    // reduced motion: one value per segment, no animation
+    for (const n of nodes) n.m = n.t;
+    parts = D.ops.slice(0, -1).map((_, k) => ({ t: k + 0.3 }));
+    drawStatic(0); parts.forEach(drawParticle);
+  }
+
+  // ---- controls, numbers, chart
+  function seg() {
+    const el = $('seg-hw'); el.innerHTML = '';
+    for (const [k, v] of Object.entries(D.hardware)) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = v + ' server'; b.setAttribute('aria-pressed', String(k === state.hw));
+      b.addEventListener('click', () => { state.hw = k; save(); render(); });
+      el.appendChild(b);
+    }
+  }
+  function kpis() {
+    const r = plan();
+    $('kpis').innerHTML = [
+      ['lead', fmtS(r.cf), 'CipherFlow, whole model'],
+      ['', (r.hyb / r.cf).toFixed(1) + '×', `faster than the best static hybrid (${r.hybName})`],
+      ['', (r.one / r.cf).toFixed(2) + '×', `vs. the best single primitive (${r.oneName})`],
+    ].map(([c, v, k]) => `<div class="kpi"><span class="v ${c}">${v}</span><span class="k">${k}</span></div>`).join('');
+  }
+  function chart() {
+    const rows = D.plans[state.hw];
+    $('chart-sub').textContent = `${D.hardware[state.hw]} server · RTT 40 ms · log scale`;
+    const narrow = ($('chart').clientWidth || 600) < 520;
+    const Wc = narrow ? 420 : 620, Hc = 280, L = 62, R = narrow ? 14 : 138, T = 14, B = 32;
+    const series = [
+      { key: 'cf', name: 'CipherFlow', color: 'var(--brand)', dash: '', w: 2.8 },
+      { key: 'hyb', name: 'Best static hybrid', color: 'var(--series-static)', dash: '', w: 2 },
+      { key: 'one', name: 'Best single primitive', color: 'var(--series-static)', dash: '5 4', w: 2 },
+    ];
+    const vals = rows.flatMap(r => [r.cf, r.hyb, r.one]);
+    const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...vals) / 1000))), hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...vals) / 1000)));
+    const X = (i) => L + i * (Wc - L - R) / (rows.length - 1);
+    const Y = (ms) => T + (Math.log10(hi) - Math.log10(ms / 1000)) / (Math.log10(hi) - Math.log10(lo)) * (Hc - T - B);
+    let s = `<svg viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="Estimated latency of the whole model against bandwidth, log scale">`;
+    for (let e = Math.log10(lo); e <= Math.log10(hi) + 1e-9; e++) {
+      const v = Math.pow(10, e), y = Y(v * 1000);
+      s += `<line x1="${L}" x2="${Wc - R}" y1="${y}" y2="${y}" stroke="var(--line)"/>`;
+      s += `<text x="${L - 8}" y="${y + 4}" text-anchor="end">${v.toLocaleString('en-US')} s</text>`;
+    }
+    rows.forEach((r, i) => { s += `<text x="${X(i)}" y="${Hc - 10}" text-anchor="middle">${D.bandwidths[i].replace('bps', '')}</text>`; });
+    s += `<rect x="${X(state.bw) - 14}" y="${T}" width="28" height="${Hc - T - B}" rx="6" fill="var(--sunk)"/>`;
+    for (const se of series) {
+      s += `<polyline points="${rows.map((r, i) => `${X(i)},${Y(r[se.key])}`).join(' ')}" fill="none" stroke="${se.color}" stroke-width="${se.w}" stroke-dasharray="${se.dash}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      rows.forEach((r, i) => { s += `<circle cx="${X(i)}" cy="${Y(r[se.key])}" r="${i === state.bw ? 5.2 : 3.2}" fill="${se.color}" stroke="var(--surface)" stroke-width="2"/>`; });
+    }
+    if (!narrow) {
+      const ends = series.map(se => ({ se, y: Y(rows[rows.length - 1][se.key]) })).sort((a, b) => a.y - b.y);
+      for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 15) ends[i].y = ends[i - 1].y + 15;
+      for (const e of ends) s += `<text class="lab" x="${Wc - R + 12}" y="${e.y + 4}">${e.se.name}</text>`;
+    }
+    const step = (Wc - L - R) / (rows.length - 1);
+    rows.forEach((r, i) => { s += `<rect class="hit" data-i="${i}" x="${X(i) - step / 2}" y="${T}" width="${step}" height="${Hc - T - B}" fill="transparent" style="cursor:pointer"/>`; });
+    $('chart').innerHTML = s + '</svg>';
+    const tip = $('tip');
+    $('chart').querySelectorAll('.hit').forEach(h => {
+      const i = +h.dataset.i, r = rows[i];
+      h.addEventListener('mousemove', (ev) => {
+        tip.innerHTML = `<b>${bwText(D.bandwidths[i])}</b><br>CipherFlow ${fmtS(r.cf)}<br>Best static hybrid ${fmtS(r.hyb)} (${r.hybName})<br>Best single primitive ${fmtS(r.one)} (${r.oneName})`;
+        tip.hidden = false; tip.style.left = Math.min(window.innerWidth - 270, ev.clientX + 14) + 'px'; tip.style.top = (ev.clientY + 14) + 'px';
+      });
+      h.addEventListener('mouseleave', () => { tip.hidden = true; });
+      h.addEventListener('click', () => { state.bw = i; save(); render(); });
+    });
+  }
+  function render(instant) {
+    seg(); setTargets(instant);
+    $('bw').value = state.bw; $('bw-val').textContent = bwText(D.bandwidths[state.bw]);
+    kpis(); chart();
+    if (reduce) still();
+  }
+  $('bw').addEventListener('input', (e) => { state.bw = +e.target.value; save(); render(); });
+
+  // ---- tabbed code blocks with copy
+  document.querySelectorAll('[data-tabs]').forEach(box => {
+    const tabs = [...box.querySelectorAll('.tab')], pres = [...box.querySelectorAll('pre')];
+    tabs.forEach((t, i) => t.addEventListener('click', () => {
+      tabs.forEach((u, j) => u.setAttribute('aria-selected', String(i === j)));
+      pres.forEach((p, j) => { p.hidden = i !== j; });
+    }));
+    const copy = box.querySelector('.copy');
+    copy.addEventListener('click', () => {
+      const pre = pres.find(p => !p.hidden);
+      const done = () => { copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy'; }, 1400); };
+      const select = () => { const rg = document.createRange(); rg.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(rg); };
+      try { navigator.clipboard.writeText(pre.textContent).then(done, select); } catch (e) { select(); }
+    });
+  });
+
+  colors(); layout(); render(true);
+  let lastNarrow = null;
+  const ro = new ResizeObserver(() => { layout(); if (reduce) still(); const n = $('chart').clientWidth < 520; if (n !== lastNarrow) { lastNarrow = n; chart(); } });
+  ro.observe(cv);
+  const start = () => { if (reduce) still(); else requestAnimationFrame((t) => { last = t; frame(t); }); };
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(start, start);
+})();
+</script>

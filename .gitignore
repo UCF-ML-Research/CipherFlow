@@ -6,3 +6,4 @@ dist/
 .venv/
 .pytest_cache/
 demo/web/cipherflow_demo.html
+demo/web/cipherflow_site.html

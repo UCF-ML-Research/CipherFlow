@@ -26,7 +26,7 @@ python -m demo.plan_pytorch_model --model bert --network 10Mbps/1ms -o plan.json
 python -m demo.plan_pytorch_model --model bert --ip SERVER_IP -o plan.json
 ```
 
-![Terminal: python -m demo.plan_pytorch_model --model bert --blocks 1 --network 10Mbps/1ms prints the plan's latency and placement, then every operator with HE or MPC, its CKKS levels, its place in the PyTorch code, and the conversions and bootstraps before it](assets/demo_network_given.gif)
+![Terminal: python -m demo.plan_pytorch_model --model bert --blocks 1 --network 10Mbps/1ms prints the plan's latency and placement, then every operator with HE or MPC, its CKKS levels, its place in the PyTorch code, and the conversions and bootstraps before it](../docs/assets/demo_network_given.gif)
 
 To plan your own PyTorch model, use the CLI. It does the same for any `FILE.py:NAME` or `package.module:NAME`:
 
@@ -67,7 +67,7 @@ operator it names (`#1 -> #2`: from operator 1 to operator 2).
 | two terminals, one host | `cipherflow netbench --serve` | `python -m demo.plan_pytorch_model --ip 127.0.0.1` |
 | two machines | `cipherflow netbench --serve` (port 7787 open) | `python -m demo.plan_pytorch_model --ip SERVER_IP` |
 
-![Two terminals: the server runs cipherflow netbench --serve; the client runs python -m demo.plan_pytorch_model --ip 127.0.0.1, which measures the RTT and the bandwidth each way to the server, then prints the plan for that network operator by operator](assets/demo_network_measured.gif)
+![Two terminals: the server runs cipherflow netbench --serve; the client runs python -m demo.plan_pytorch_model --ip 127.0.0.1, which measures the RTT and the bandwidth each way to the server, then prints the plan for that network operator by operator](../docs/assets/demo_network_measured.gif)
 
 The client measures:
 - the round-trip time, as the median of one-byte ping-pongs;
@@ -85,7 +85,8 @@ Things to keep in mind:
 
 ## Web page
 
-[`docs/index.html`](../docs/index.html) is the interactive version, served by GitHub Pages. It works offline
+[`docs/planner/index.html`](../docs/planner/index.html) is the interactive version, served by GitHub Pages next to the
+website ([`docs/index.html`](../docs/index.html), which shows one block's plan as the bandwidth changes). It works offline
 in any browser. It shows:
 - the PyTorch code and its traced operator graph;
 - a deployment picker;
@@ -105,7 +106,7 @@ Rebuild the page after changing the planner, the profiles or the models:
 
 ```bash
 python -m demo.web.build_data      # 350 plans over models x hardware x bandwidth x RTT -> demo/web/demo_data.json (~7 min, 6 workers)
-python -m demo.web.build_page      # embeds them into demo/web/template.html -> docs/index.html
+python -m demo.web.build_page      # -> docs/planner/index.html (template.html) and the website docs/index.html (site_template.html)
 ```
 
 ## Files
@@ -117,5 +118,6 @@ python -m demo.web.build_page      # embeds them into demo/web/template.html -> 
 | `web/build_data.py` | traces the models and compiles the grid of plans |
 | `web/template.html` | the page: layout, graph drawing, tables |
 | `web/demo_data.json` | the precomputed plans (generated) |
-| `web/build_page.py` | writes `docs/index.html` (plus `web/cipherflow_demo.html`, an untracked artifact body) |
-| `assets/*.gif` | the terminal recordings above; `python demo/assets/make_terminal_gifs.py` re-renders them from real runs of the commands (needs Pillow; only the pacing is staged) |
+| `web/site_template.html` | the website: one BERT-base block re-planned as the bandwidth changes, the figure, the demo, quick start, backends, roadmap |
+| `web/build_page.py` | writes `docs/planner/index.html` and `docs/index.html` (plus `web/cipherflow_demo.html`, an untracked artifact body) |
+| `make_terminal_gifs.py` | re-renders the terminal recordings above (`docs/assets/demo_network_*.gif`) from real runs of the commands (needs Pillow; only the pacing is staged) |

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Roadmap figure (`docs/assets/cipherflow-roadmap-*.svg`, `make_roadmap_svg.py`) in `ROADMAP.md` and on the website:
+  discriminative Transformers (done), generative models (next), a private inference runtime (then); below, the
+  next stage's two steps (backend operators, then the models) and a LLaMA-style decoder block marked by which
+  operators exist today. `ROADMAP.md` describes the stages, with details, and section 7 follows the two steps.
+- Website (`docs/index.html`, GitHub Pages; white, one light theme): the thesis as a live panel (one BERT-base block re-planned as the
+  bandwidth and the hardware change, with the latency against static placements), the figure, the demo,
+  quick start, backends and roadmap. The plan visualization moves to `docs/planner/`; both are built by
+  `python -m demo.web.build_page`. The terminal recordings move to `docs/assets/` (built by
+  `demo/make_terminal_gifs.py`).
+
 ## v0.4.0 (2026-10-08)
 
 A Transformer written in PyTorch in, the plan operator by operator out: plans name each operator's place
