@@ -158,7 +158,6 @@ p { margin: 0; }
 .figure { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; overflow-x: auto; }
 .figure img { width: 100%; min-width: 600px; height: auto; display: block; }
 .figure img.lt { display: var(--img-light); }
-.figure img.dk { display: var(--img-dark); }
 .io { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; }
 @media (max-width: 960px) { .io { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .io { grid-template-columns: minmax(0, 1fr); } }
@@ -316,7 +315,6 @@ footer .mk b { color: var(--teal); }
     <p class="lede">CipherFlow plans against an abstraction of the backends: methods, each one operator in one domain with the CKKS levels it consumes, the inputs it accepts and its measured cost. A library plugs in by registering its methods and a cost profile.</p>
     <div class="figure">
       <img class="lt" src="assets/cipherflow-ecosystem-light.svg" width="1120" height="990" alt="CipherFlow in the private-inference stack: a PyTorch model is traced into an operator graph; the deployment gives hardware, network and security model; CipherFlow plans with MicroBench, state expansion and BlockFold; HE and MPC backends report methods and measured costs and receive plan.json; cipherflow.runtime checks the plan and emulates it on real inputs.">
-      <img class="dk" src="assets/cipherflow-ecosystem-dark.svg" width="1120" height="990" alt="">
     </div>
     <div class="io">
       <div><span class="t">① input</span><b>Operator graph</b><p>Operators, shapes and residual edges, traced from an <code>nn.Module</code>.</p></div>
@@ -402,7 +400,6 @@ pip install -e .                          <span class="c"># PyTorch for from_tor
     <p class="lede">BERT and ViT encoders are done. Generative models come next, first the backend operators decoders need and then the models; after them, a runtime that executes plans under encryption.</p>
     <div class="figure">
       <img class="lt" src="assets/cipherflow-roadmap-light.svg" width="1120" height="600" loading="lazy" alt="CipherFlow roadmap. Done: discriminative Transformers (BERT-base, ViT-B/16). Next: generative models (GPT-2, then LLaMA-style decoders): backend operators for decoders, a torch.export front end, prefill and decode plans. Then: a private inference runtime. Below, the two steps of the next stage and a LLaMA-style decoder block marked by which operators exist today.">
-      <img class="dk" src="assets/cipherflow-roadmap-dark.svg" width="1120" height="600" loading="lazy" alt="">
     </div>
     <p><a href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md">The full roadmap</a> lists every done and planned item.</p>
   </section>

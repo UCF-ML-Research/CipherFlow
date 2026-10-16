@@ -20,10 +20,7 @@ The path has three stages:
 3. **Private inference runtime (then):** plans executed under encryption by the two parties
    ([section 6](#6-running-the-plan)), on more backends ([section 3](#3-backends-and-costs)).
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/cipherflow-roadmap-dark.svg">
-  <img alt="CipherFlow roadmap. Done: discriminative Transformers (BERT-base, ViT-B/16): PyTorch front end, measured HE and MPC backends, plans, calibration and emulation. Next: generative models (GPT-2, then LLaMA-style decoders): backend operators for decoders, a torch.export front end, prefill and decode plans. Then: a private inference runtime: a two-party runtime, encrypted execution from BERT to LLMs, GPU backends and SPU. Below, the details of the next stage: step 1 adds the backend operators, step 2 brings in the models; a LLaMA-style decoder block marks which operators exist today and which step 1 adds." src="docs/assets/cipherflow-roadmap-light.svg" width="100%">
-</picture>
+<img alt="CipherFlow roadmap. Done: discriminative Transformers (BERT-base, ViT-B/16): PyTorch front end, measured HE and MPC backends, plans, calibration and emulation. Next: generative models (GPT-2, then LLaMA-style decoders): backend operators for decoders, a torch.export front end, prefill and decode plans. Then: a private inference runtime: a two-party runtime, encrypted execution from BERT to LLMs, GPU backends and SPU. Below, the details of the next stage: step 1 adds the backend operators, step 2 brings in the models; a LLaMA-style decoder block marks which operators exist today and which step 1 adds." src="docs/assets/cipherflow-roadmap.svg" width="100%">
 
 ### Details
 

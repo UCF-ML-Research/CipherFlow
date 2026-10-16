@@ -38,10 +38,7 @@ measure on your machine. For HE, the supported backends are OpenFHE (CKKS, with 
 bootstrapping) and NEXUS (SEAL on CPU, Phantom on CUDA). For MPC, they are SCI/BOLT (two parties) and
 SHAFT/CrypTen (two parties and a trusted dealer, CPU and GPU). SPU is planned ([ROADMAP.md](ROADMAP.md)).
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/cipherflow-ecosystem-dark.svg">
-  <img alt="CipherFlow in the private-inference stack. Model layer: a PyTorch model, traced by cf.models.from_torch into an operator graph (operators, tensor shapes, residual edges). Deployment: hardware profile or this machine, network given or measured with --ip, security model. Planning layer (CipherFlow): MicroBench, state expansion over domains and CKKS levels, BlockFold; cf.compile returns plan.json. Backend layer: HE (OpenFHE, NEXUS) and MPC (SCI, SHAFT) report methods and measured costs and receive the plan; HE-MPC conversions and bootstrapping. Execution: cipherflow.runtime checks the plan and emulates it on real inputs; encrypted two-party execution is planned." src="docs/assets/cipherflow-ecosystem-light.svg" width="100%">
-</picture>
+<img alt="CipherFlow in the private-inference stack. Model layer: a PyTorch model, traced by cf.models.from_torch into an operator graph (operators, tensor shapes, residual edges). Deployment: hardware profile or this machine, network given or measured with --ip, security model. Planning layer (CipherFlow): MicroBench, state expansion over domains and CKKS levels, BlockFold; cf.compile returns plan.json. Backend layer: HE (OpenFHE, NEXUS) and MPC (SCI, SHAFT) report methods and measured costs and receive the plan; HE-MPC conversions and bootstrapping. Execution: cipherflow.runtime checks the plan and emulates it on real inputs; encrypted two-party execution is planned." src="docs/assets/cipherflow-ecosystem.svg" width="100%">
 
 | | interface | contents |
 |---|---|---|

@@ -2,13 +2,12 @@
 inference runtime (then), with the details of the next stage below: its two steps, and a LLaMA-style
 decoder block marked by which operators exist today.
 
-Writes docs/assets/cipherflow-roadmap-{light,dark}.svg in the style of the README figure.
+Writes docs/assets/cipherflow-roadmap.svg (follows the viewer's light or dark color scheme) and
+cipherflow-roadmap-light.svg (always light, for the white website), in the style of the README figure.
 
     python docs/assets/make_roadmap_svg.py
 """
-from pathlib import Path
-
-from make_ecosystem_svg import FONT, THEMES
+from make_ecosystem_svg import FONT, write_figure
 
 W, H = 1120, 600
 CW, GAP, X0, CY, CH = 330, 25, 40, 104, 176      # stage cards: width, gap, left, top, height
@@ -125,10 +124,7 @@ def svg(c: dict) -> str:
 
 
 def main() -> None:
-    out = Path(__file__).resolve().parent
-    for name, colors in THEMES.items():
-        (out / f"cipherflow-roadmap-{name}.svg").write_text(svg(colors))
-        print("wrote", out / f"cipherflow-roadmap-{name}.svg")
+    write_figure("cipherflow-roadmap", svg)
 
 
 if __name__ == "__main__":

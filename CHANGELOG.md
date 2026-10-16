@@ -2,7 +2,10 @@
 
 ## Unreleased
 
-- Roadmap figure (`docs/assets/cipherflow-roadmap-*.svg`, `make_roadmap_svg.py`) in `ROADMAP.md` and on the website:
+- The README and roadmap figures are single SVG files (`docs/assets/cipherflow-ecosystem.svg`,
+  `cipherflow-roadmap.svg`) that follow the viewer's light or dark color scheme, on their own background,
+  so they read the same anywhere they are opened; `*-light.svg` stay light for the white website.
+- Roadmap figure (`docs/assets/cipherflow-roadmap.svg`, `make_roadmap_svg.py`) in `ROADMAP.md` and on the website:
   discriminative Transformers (done), generative models (next), a private inference runtime (then); below, the
   next stage's two steps (backend operators, then the models) and a LLaMA-style decoder block marked by which
   operators exist today. `ROADMAP.md` describes the stages, with details, and section 7 follows the two steps.

@@ -1,10 +1,12 @@
 """Generate the README figure: where CipherFlow sits in the private-inference stack.
 
-Writes docs/assets/cipherflow-ecosystem-{light,dark}.svg (transparent background,
-Comic Sans MS with fallbacks, so the files render as plain images on GitHub).
+Writes docs/assets/cipherflow-ecosystem.svg, which follows the viewer's light or dark color scheme
+(its colors are CSS variables switched by prefers-color-scheme inside the file, on its own background),
+and cipherflow-ecosystem-light.svg, always light, for the white website. Comic Sans MS with fallbacks.
 
     python docs/assets/make_ecosystem_svg.py
 """
+import re
 from pathlib import Path
 
 THEMES = {
@@ -128,11 +130,44 @@ def svg(c: dict) -> str:
     return "\n".join(p)
 
 
-def main() -> None:
+BACKGROUND = {"light": "#ffffff", "dark": "#0d1117"}      # the adaptive file's own ground (GitHub's canvases)
+
+
+def _css(theme: str) -> str:
+    return "; ".join(f"--{k.replace('_', '-')}: {v}" for k, v in {**THEMES[theme], "bg": BACKGROUND[theme]}.items())
+
+
+def adaptive(draw) -> str:
+    """The figure `draw(colors)` with every color a CSS variable, set for light and dark inside the file.
+    Colors move from presentation attributes into style attributes, where var() works in every browser."""
+    body = draw({k: f"var(--{k.replace('_', '-')})" for k in THEMES["light"]})
+
+    def to_style(m):
+        tag = m.group(0)
+        props = re.findall(r' (fill|stroke)="(var\(--[\w-]+\))"', tag)
+        if not props:
+            return tag
+        tag = re.sub(r' (fill|stroke)="var\(--[\w-]+\)"', "", tag)
+        end = -2 if tag.endswith("/>") else -1
+        return tag[:end] + ' style="' + ";".join(f"{a}:{v}" for a, v in props) + '"' + tag[end:]
+    body = re.sub(r"<[a-zA-Z][^>]*>", to_style, body)
+    head = (f"<style>svg {{ {_css('light')} }} "
+            f"@media (prefers-color-scheme: dark) {{ svg {{ {_css('dark')} }} }}</style>"
+            '<rect width="100%" height="100%" style="fill:var(--bg)"/>')
+    i = body.index(">", body.index("<svg")) + 1
+    return body[:i] + head + body[i:]
+
+
+def write_figure(stem: str, draw) -> None:
+    """docs/assets/<stem>.svg (adaptive) and <stem>-light.svg (always light, for the white website)."""
     out = Path(__file__).resolve().parent
-    for name, colors in THEMES.items():
-        (out / f"cipherflow-ecosystem-{name}.svg").write_text(svg(colors))
-        print("wrote", out / f"cipherflow-ecosystem-{name}.svg")
+    (out / f"{stem}.svg").write_text(adaptive(draw))
+    (out / f"{stem}-light.svg").write_text(draw(THEMES["light"]))
+    print("wrote", out / f"{stem}.svg", "and", out / f"{stem}-light.svg")
+
+
+def main() -> None:
+    write_figure("cipherflow-ecosystem", svg)
 
 
 if __name__ == "__main__":
