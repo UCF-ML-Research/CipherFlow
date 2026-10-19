@@ -178,7 +178,7 @@ A plan uses one HE backend and one MPC backend, chosen with `he=` and `mpc=`:
 |---|---|---|---|
 | `openfhe-fast` | measured: all ten operators run on one CKKS parameter set ([`native/openfhe`](native/openfhe)) | 128-bit | 8 levels after, 10.5 bits, 17.6 s |
 | `openfhe-precise` | measured, two-pass bootstrapping | 128-bit | 7 levels after, 23.5 bits, 34.8 s |
-| `nexus` (SEAL / Phantom) | costs are NEXUS reference kernels scaled to each shape; its operators use three parameter sets, so they do not run as one pipeline | unverified | precision not established |
+| `nexus` (SEAL / Phantom) | costs are NEXUS reference kernels scaled to each shape; its operators use three parameter sets, so they do not run as one pipeline | - | - |
 
 Precision is -log2 of the largest bootstrapping error on random values in [-1, 1].
 
