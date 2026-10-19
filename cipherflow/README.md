@@ -104,6 +104,31 @@ to the same plan as `cf.models.bert()`. For Hugging Face models pass the encoder
 outside the operator set. Anything else raises `cf.UnsupportedModel` listing every
 unsupported operation.
 
+### Extensions
+
+`cf.Extension(name)` brings primitives and operators to the planner (`cipherflow.extensions`):
+
+| call | what it adds |
+|---|---|
+| `ext.primitive(op, "HE" \| "MPC", cost=..., levels=0, level_out=None, accepts=None)` | an implementation of operator `op` in one domain. For an operator the backend pair already implements in that domain, it replaces the built-in implementation (and its kernel variants); for a new operator, it is the only implementation in that domain |
+| `ext.operator(ModuleClass, op)` | `from_torch(..., extensions=[ext])` traces instances of the PyTorch module class as one operator of type `op` |
+
+The arguments of `primitive`:
+- `cost` is a `cf.Cost(local_ms, comm_bytes, comm_rounds)` per call, or a function `(node, profile) -> cf.Cost`;
+  `cf.extensions.like(op, domain, scale)` prices a node from the profile's measured record of another
+  operator;
+- `levels` are the CKKS levels an HE primitive consumes, and `level_out` the output level of one that
+  bootstraps internally;
+- `accepts(node)` returns `None`, or why the primitive cannot run the node, which then stays out of that
+  domain.
+
+Pass the same extensions to `from_torch` (for their operators) and to `compile`. In the plan:
+- the nodes an extension runs have `backend` set to the extension's name and `cost_source="extension"`;
+- `explain(steps=True)` tags them, e.g. `Softmax [my-he-softmax]`;
+- `plan.warnings` names the operators the extension priced.
+
+Examples: [`demo/extensions`](../demo/extensions).
+
 ### What fails, and how
 
 | situation | behaviour |
@@ -112,7 +137,7 @@ unsupported operation.
 | no MPC backend satisfies `mpc`, `security`, the hardware and the profile | `cf.UnsupportedBackend`, with the reason for each backend |
 | a node violates a method's contract (NEXUS: hidden 768, 12 heads × 64, packed Q/K/V) | the node is kept out of that domain (noted in `plan.warnings`); `UnsupportedOperator` if no domain can run it |
 | the graph is not a chain with two-branch residual regions (several inputs/outputs, cross-attention, nested residuals, ...) | `cf.UnsupportedGraph` before planning; `cf.check_graph(graph)` runs the same check |
-| an operator type has no method | `cf.UnsupportedOperator` |
+| an operator type has no method | `cf.UnsupportedOperator` (add one with a `cf.Extension`) |
 
 ## CLI
 

@@ -79,8 +79,9 @@ def _qualname(node, gm) -> str:
 class _Traced:
     """Classification of every fx node: kind in {input, const, skip, op, unsupported}."""
 
-    def __init__(self, gm, torch):
+    def __init__(self, gm, torch, ext_ops=None):
         self.gm, self.torch = gm, torch
+        self.ext_ops = ext_ops or {}              # extension module class -> (operator type, extension)
         self.kind: Dict[str, str] = {}
         self.op: Dict[str, str] = {}              # canonical op (or Linear / MatMul / MHA) for kind == op
         self.why: Dict[str, str] = {}             # unsupported description
@@ -114,6 +115,9 @@ class _Traced:
         if n.op == "call_module":
             m = self.gm.get_submodule(n.target)
             cls = type(m).__name__
+            for ext_cls, (op, _name) in self.ext_ops.items():
+                if isinstance(m, ext_cls):
+                    return self._set(n, "op", op)
             if isinstance(m, nn.LayerNorm):
                 return self._set(n, "op", "LayerNorm")
             if isinstance(m, nn.GELU) or "gelu" in cls.lower():
@@ -232,14 +236,15 @@ class TraceResult:
 
 
 def from_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]] = None,
-               graph_id: Optional[str] = None, qkv_projection: bool = True) -> OperatorGraph:
-    """Trace `module` (an encoder stack taking hidden states) into an OperatorGraph."""
+               graph_id: Optional[str] = None, qkv_projection: bool = True, extensions=()) -> OperatorGraph:
+    """Trace `module` (an encoder stack taking hidden states) into an OperatorGraph. Instances of
+    the module classes an extension registers (Extension.operator) become its operators."""
     return trace_torch(module, example_inputs, concrete_args=concrete_args, graph_id=graph_id,
-                       qkv_projection=qkv_projection).graph
+                       qkv_projection=qkv_projection, extensions=extensions).graph
 
 
 def trace_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any]] = None,
-                graph_id: Optional[str] = None, qkv_projection: bool = True) -> TraceResult:
+                graph_id: Optional[str] = None, qkv_projection: bool = True, extensions=()) -> TraceResult:
     """from_torch, keeping the traced module and the fx node -> operator mapping."""
     try:
         import torch
@@ -248,6 +253,8 @@ def trace_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any
     except ImportError as exc:  # pragma: no cover
         raise UnsupportedModel("from_torch needs PyTorch (pip install torch)") from exc
 
+    from .extensions import module_ops
+    ext_ops = module_ops(extensions)
     inputs = example_inputs if isinstance(example_inputs, tuple) else (example_inputs,)
     ca: Dict[str, Any] = {}
     if isinstance(module, fx.GraphModule):
@@ -255,7 +262,13 @@ def trace_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any
     else:
         ca = _default_concrete_args(module, len(inputs)) if concrete_args is None else concrete_args
         try:
-            gm = fx.symbolic_trace(module, concrete_args=ca or None)
+            if ext_ops:                          # extension modules stay whole: one operator each
+                class _Tracer(fx.Tracer):
+                    def is_leaf_module(self, m, qualname):
+                        return isinstance(m, tuple(ext_ops)) or super().is_leaf_module(m, qualname)
+                gm = fx.GraphModule(module, _Tracer().trace(module, concrete_args=ca or None), type(module).__name__)
+            else:
+                gm = fx.symbolic_trace(module, concrete_args=ca or None)
         except Exception as exc:
             raise UnsupportedModel(
                 f"torch.fx could not trace {type(module).__name__}: {type(exc).__name__}: "
@@ -271,7 +284,7 @@ def trace_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any
         raise UnsupportedModel(f"shape propagation failed for {type(module).__name__}: "
                                f"{type(exc).__name__}: {str(exc).splitlines()[0][:200]}") from exc
 
-    t = _Traced(gm, torch)
+    t = _Traced(gm, torch, ext_ops)
     bad: Dict[str, List[str]] = {}
     for n in t.nodes:
         if t.kind[n.name] == "unsupported":
@@ -324,7 +337,8 @@ def trace_torch(module, example_inputs, *, concrete_args: Optional[Dict[str, Any
         raise UnsupportedModel(
             f"{type(module).__name__} uses {len(bad)} operation kind(s) outside CipherFlow's v0.1 operator "
             f"set: " + "; ".join(parts) + ". Supported: self-attention with linear Q/K/V, linear layers, "
-            "LayerNorm, GeLU, Softmax, residual Add, and shape-only ops")
+            "LayerNorm, GeLU, Softmax, residual Add, and shape-only ops. Other operations can be added as "
+            "operators of a cipherflow.Extension (see demo/extensions)")
 
     # ---------------------------------------------------------------- nodes
     def arrival_shape(p, a):

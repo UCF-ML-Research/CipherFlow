@@ -1,7 +1,21 @@
 # Changelog
 
-## Unreleased
+## v0.5.0 (2026-10-19)
 
+Extensions: users bring new HE and MPC primitives and new operators, and CipherFlow plans with them; demos of
+a new HE primitive and of a new workload (private RAG retrieval). A website, a roadmap with its figure, and
+figures that follow the viewer's light or dark scheme.
+
+- Extensions (`cf.Extension`, `cipherflow.extensions`): new primitives for the backends and new operators for
+  the planner. A primitive is an implementation of an operator in HE or MPC with its CKKS levels, accepted
+  inputs and cost (`cf.Cost`, or a function of the node and the profile; `extensions.like` scales a measured
+  record). It replaces a backend's built-in implementation, or implements a new operator.
+  `Extension.operator` maps a PyTorch module class to an operator for `from_torch(..., extensions=...)`.
+  `compile(..., extensions=...)` plans with them; plans mark the operators an extension runs (`node.backend`,
+  `cost_source="extension"`, the `[name]` tag in `explain(steps=True)`) and warn that the extension priced them.
+- Demos in `demo/extensions`: a new HE Softmax primitive in BERT-base; the retrieval step of private RAG
+  (encoder, pooling, document scores, top-k) as a new workload.
+- Unsupported PyTorch operations point to extensions in the error message.
 - The README and roadmap figures are single SVG files (`docs/assets/cipherflow-ecosystem.svg`,
   `cipherflow-roadmap.svg`) that follow the viewer's light or dark color scheme, on their own background,
   so they read the same anywhere they are opened; `*-light.svg` stay light for the white website.

@@ -109,6 +109,12 @@ python -m demo.web.build_data      # 350 plans over models x hardware x bandwidt
 python -m demo.web.build_page      # -> docs/planner/index.html (template.html) and the website docs/index.html (site_template.html)
 ```
 
+## Extensions
+
+[`extensions/`](extensions) shows how to extend the backend layer and the operators:
+- `python -m demo.extensions.new_he_primitive` plugs a new HE primitive into the planner;
+- `python -m demo.extensions.private_rag` plans a new workload, the retrieval step of private RAG.
+
 ## Files
 
 | file | contents |
@@ -120,4 +126,5 @@ python -m demo.web.build_page      # -> docs/planner/index.html (template.html) 
 | `web/demo_data.json` | the precomputed plans (generated) |
 | `web/site_template.html` | the website: one BERT-base block re-planned as the bandwidth changes, the figure, the demo, quick start, backends, roadmap |
 | `web/build_page.py` | writes `docs/planner/index.html` and `docs/index.html` (plus `web/cipherflow_demo.html`, an untracked artifact body) |
+| `extensions/` | extension demos: a new HE primitive, private RAG retrieval |
 | `make_terminal_gifs.py` | re-renders the terminal recordings above (`docs/assets/demo_network_*.gif`) from real runs of the commands (needs Pillow; only the pacing is staged) |

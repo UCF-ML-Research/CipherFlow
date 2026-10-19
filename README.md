@@ -129,8 +129,26 @@ leave them out: three 768×768 matmuls per block, 10–30% of a block's cost. To
 `cf.models.bert_paper()` / `vit_paper()` (or `qkv_projection=False`) with the `paper-cpu` / `paper-gpu`
 profiles, which have no cost for the projections.
 
-See [`cipherflow/README.md`](cipherflow/README.md) for the full [API](cipherflow/README.md#api) and the
-[plan format](cipherflow/README.md#plan-format).
+### Extending the backends and the operators
+
+An extension brings new primitives and new operators. A primitive is one implementation of an operator in HE
+or MPC, with its CKKS levels, the inputs it accepts and its cost. It can replace a backend's built-in
+implementation of an operator, or implement a new operator: a PyTorch module class that `from_torch` traces as
+a single operator.
+
+```python
+ext = cf.Extension("my-he-softmax").primitive("Softmax", "HE", levels=4, cost=cf.Cost(local_ms=9_000))
+plan = cf.compile(graph, cf.Deployment.of("cpu", "10Mbps/1ms"), extensions=[ext])
+```
+
+[`demo/extensions`](demo/extensions) shows both:
+- `python -m demo.extensions.new_he_primitive` plugs a new HE Softmax kernel into BERT-base and shows the plan
+  change;
+- `python -m demo.extensions.private_rag` plans a new workload, the retrieval step of private RAG (encoder,
+  pooling, document scores, top-k).
+
+See [`cipherflow/README.md`](cipherflow/README.md) for the full [API](cipherflow/README.md#api), including
+[extensions](cipherflow/README.md#extensions), and the [plan format](cipherflow/README.md#plan-format).
 
 ## Supported models
 
@@ -142,7 +160,8 @@ See [`cipherflow/README.md`](cipherflow/README.md) for the full [API](cipherflow
 | **not supported (explicit error)** | decoder LLMs and generation (causal mask, KV cache, RoPE, RMSNorm, SwiGLU), CNNs, encoder-decoder models, embeddings and task heads, attention masks, ONNX |
 
 Anything outside this set raises `UnsupportedModel`, `UnsupportedGraph` or `UnsupportedOperator`, naming the
-cause. CipherFlow never plans a model with parts of it dropped. [ROADMAP.md](ROADMAP.md) lists what comes
+cause. CipherFlow never plans a model with parts of it dropped. Operations outside the set can be added as the
+operators of an [extension](#extending-the-backends-and-the-operators). [ROADMAP.md](ROADMAP.md) lists what comes
 next, decoder LLMs first.
 
 ## Backends and cost profiles

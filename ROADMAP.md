@@ -47,6 +47,7 @@ generative models above all (section 7).
 - [x] Q/K/V projections as an operator (`Linear_QKV`), priced on every backend (v0.2.0)
 - [x] Each operator's place in the PyTorch code (`node.source`, e.g. `blocks.0.attn: softmax`) (v0.4.0)
 - [x] `cipherflow compile --torch FILE.py:NAME` (v0.4.0)
+- [x] New operators from PyTorch modules: `cf.Extension.operator` (v0.5.0)
 - [ ] `torch.export` (Core ATen) front end instead of torch.fx module matching
 - [ ] `from_onnx`
 - [ ] Embeddings and task heads (today the client computes them in plaintext)
@@ -70,6 +71,15 @@ server.
 
 The planner weighs what each backend measures: operator costs, HE↔MPC conversions, bootstrapping, and the
 CKKS levels each kernel consumes.
+
+### Extensions
+
+- [x] New primitives from users: `cf.Extension.primitive` adds an implementation of an operator in HE or MPC (CKKS levels, accepted inputs, cost), replacing a backend's built-in one or implementing a new operator (v0.5.0)
+- [ ] Extension operators in the runtime (emulation on real data) and in MicroBench (measured, not declared, costs)
+- [ ] Extension primitives executed under encryption, with the runtime of section 6
+- [ ] Extensions from the command line (`cipherflow compile --extension FILE.py:NAME`)
+- [ ] Packaged extensions: an installed library registers its primitives and operators (entry points)
+- [ ] Operators with several data inputs and outputs, as many extension workloads need (with the graphs of section 4)
 
 ### MPC
 
@@ -168,6 +178,8 @@ PyTorch and planned.
 - [x] Interactive demo page (v0.1)
 - [x] Demo input as PyTorch code and output as the plan operator by operator, with a JSON download (v0.4.0)
 - [x] Demo folder (`demo/`): models, a script, the page builder, terminal recordings (v0.4.0)
+- [x] Extension demos (`demo/extensions`): a new HE primitive in BERT-base; private RAG retrieval as a new workload (v0.5.0)
+- [ ] More extension demos: a router (a classifier head and an argmax that picks a model); a database task (comparisons and aggregation over encrypted or shared records)
 - [x] Design notes: hardened conversion (`native/openfhe/CONVERSION.md`), wide-range kernels (`native/openfhe/NONLINEAR.md`), planner optimality (`compiler/state_expanded/OPTIMALITY.md`), cost provenance (`compiler/state_expanded/profiles/DATA_PROVENANCE.md`)
 - [ ] Demo page with the measured OpenFHE + SCI profiles (today: the paper's profiles)
 - [ ] The page for any plan (`cipherflow view plan.json`)

@@ -10,6 +10,7 @@ from compiler.state_expanded.planner import compile_plan, compile_plan_safe
 from compiler.state_expanded.profile_schema import LatencyProfile, OperatorRecord
 
 from . import backends as _backends
+from . import extensions as _ext
 from . import profiles as _profiles
 from .deploy import Deployment
 from .errors import (CostExtrapolationError, CostExtrapolationWarning, UnsupportedBackend,
@@ -370,10 +371,11 @@ def _profile_for(graph, deployment, cand: Candidate, *, measure: bool, verbose: 
     return prof, name
 
 
-def _plan_with(graph, deployment, cand: Candidate, *, safe, strict, verbose, calibration=None):
-    _check_methods(graph, _methods(cand, None) if cand.methods is None else cand.methods)
+def _plan_with(graph, deployment, cand: Candidate, *, safe, strict, verbose, calibration=None, extensions=()):
+    _check_methods(graph, _ext.with_methods(_methods(cand, None) if cand.methods is None else cand.methods, extensions))
     prof, prof_name = _profile_for(graph, deployment, cand, measure=True, verbose=verbose)
-    meths = _methods(cand, prof)
+    prof = _ext.with_records(prof, graph, extensions)
+    meths = _ext.with_methods(_methods(cand, prof), extensions)
     _check_coverage(graph, meths, prof)
     base_graph = graph
     graph, kernels = _backends.assign_kernels(graph, meths, calibration)
@@ -407,6 +409,12 @@ def _plan_with(graph, deployment, cand: Candidate, *, safe, strict, verbose, cal
         else:
             n.cost_source = report.node_source.get((n.id, n.domain), "exact")
             n.backend = cand.he if n.domain == "HE" else cand.mpc
+    ext_owner = _ext.owners(extensions)
+    for n in plan.nodes:                         # operators an extension runs, at the extension's costs
+        name = ext_owner.get((n.op_type, n.domain))
+        if name:
+            n.backend, n.cost_source = name, "extension"
+    notes += _ext.notes(plan, extensions)
     if calibration is None:
         unchecked = sorted({n.op_type for n in plan.nodes if n.domain == "HE" and any(
             m.value_contract is not None for m in meths if m.op_type == n.op_type and m.domain == "HE")})
@@ -473,7 +481,7 @@ def compile(graph, deployment: Deployment, *,
             min_precision: Optional[float] = None,
             methods: Union[str, Sequence[_backends.Method]] = "auto",
             safe: bool = True, strict: bool = False, verbose: bool = True,
-            calibration=None) -> Plan:
+            calibration=None, extensions: Sequence = ()) -> Plan:
     """Plan hybrid HE/MPC execution of `graph` for `deployment`.
 
     profile:  a LatencyProfile, a JSON path, a built-in name (see cipherflow.profiles.BUILTIN;
@@ -498,6 +506,8 @@ def compile(graph, deployment: Deployment, *,
     calibration: a cipherflow.Calibration (or its JSON path) from cipherflow.runtime.calibrate:
               operators whose calibrated inputs fall outside an HE method's approximation are
               kept out of HE (see cipherflow.kernel_params).
+    extensions: cipherflow.Extension objects: new primitives (replacing a backend's implementation
+              of an operator in a domain) and new operators, with their costs (cipherflow.extensions).
 
     Raises UnsupportedGraph for structures the planner does not handle, UnsupportedOperator
     for operators no backend can run, and UnsupportedBackend when no backend pair fits;
@@ -514,7 +524,7 @@ def compile(graph, deployment: Deployment, *,
     for c in cands:
         try:
             plans[c.name] = _plan_with(graph, deployment, c, safe=safe, strict=strict, verbose=verbose,
-                                       calibration=calibration)
+                                       calibration=calibration, extensions=extensions)
         except _CANDIDATE_ERRORS as exc:
             if len(cands) == 1:
                 raise

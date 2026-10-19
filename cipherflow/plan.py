@@ -189,16 +189,23 @@ class Plan:
             out += [action(a) for a in before.get(n.id, [])]
             out.append({"step": "operator", "id": n.id, "op_type": n.op_type, "domain": n.domain,
                         "level_in": n.level_in, "level_out": n.level_out, "kernel": n.kernel,
-                        "source": n.source})
+                        "backend": n.backend, "source": n.source})
         out += [action(a) for a in before.get("<output>", [])]
         return out
 
     def explain_steps(self) -> str:
         """steps() as a table: one line per operator, conversions and bootstraps indented above it."""
-        lines = [f"  {'#':>4}  {'operator':22s} {'domain':6s} {'CKKS level':10s} "
-                 + ("PyTorch" if any(n.source for n in self.nodes) else "node")]
         steps = self.steps()
         num = {s["id"]: i for i, s in enumerate(t for t in steps if t["step"] == "operator")}
+
+        def op_name(s):
+            kern, own = s["kernel"], s.get("backend")
+            tag = kern["kernel"] if kern else (own if own not in (None, "client", self.he_backend, self.mpc_backend)
+                                              else None)           # an extension's primitive
+            return s["op_type"] + (f" [{tag}]" if tag else "")
+        w = max([22] + [len(op_name(s)) for s in steps if s["step"] == "operator"])
+        lines = [f"  {'#':>4}  {'operator':{w}s} {'domain':6s} {'CKKS level':10s} "
+                 + ("PyTorch" if any(n.source for n in self.nodes) else "node")]
         k = 0
         for s in steps:
             if s.get("edge"):
@@ -216,9 +223,7 @@ class Plan:
                 where = s["source"] or s["id"]
                 if s["op_type"] == "Input":
                     where += f" ({'encrypted' if s['domain'] == 'HE' else 'secret-shared'} by the client)"
-                kern = s["kernel"]
-                op = s["op_type"] + (f" [{kern['kernel']}]" if kern else "")
-                lines.append(f"  {k:4d}  {op:22s} {s['domain']:6s} {lv:10s} {where}")
+                lines.append(f"  {k:4d}  {op_name(s):{w}s} {s['domain']:6s} {lv:10s} {where}")
                 k += 1
         return "\n".join(lines)
 
