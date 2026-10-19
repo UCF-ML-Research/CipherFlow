@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- README: an overview figure after the first paragraph (`docs/assets/cipherflow-overview-v3.png`): a PyTorch
+  model and a target deployment go in; MicroBench, state expansion and BlockFold choose HE or MPC for each
+  operator; out comes a deployment plan with its latency and communication.
+
 ## v0.5.0 (2026-10-19)
 
 Extensions: users bring new HE and MPC primitives and new operators, and CipherFlow plans with them; demos of

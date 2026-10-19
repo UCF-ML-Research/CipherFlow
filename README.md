@@ -30,6 +30,10 @@ network, which is either given or measured between the two parties. It returns a
 operator, whether it runs in HE or MPC and where to convert or bootstrap, with the expected latency and
 communication. It also checks that plan and emulates it on real inputs.
 
+<p align="center">
+  <img alt="CipherFlow takes a PyTorch model and target deployment, uses MicroBench, state expansion, and BlockFold to choose HE or MPC for each operator, and produces a deployment plan with estimated latency and communication." src="docs/assets/cipherflow-overview-v3.png" width="100%">
+</p>
+
 CipherFlow plans against an abstraction of the backends. A backend is a set of
 *methods*, each one operator in one domain with the CKKS levels it consumes, the shapes and value ranges it
 accepts, and its measured cost. The backend also supplies the measured cost of its HE↔MPC conversions and
