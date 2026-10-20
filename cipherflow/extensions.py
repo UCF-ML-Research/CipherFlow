@@ -67,6 +67,10 @@ class Extension:
     primitives: List[Primitive] = field(default_factory=list)
     modules: Dict[type, str] = field(default_factory=dict)       # PyTorch module class -> operator type
     note: str = ""
+    # an HE backend of its own (cipherflow.lowering.PrimitiveBackend): its level budget and bootstrapping
+    he_levels: Optional[int] = None
+    bootstrap: Optional[Cost] = None
+    bootstrap_slots: Optional[int] = None
 
     def primitive(self, op: str, domain: str, *, cost: CostFn, levels: int = 0, level_out: Optional[int] = None,
                   accepts: Optional[Callable[[object], Optional[str]]] = None) -> "Extension":
@@ -146,6 +150,21 @@ def with_records(profile, graph, extensions):
     exts = _check(extensions)
     if not exts:
         return profile
+    own = [e for e in exts if e.he_levels is not None or e.bootstrap is not None]
+    if len(own) > 1:
+        raise ValueError(f"extensions {own[0].name} and {own[1].name} both bring their own HE level budget")
+    if own:                                       # the extension's HE backend: its levels and bootstrapping
+        e = own[0]
+        boot = profile.bootstrap
+        if e.bootstrap is not None:
+            from compiler.state_expanded.profile_schema import BootstrapRecord
+            boot = BootstrapRecord(method=f"extension:{e.name}", local_compute_ms=float(e.bootstrap.local_ms),
+                                   comm_bytes=int(e.bootstrap.comm_bytes), comm_rounds=int(e.bootstrap.comm_rounds),
+                                   metadata={"source": "extension", "extension": e.name,
+                                             **({"slots": int(e.bootstrap_slots)} if e.bootstrap_slots else {}),
+                                             **({"levels_after": int(e.he_levels)} if e.he_levels else {})})
+        profile = replace(profile, bootstrap=boot,
+                          he_level_budget=int(e.he_levels) if e.he_levels is not None else profile.he_level_budget)
     prims = {(p.op, p.domain): (e, p) for e in exts for p in e.primitives}
     kept = [r for r in profile.operators if (r.op_type, r.domain) not in prims]
     seen = set()

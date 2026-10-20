@@ -5,10 +5,11 @@
     plan  = cf.compile(graph, cf.Deployment.of("cpu", "10Mbps/1ms"))   # mpc="auto", security="2pc"
     print(plan.explain()); plan.to_json("plan.json")
 """
-from . import backends, errors, extensions, measure as _mb, models, profiles
+from . import backends, errors, extensions, lowering, measure as _mb, models, profiles
 from .calibration import Calibration
 from .deploy import Deployment, Hardware, Network
 from .extensions import Cost, Extension, Primitive
+from .lowering import PrimitiveBackend
 from .errors import (CostExtrapolationError, CostExtrapolationWarning, UnsupportedBackend,
                      UnsupportedGraph, UnsupportedModel, UnsupportedOperator)
 from .plan import Plan
@@ -24,7 +25,7 @@ __all__ = ["compile", "Deployment", "Hardware", "Network", "Plan", "models", "pr
            "backends", "load_profile", "microbench", "BackendUnavailable", "ProfileNotFound",
            "UnsupportedOperator", "UnsupportedGraph", "UnsupportedModel", "CostExtrapolationError",
            "CostExtrapolationWarning", "check_graph", "errors", "match", "UnsupportedBackend",
-           "Calibration", "Extension", "Primitive", "Cost", "extensions"]
+           "Calibration", "Extension", "Primitive", "Cost", "extensions", "PrimitiveBackend", "lowering"]
 __version__ = "0.5.0"
 
 

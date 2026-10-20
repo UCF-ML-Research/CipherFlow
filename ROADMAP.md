@@ -75,11 +75,29 @@ CKKS levels each kernel consumes.
 ### Extensions
 
 - [x] New primitives from users: `cf.Extension.primitive` adds an implementation of an operator in HE or MPC (CKKS levels, accepted inputs, cost), replacing a backend's built-in one or implementing a new operator (v0.5.0)
-- [ ] Extension operators in the runtime (emulation on real data) and in MicroBench (measured, not declared, costs)
+- [x] Backends from their primitives (prototype): `cf.PrimitiveBackend` lowers every operator to kernel templates over a backend's HE or MPC primitives and prices it from their costs (unreleased)
+- [ ] Kernel templates checked against measured kernels (OpenFHE, SCI), and more of them: packings, extension operators
+- [ ] Code generation: the lowered kernels as programs that call the backend's primitives
+- [ ] Conversion protocols for primitive backends (today the profile's conversions are kept)
+- [ ] Extension operators in MicroBench: measured, not declared, costs and levels
+- [ ] Extension operators in the emulator: checked on real data and calibrated like the built-in kernels, so that a plan keeps them to the value ranges their approximations hold on
+- [ ] Security models for extensions: an extension states the model it assumes (`2pc`, `2pc-dealer`), and `security=` selects it like the built-in backends
 - [ ] Extension primitives executed under encryption, with the runtime of section 6
 - [ ] Extensions from the command line (`cipherflow compile --extension FILE.py:NAME`)
 - [ ] Packaged extensions: an installed library registers its primitives and operators (entry points)
 - [ ] Operators with several data inputs and outputs, as many extension workloads need (with the graphs of section 4)
+
+Limits of extensions today, lifted by the open items above:
+- **Declared costs.** A plan uses an extension's costs and CKKS levels as given; a plan is only as good as
+  those numbers.
+- **Correctness, precision and security.** CipherFlow does not check them for an extension's primitives, nor
+  whether the model's values stay in the ranges its approximations assume.
+- **Kernel templates.** `cf.PrimitiveBackend` prices standard constructions on one simple packing; they are
+  cost models, not code that runs.
+- **Conversions.** HE↔MPC conversions keep the costs of the profile planned with (e.g. OpenFHE + SCI), also
+  for primitive backends.
+- **Execution.** Extensions are planned, not executed: the emulator and MicroBench know only the built-in
+  operators.
 
 ### MPC
 

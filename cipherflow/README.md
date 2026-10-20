@@ -127,7 +127,16 @@ Pass the same extensions to `from_torch` (for their operators) and to `compile`.
 - `explain(steps=True)` tags them, e.g. `Softmax [my-he-softmax]`;
 - `plan.warnings` names the operators the extension priced.
 
-Examples: [`demo/extensions`](../demo/extensions).
+`cf.PrimitiveBackend` builds an extension from a backend's primitives instead of its operators:
+- `PrimitiveBackend.he(name, slots=, levels=, primitives={add, mul_plain, mul, rotate}, bootstrap=)` declares an
+  HE backend, with costs per ciphertext operation;
+- `PrimitiveBackend.mpc(name, primitives={mul, matmul, trunc, cmp, add})` declares an MPC backend, with costs per
+  element and rounds per call.
+
+CipherFlow lowers every operator to kernel templates over these primitives. `backend.lower(graph)` shows the
+calls, CKKS levels and cost of each operator, and `backend.extension()` plans with it (`cipherflow.lowering`).
+
+Tutorial: [`docs/tutorials/backend-primitives.md`](../docs/tutorials/backend-primitives.md). Examples: [`demo/extensions`](../demo/extensions).
 
 ### What fails, and how
 

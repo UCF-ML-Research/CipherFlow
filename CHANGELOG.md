@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Tutorial for adding new backend primitives, `docs/tutorials/backend-primitives.md`: a kernel for a whole
+  operator, a backend from its basic operations, a new operator, with how to measure one call and how to read
+  the plan. The README summarizes it; ROADMAP.md lists the limits of extensions.
+- Backends from their primitives (prototype, `cf.PrimitiveBackend`, `cipherflow.lowering`): an HE backend given
+  by its CKKS primitives (add, plaintext and ciphertext multiplication, rotation, bootstrapping; slots and level
+  budget), or an MPC backend by its primitives (multiplication, products with the server's weights, truncation,
+  comparison). Every operator is lowered to kernel templates over them, priced from the counts of calls
+  (`backend.lower(graph)`), and planned as an extension (`backend.extension()`), which also brings the HE
+  backend's level budget and bootstrapping. Demo: `python -m demo.extensions.primitive_backend`.
 - README: an overview figure after the first paragraph (`docs/assets/cipherflow-overview-v3.png`): a PyTorch
   model and a target deployment go in; MicroBench, state expansion and BlockFold choose HE or MPC for each
   operator; out comes a deployment plan with its latency and communication.

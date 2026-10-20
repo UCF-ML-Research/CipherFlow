@@ -60,6 +60,57 @@ BERT-base (12 blocks), CPU, 10Mbps/1ms, OpenFHE (fast) + SCI
 For a real kernel, pass its measured cost and its level use; `--speedup` and `--levels` show how the plan
 responds to both.
 
+## A backend from its primitives
+
+```bash
+python -m demo.extensions.primitive_backend                     # --network 100Mbps/20ms --blocks 12
+```
+
+Here the user gives only a backend's primitives and the cost of one call of each. CipherFlow writes every
+operator as a program over those primitives (a kernel template), counts the calls and CKKS levels, prices
+the operator, and plans with the backend as an extension:
+
+```python
+my_ckks = cf.PrimitiveBackend.he("my-ckks", slots=32768, levels=10, bootstrap=cf.Cost(9_000),
+                                 primitives={"add": cf.Cost(0.3), "mul_plain": cf.Cost(3),
+                                             "mul": cf.Cost(40), "rotate": cf.Cost(35)})
+my_2pc = cf.PrimitiveBackend.mpc("my-2pc", primitives={"mul": cf.Cost(3e-4, 128, 1), "matmul": cf.Cost(2e-5, 8, 2),
+                                                       "trunc": cf.Cost(2e-4, 128, 1), "cmp": cf.Cost(2e-3, 4000, 16)})
+print(my_ckks.lower(graph))                    # every operator as primitive calls, levels and cost
+plan = cf.compile(graph, deployment, extensions=[my_ckks.extension(), my_2pc.extension()])
+```
+
+The two kinds of backend are priced differently:
+- **HE primitives** cost one call on a ciphertext of `slots` values. The backend also brings its level budget
+  and its bootstrapping, which replace the profile's.
+- **MPC primitives** cost one element (local time and bytes) and a number of rounds per call; a call works on
+  all its elements at once. `matmul` (shares × the server's weights) is optional; without it, linear layers
+  use `mul`.
+
+| operator | HE kernel | MPC kernel |
+|---|---|---|
+| linear layers | BSGS diagonal matrix-vector product (plaintext multiplications, rotations) | `matmul` (or `mul`) per multiply-accumulate, truncation |
+| QKᵀ, Attn·V | SIMD ciphertext products, rotations to align and sum | `mul` per multiply-accumulate, truncation |
+| Softmax | exp by squarings, row sums by rotation, 1/x by Newton steps | max by a comparison tree, exp by squarings, 1/x by Newton steps |
+| LayerNorm | mean and variance by rotation, 1/√x start polynomial and Newton steps | variance, 1/√x by Newton steps |
+| GeLU | degree-27 polynomial (Paterson–Stockmeyer) | two comparisons, degree-6 polynomial on the middle piece |
+| residual add | addition | local |
+
+The kernels' parameters (polynomial degrees, iteration counts) can be changed with `params=`. When a
+kernel needs more levels than the budget, it bootstraps inside. When a backend lacks a primitive that a
+kernel needs (e.g. rotation), the operator stays out of that domain.
+
+With the illustrative costs of the demo, the two new backends share BERT-base at 100 Mbps:
+- linear layers, attention products and GeLU in `my-ckks`;
+- Softmax and LayerNorm in `my-2pc`.
+
+At 1 Gbps everything moves to `my-2pc`.
+
+Prototype limits:
+- the kernels are cost models of standard constructions on one simple packing, not code that runs;
+- HE↔MPC conversions keep the costs of the profile planned with;
+- whether the primitives are precise enough and secure is the user's to ensure.
+
 ## A new workload: private RAG retrieval
 
 ```bash
