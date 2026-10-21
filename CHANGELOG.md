@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Website redesign: the home page keeps the hero, the results and four cards into the other pages; How it works,
+  Get started (install and the demo), Tutorials and Roadmap are pages of their own behind the nav links
+  (`#how`, `#start`, `#tutorials`, `#roadmap`; the old section anchors still lead to their content). The hero sets
+  the copy beside the live plan, now a plan sheet (operators top to bottom on the client and server lanes) that
+  also fits phones; the stack and the roadmap are drawn in the page's own type instead of the README figures;
+  code reads as notebook cells (source above, output below); the arXiv placeholder sits beside the NeurIPS badge.
+- Website: a Get started selector laid out like PyTorch's (package, model, interface, server, network) that
+  gives the install command and a first plan for each combination, every combination run with current PyTorch;
+  a step-by-step tutorial (trace, deployment, compile, read the plan, emulate) with its real outputs; and
+  "Bring your own primitives", the three ways to add backend primitives with their results.
 - Tutorial for adding new backend primitives, `docs/tutorials/backend-primitives.md`: a kernel for a whole
   operator, a backend from its basic operations, a new operator, with how to measure one call and how to read
   the plan. The README summarizes it; ROADMAP.md lists the limits of extensions.

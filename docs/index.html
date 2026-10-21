@@ -13,126 +13,174 @@ img { max-width: 100%; }
 <title>CipherFlow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout: a white lattice hero (one light theme) holds the thesis as a live two-lane plan (client / server); the reading column below
-   walks from results to ideas, pipeline, demo and code. One light palette for every viewer. */
+/* Layout: one page per nav link (views switched by the URL's #anchor), each in white and pale bands. Home is the
+   hero, the copy beside a live plan sheet (operators top to bottom on client and server lanes), the results, and
+   four cards into the other pages. Colour carries meaning only: indigo is the compiler, green is HE (ciphertexts
+   on the server), orange is MPC (one share per party). One light palette for every viewer. */
 :root {
-  --bg: #ffffff; --surface: #ffffff; --sunk: #f3f5fa; --ink: #0f1130; --muted: #5a5f7c; --line: #e5e7f0;
-  --brand: #22249a; --teal: #047f78; --he: #13997a; --he-fill: #ddf3ec; --mpc: #dd5a28; --mpc-fill: #fde7dd;
-  --series-static: #9aa0b8; --code-bg: #0e1030; --code-ink: #e9ebfb; --code-muted: #8d92b8; --code-line: #262a55;
-  --hero-bg: #ffffff; --hero-ink: #0f1130; --hero-muted: #5a5f7c; --hero-line: #e3e6f0;
-  --hero-brand: #22249a; --hero-teal: #047f78; --hero-he: #13997a; --hero-mpc: #e0612f; --hero-panel: #ffffff;
-  --img-light: block; --img-dark: none;
+  --paper: #ffffff;
+  --wash: #f6f7fb;
+  --wash-2: #eef0f7;
+  --ink: #0b0d26;
+  --ink-2: #2a2e4d;
+  --muted: #5c6180;
+  --faint: #8e93ad;
+  --rule: #e6e8f1;
+  --rule-2: #d6d9e6;
+  --brand: #23259b;
+  --brand-2: #3a3ec4;
+  --brand-wash: #eef0fd;
+  --teal: #047f78;
+  --he: #0b8a6f;
+  --he-fill: #e1f4ed;
+  --he-line: #9fd6c4;
+  --mpc: #d4521d;
+  --mpc-fill: #fdece3;
+  --mpc-line: #f0b89e;
+  --series: #a3a8c0;
+  --code-k: #3438b8;
+  --code-s: #0a7a6b;
+  --code-c: #8a8fa9;
+  --foot-bg: #0b0d26;
+  --foot-ink: #eceefb;
+  --foot-muted: #9ea3c4;
+  --foot-rule: #262a50;
+  --shadow: 0 1px 2px rgba(11, 13, 38, 0.05), 0 24px 60px -32px rgba(35, 37, 155, 0.3);
   --display: "Bricolage Grotesque", "Geist", system-ui, sans-serif;
   --body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --max: 1180px;
   color-scheme: light;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--body); margin: 0; -webkit-font-smoothing: antialiased; }
-a { color: var(--brand); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.65 var(--body); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+a { color: var(--brand); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--brand-2); }
 :focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 6px; }
 img { max-width: 100%; }
-code { font-family: var(--mono); font-size: 0.86em; background: var(--sunk); border-radius: 5px; padding: 1px 6px; }
-.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 24px; }
-.mono { font-family: var(--mono); }
-
-/* ---------- hero (fixed dark world) ---------- */
-.hero { background: var(--hero-bg); color: var(--hero-ink); position: relative; overflow: hidden; isolation: isolate; border-bottom: 1px solid var(--hero-line); }
-.hero::before { /* lattice: points of a skewed integer lattice, the ground CKKS security stands on */
-  content: ""; position: absolute; inset: -40px; z-index: -1; opacity: 0.55;
-  background-image: radial-gradient(circle at 1px 1px, rgba(34, 36, 154, 0.16) 1px, transparent 1.6px);
-  background-size: 26px 26px; transform: skewX(-14deg) rotate(-2deg);
-  mask-image: radial-gradient(ellipse 80% 70% at 70% 30%, #000 30%, transparent 75%);
-}
-.hero::after { content: ""; position: absolute; z-index: -1; width: 760px; height: 760px; right: -220px; top: -320px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(4, 127, 120, 0.09), rgba(34, 36, 154, 0.05) 55%, transparent); }
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--hero-bg); }
-.top.scrolled { background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(10px); border-bottom: 1px solid var(--hero-line); }
-.top .wrap { display: flex; align-items: center; gap: 24px; padding-block: 14px; }
-.mark { font: 700 19px/1 var(--display); letter-spacing: -0.01em; color: var(--hero-ink); text-decoration: none; }
-.mark b { color: var(--hero-teal); font-weight: 700; }
-.top nav { margin-left: auto; display: flex; gap: 22px; align-items: center; font-size: 14px; }
-.top nav a { color: var(--hero-muted); text-decoration: none; }
-.top nav a:hover { color: var(--hero-ink); }
-.top nav a.gh { color: var(--hero-ink); border: 1px solid var(--hero-line); border-radius: 999px; padding: 5px 12px; display: inline-flex; gap: 7px; align-items: center; }
-.top nav a.gh svg { width: 15px; height: 15px; fill: currentColor; }
-@media (max-width: 760px) { .top nav a.opt { display: none; } }
-
-.hero-in { display: grid; gap: 28px; padding-block: 56px 64px; }
-.pill { display: inline-flex; gap: 10px; align-items: center; width: fit-content; font: 500 12px var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--hero-muted); border: 1px solid var(--hero-line); border-radius: 999px; padding: 5px 12px; }
-.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--hero-teal); box-shadow: 0 0 0 4px rgba(4, 127, 120, 0.14); }
-.hero h1 { margin: 0; line-height: 0; }
-.hero h1 img { width: min(600px, 100%); height: auto; }
-.tagline { margin: 0; font: 600 clamp(26px, 3.6vw, 42px)/1.12 var(--display); letter-spacing: -0.02em; max-width: 22ch; text-wrap: balance; }
-.tagline em { font-style: normal; color: var(--hero-teal); }
-.pitch { margin: 0; color: var(--hero-muted); font-size: 17.5px; max-width: 62ch; }
-.cta { display: flex; flex-wrap: wrap; gap: 10px; }
-.btn { display: inline-flex; align-items: center; gap: 8px; font: 500 15px var(--body); padding: 10px 18px; border-radius: 10px; text-decoration: none; transition: transform .15s, background .15s, border-color .15s; }
-.btn svg { width: 16px; height: 16px; fill: currentColor; }
-.btn.solid { background: var(--hero-brand); color: #ffffff; }
-.btn.solid:hover { transform: translateY(-1px); }
-.btn.ghost { color: var(--hero-ink); border: 1px solid var(--hero-line); background: #ffffff; }
-.btn.ghost:hover { border-color: rgba(34, 36, 154, 0.35); }
-.btn.soon { cursor: default; color: var(--hero-muted); }
-.btn.soon:hover { border-color: var(--hero-line); }
-.btn small { font: 500 10.5px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--hero-teal); border: 1px solid rgba(4, 127, 120, 0.35); border-radius: 999px; padding: 0 7px; }
-
-/* live plan */
-.live { background: var(--hero-panel); border: 1px solid var(--hero-line); border-radius: 18px; padding: 20px 20px 16px; display: grid; gap: 14px; backdrop-filter: blur(6px); min-width: 0;
-  box-shadow: 0 1px 2px rgba(15, 17, 48, 0.04), 0 24px 60px -32px rgba(34, 36, 154, 0.22); }
-.live-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 28px; align-items: center; }
-@media (max-width: 860px) { .live-head { grid-template-columns: minmax(0, 1fr); } }
-.live-title { display: grid; gap: 2px; }
-.live-title b { font: 600 15px var(--display); letter-spacing: 0.01em; }
-.live-title span { font-size: 13px; color: var(--hero-muted); }
-.ctrls { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; }
-.seg { display: inline-flex; border: 1px solid var(--hero-line); border-radius: 9px; padding: 3px; gap: 3px; }
-.seg button { font: 500 13px var(--body); color: var(--hero-muted); background: transparent; border: 0; border-radius: 6px; padding: 6px 13px; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--hero-ink); color: var(--hero-bg); }
-.bwc { display: grid; gap: 4px; width: min(340px, 100%); }
-.bwc .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--hero-muted); }
-.bwc .row b { font: 500 16px var(--mono); color: var(--hero-ink); }
-.bwc input { width: 100%; accent-color: var(--hero-teal); }
-.bwc .ticks { display: flex; justify-content: space-between; font: 10.5px var(--mono); color: var(--hero-muted); }
-.stage { overflow-x: auto; border-radius: 12px; background: #f8f9fd; border: 1px solid var(--hero-line); }
-.stage canvas { display: block; min-width: 700px; width: 100%; height: 260px; }
-.live-foot { display: flex; flex-wrap: wrap; gap: 14px 36px; align-items: end; justify-content: space-between; }
-.kpis { display: flex; flex-wrap: wrap; gap: 12px 40px; }
-.kpi { display: grid; gap: 0; }
-.kpi .v { font: 600 30px/1.1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.kpi .v.lead { color: var(--hero-teal); }
-.kpi .k { font-size: 12.5px; color: var(--hero-muted); }
-.keys { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12.5px; color: var(--hero-muted); align-items: center; }
-.keys i { display: inline-block; vertical-align: -1px; margin-right: 6px; }
-.k-he { width: 11px; height: 11px; border-radius: 3px; background: var(--hero-he); box-shadow: 0 0 0 2px rgba(19, 153, 122, 0.22); }
-.k-mpc { width: 9px; height: 9px; border-radius: 50%; background: var(--hero-mpc); }
-.k-cv { font: 600 11px var(--mono); font-style: normal; color: var(--hero-ink); border: 1px solid var(--hero-muted); border-radius: 4px; padding: 0 4px; }
-.hero .src { font-size: 12px; color: var(--hero-muted); margin: 0; }
-.hero .src a { color: var(--hero-brand); }
-.hero code { background: var(--sunk); }
-
-/* ---------- page ---------- */
-main { display: grid; gap: 104px; padding-block: 88px 72px; }
-section { display: grid; gap: 22px; min-width: 0; scroll-margin-top: 72px; }
-.kicker { font: 500 12px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--teal); }
-h2 { font: 600 clamp(28px, 3.4vw, 42px)/1.1 var(--display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; max-width: 24ch; }
-h3 { font: 600 19px/1.3 var(--display); margin: 0; letter-spacing: -0.005em; }
 p { margin: 0; }
-.lede { color: var(--muted); font-size: 17.5px; max-width: 64ch; }
-.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start; }
-@media (max-width: 880px) { .split { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--wash-2); color: var(--ink-2); border-radius: 5px; padding: 1px 6px; }
+.wrap { max-width: var(--max); margin-inline: auto; padding-inline: 24px; }
+@media (max-width: 520px) { .wrap { padding-inline: 18px; } }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* results */
-.big { display: grid; gap: 22px; }
-.big .n { font: 600 clamp(64px, 8vw, 104px)/0.9 var(--display); letter-spacing: -0.04em; color: var(--brand); font-variant-numeric: tabular-nums; }
-.big .n small { font-size: 0.42em; letter-spacing: 0; color: var(--muted); font-weight: 500; margin-left: 6px; }
-.big .row { display: grid; gap: 6px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
-.big .row:last-of-type { border-bottom: 0; }
-.big p { color: var(--muted); font-size: 14.5px; }
-.chartbox { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px 12px; display: grid; gap: 10px; min-width: 0; }
+/* ---------- header ---------- */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: rgba(255, 255, 255, 0.86); backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+.top.scrolled { border-bottom-color: var(--rule); }
+.top .wrap { display: flex; align-items: center; gap: 28px; height: 64px; }
+.mark { font: 700 19px/1 var(--display); letter-spacing: -0.01em; color: var(--ink); text-decoration: none; }
+.mark b { color: var(--teal); }
+.mark:hover { color: var(--ink); }
+.top nav { margin-left: auto; display: flex; align-items: center; gap: 26px; font-size: 14.5px; }
+.top nav a { position: relative; color: var(--muted); text-decoration: none; padding-block: 6px; white-space: nowrap; }
+.top nav a:hover { color: var(--ink); }
+.top nav a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+.top nav a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--brand); }
+.gh { color: var(--ink); border: 1px solid var(--rule-2); border-radius: 999px; padding: 6px 13px; display: inline-flex; gap: 7px; align-items: center; background: var(--paper); font-size: 14px; text-decoration: none; white-space: nowrap; }
+.gh:hover { border-color: var(--ink); color: var(--ink); }
+.gh svg { width: 15px; height: 15px; fill: currentColor; }
+@media (max-width: 760px) {
+  .top .wrap { flex-wrap: wrap; height: auto; padding-block: 10px 0; row-gap: 2px; }
+  .top .gh { margin-left: auto; }
+  .top nav { order: 3; width: 100%; margin-left: 0; gap: 20px; overflow-x: auto; padding-bottom: 6px; font-size: 14px; }
+}
+
+/* ---------- buttons, pills ---------- */
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 500 14.5px/1 var(--body); padding: 12px 17px; border-radius: 10px; text-decoration: none; border: 1px solid transparent; white-space: nowrap; transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s; }
+.btn svg { width: 16px; height: 16px; fill: currentColor; }
+.btn.solid { background: var(--brand); color: #ffffff; }
+.btn.solid:hover { background: var(--ink); color: #ffffff; transform: translateY(-1px); }
+.btn.ghost { background: var(--paper); color: var(--ink); border-color: var(--rule-2); }
+.btn.ghost:hover { border-color: var(--brand); color: var(--brand); }
+.btn.soon { color: var(--faint); cursor: default; }
+.btn.soon:hover { border-color: var(--rule-2); color: var(--faint); }
+.btn small { font: 500 10px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal); border: 1px solid rgba(4, 127, 120, 0.35); border-radius: 999px; padding: 1px 7px; }
+.pill { display: inline-flex; gap: 10px; align-items: center; width: fit-content; font: 500 11.5px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule-2); border-radius: 999px; padding: 6px 13px; background: var(--paper); }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 4px rgba(4, 127, 120, 0.14); }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill svg { width: 13px; height: 13px; fill: currentColor; }
+.pill.soon { color: var(--faint); gap: 8px; cursor: default; }
+.pill small { font: 500 9.5px var(--mono); letter-spacing: 0.08em; color: var(--teal); border: 1px solid rgba(4, 127, 120, 0.35); border-radius: 999px; padding: 1px 6px; }
+
+/* ---------- hero: the copy beside the live plan sheet ---------- */
+.hero { position: relative; overflow: hidden; isolation: isolate; border-bottom: 1px solid var(--rule); }
+.hero::before { /* lattice: points of a skewed integer lattice, the ground CKKS security stands on */
+  content: ""; position: absolute; inset: -60px; z-index: -1; opacity: 0.6;
+  background-image: radial-gradient(circle at 1px 1px, rgba(35, 37, 155, 0.16) 1px, transparent 1.6px);
+  background-size: 26px 26px; transform: skewX(-14deg) rotate(-2deg);
+  mask-image: radial-gradient(ellipse 55% 75% at 78% 45%, #000 25%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 55% 75% at 78% 45%, #000 25%, transparent 75%);
+}
+.hero::after { content: ""; position: absolute; z-index: -1; width: 820px; height: 820px; right: -260px; top: -260px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(4, 127, 120, 0.08), rgba(35, 37, 155, 0.05) 55%, transparent); }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 56px; align-items: center; padding-block: 56px 80px; }
+@media (max-width: 1040px) { .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 44px; padding-block: 40px 64px; } }
+.hero-copy { display: grid; gap: 24px; align-content: center; min-width: 0; }
+.hero h1 { margin: 0; line-height: 0; }
+.hero h1 img { width: min(470px, 100%); height: auto; }
+.tagline { font: 600 clamp(28px, 3.2vw, 40px)/1.12 var(--display); letter-spacing: -0.025em; max-width: 19ch; text-wrap: balance; }
+.tagline em { font-style: normal; color: var(--teal); }
+.pitch { font-size: 17px; color: var(--muted); max-width: 52ch; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.plan-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 20px; box-shadow: var(--shadow); min-width: 0; display: grid; }
+.pc-head { display: grid; gap: 14px; padding: 18px 20px 16px; border-bottom: 1px solid var(--rule); }
+.pc-title { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 14px; }
+.pc-title b { font: 600 15px var(--display); letter-spacing: 0.005em; }
+.pc-title span { font-size: 12.5px; color: var(--muted); }
+.pc-ctrls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--rule-2); border-radius: 10px; padding: 3px; gap: 3px; background: var(--paper); }
+.seg button { font: 500 13px var(--body); color: var(--muted); background: transparent; border: 0; border-radius: 7px; padding: 7px 13px; cursor: pointer; }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #ffffff; }
+.bwc { display: grid; gap: 3px; flex: 1 1 240px; min-width: 0; max-width: 360px; }
+.bwc .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--muted); }
+.bwc .row b { font: 500 15px var(--mono); color: var(--ink); }
+.bwc input { width: 100%; accent-color: var(--teal); margin: 4px 0 0; }
+.bwc .ticks { display: flex; justify-content: space-between; font: 10px var(--mono); color: var(--faint); }
+.pc-stage { padding: 6px 4px 0; }
+.pc-stage canvas { display: block; width: 100%; height: 470px; }
+.pc-foot { display: grid; gap: 14px; padding: 16px 20px 18px; border-top: 1px solid var(--rule); background: linear-gradient(var(--paper), var(--wash)); border-radius: 0 0 20px 20px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.kpi .kv { display: block; font: 600 26px/1.1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kpi .kv.lead { color: var(--teal); }
+.kpi .kl { display: block; margin-top: 4px; font-size: 12px; line-height: 1.4; color: var(--muted); }
+@media (max-width: 520px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpi .kv { font-size: 22px; } }
+.keys { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--muted); align-items: center; }
+.keys i { display: inline-block; vertical-align: -1px; margin-right: 6px; }
+.k-he { width: 10px; height: 10px; border-radius: 3px; background: var(--he); box-shadow: 0 0 0 2px rgba(11, 138, 111, 0.22); }
+.k-mpc { width: 9px; height: 9px; border-radius: 50%; background: var(--mpc); }
+.k-cv { font: 600 10.5px var(--mono); font-style: normal; color: var(--ink); border: 1px solid var(--faint); border-radius: 4px; padding: 0 4px; }
+.src { font-size: 11.5px; color: var(--faint); line-height: 1.5; }
+.src code { font-size: 0.95em; }
+
+/* ---------- bands and section heads ---------- */
+main { display: block; }
+.band { padding-block: clamp(72px, 9vw, 112px); scroll-margin-top: 64px; }
+.band.alt { background: var(--wash); border-block: 1px solid var(--rule); }
+.head { display: grid; gap: 14px; max-width: 780px; margin-bottom: 44px; }
+.kicker { font: 500 12px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--teal); }
+h2 { margin: 0; font: 600 clamp(30px, 3.6vw, 46px)/1.08 var(--display); letter-spacing: -0.028em; text-wrap: balance; }
+h3 { margin: 0; font: 600 19px/1.3 var(--display); letter-spacing: -0.01em; }
+.lede { font-size: 17.5px; color: var(--muted); max-width: 66ch; }
+.dom { display: inline-block; font: 600 0.6em/1 var(--mono); letter-spacing: 0.02em; padding: 0.34em 0.5em 0.3em; border-radius: 0.38em; vertical-align: 0.22em; }
+.dom.he { color: var(--he); background: var(--he-fill); }
+.dom.mpc { color: var(--mpc); background: var(--mpc-fill); }
+.note { font-size: 13px; color: var(--muted); }
+
+/* ---------- results ---------- */
+.results { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: center; }
+@media (max-width: 900px) { .results { grid-template-columns: minmax(0, 1fr); gap: 36px; } }
+.results-copy { display: grid; gap: 14px; align-content: start; }
+.stats { display: grid; margin-top: 18px; }
+.stat { display: grid; gap: 8px; padding-block: 22px; border-top: 1px solid var(--rule-2); }
+.stat .n { font: 600 clamp(64px, 8vw, 100px)/0.9 var(--display); letter-spacing: -0.045em; color: var(--brand); font-variant-numeric: tabular-nums; }
+.stat .n small { font-size: 0.38em; letter-spacing: 0; color: var(--muted); font-weight: 500; margin-left: 4px; }
+.stat p { color: var(--muted); font-size: 15px; max-width: 42ch; }
+.chartbox { background: var(--paper); border: 1px solid var(--rule); border-radius: 18px; padding: 20px 20px 14px; display: grid; gap: 10px; min-width: 0; box-shadow: var(--shadow); }
 .chartbox .hd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; }
 .chartbox .hd b { font: 600 15px var(--display); }
 .chartbox .hd span { font-size: 12.5px; color: var(--muted); }
@@ -141,103 +189,286 @@ p { margin: 0; }
 #chart svg { width: 100%; height: auto; display: block; }
 #chart text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
 #chart .lab { font-family: var(--body); font-size: 12px; fill: var(--ink); }
-.note { font-size: 12.5px; color: var(--muted); }
-#tip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--bg); font: 12px/1.5 var(--body); padding: 8px 10px; border-radius: 8px; max-width: 260px; }
+#tip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--paper); font: 12px/1.5 var(--body); padding: 8px 10px; border-radius: 8px; max-width: 280px; box-shadow: 0 10px 30px -12px rgba(11, 13, 38, 0.5); }
+#tip span { color: var(--faint); font-family: var(--mono); font-size: 11px; }
 
-/* ideas */
-.ideas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--surface); }
-@media (max-width: 880px) { .ideas { grid-template-columns: minmax(0, 1fr); } }
-.idea { padding: 26px 24px 28px; display: grid; gap: 12px; align-content: start; border-right: 1px solid var(--line); position: relative; }
-.idea:last-child { border-right: 0; }
-@media (max-width: 880px) { .idea { border-right: 0; border-bottom: 1px solid var(--line); } .idea:last-child { border-bottom: 0; } }
+/* ---------- how it works: the stack, drawn in the page's own type ---------- */
+.arch { margin: 0; display: grid; gap: 0; }
+.layer { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 20px; align-items: start; }
+.ltag { font: 500 11.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); padding-top: 18px; text-align: right; }
+.lbox { background: var(--paper); border: 1px solid var(--rule-2); border-radius: 14px; padding: 16px 20px; display: grid; gap: 4px; min-width: 0;  align-content: start; }
+.lbox > b { font: 600 16px/1.35 var(--display); }
+.lbox > span, .lbox li { font-size: 14px; color: var(--muted); }
+.lbox ul { margin: 2px 0 0; padding-left: 18px; display: grid; gap: 2px; }
+.lbox .n { font: 600 12px var(--mono); color: var(--brand); margin-right: 6px; }
+.plan-row { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 8fr); gap: 34px; position: relative; }
+.plan-row .side { display: grid; gap: 12px; align-content: start; }
+.plan-row .side .lbox { background: var(--wash); }
+.plan-row::after { content: "→"; position: absolute; left: calc((100% - 34px) * 5 / 13 + 9px); top: 46px; font: 500 16px var(--mono); color: var(--faint); }
+.core { border: 1.5px solid var(--brand); background: linear-gradient(180deg, var(--brand-wash), var(--paper) 85%); gap: 12px; }
+.core .name { font: 700 22px/1.1 var(--display); letter-spacing: -0.02em; color: var(--brand); }
+.core .name small { font: 500 11.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-left: 10px; }
+.stages { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.stages li { position: relative; background: var(--paper); border: 1px solid var(--rule-2); border-radius: 10px; padding: 10px 12px; display: grid; gap: 1px; min-width: 0; }
+.stages li + li::before { content: "→"; position: absolute; left: -18px; top: 50%; transform: translateY(-50%); color: var(--faint); font: 500 14px var(--mono); }
+.stages b { font: 600 14px var(--body); }
+.stages span { font-size: 12.5px; color: var(--muted); }
+.core .call { display: block; font-size: 12.5px; padding: 8px 10px; background: var(--paper); border: 1px solid var(--rule); white-space: normal; overflow-wrap: anywhere; }
+.core .ret { font-size: 12.5px; color: var(--muted); }
+.link { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 20px; }
+.link .pair { display: flex; flex-wrap: wrap; gap: 8px 40px; padding: 4px 0 4px 34px; }
+.flow { position: relative; display: grid; gap: 1px; padding: 12px 0 14px 26px; font-size: 13px; color: var(--muted); max-width: 46ch; }
+.flow b { font: 600 13.5px var(--body); color: var(--ink); }
+.flow b .n { font: 600 12px var(--mono); color: var(--brand); margin-right: 6px; }
+.flow::before { content: ""; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 1.5px; background: var(--rule-2); }
+.flow::after { content: ""; position: absolute; left: 2px; border-left: 5px solid transparent; border-right: 5px solid transparent; }
+.flow.down::after { bottom: 2px; border-top: 7px solid var(--faint); }
+.flow.up::after { top: 2px; border-bottom: 7px solid var(--faint); }
+.dom2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 6px; }
+.dom2 > div { border-radius: 10px; padding: 10px 14px; display: grid; gap: 1px; font-size: 13.5px; color: var(--ink-2); }
+.dom2 b { font: 600 14px var(--body); }
+.dom2 .he { background: var(--he-fill); border: 1px solid var(--he-line); }
+.dom2 .he b { color: var(--he); }
+.dom2 .mpc { background: var(--mpc-fill); border: 1px solid var(--mpc-line); }
+.dom2 .mpc b { color: var(--mpc); }
+.lbox .foot { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+@media (max-width: 900px) {
+  .layer, .link { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .ltag { text-align: left; padding-top: 6px; }
+  .plan-row { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .plan-row::after { display: none; }
+  .stages { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .stages li + li::before { content: "↓"; left: 50%; top: -15px; transform: translateX(-50%); font-size: 12px; }
+  .link .pair { padding-left: 0; }
+  .dom2 { grid-template-columns: minmax(0, 1fr); }
+}
+.sub { margin: 56px 0 18px; }
+.ideas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .ideas { grid-template-columns: minmax(0, 1fr); } }
+.idea { background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; padding: 22px 22px 24px; display: grid; gap: 10px; align-content: start; }
 .idea .num { font: 500 12px var(--mono); color: var(--teal); letter-spacing: 0.1em; }
-.idea p { color: var(--muted); font-size: 15px; }
-.idea svg { width: 100%; height: 64px; }
+.idea svg { width: 100%; height: 60px; }
+.idea p { color: var(--muted); font-size: 14.5px; }
 
-/* pipeline */
-.figure { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; overflow-x: auto; }
-.figure img { width: 100%; min-width: 600px; height: auto; display: block; }
-.figure img.lt { display: var(--img-light); }
-.io { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; }
-@media (max-width: 960px) { .io { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 520px) { .io { grid-template-columns: minmax(0, 1fr); } }
-.io div { display: grid; gap: 4px; align-content: start; padding-top: 12px; border-top: 1px solid var(--line); min-width: 0; }
-.io div.out { border-top: 2px solid var(--brand); }
-.io .t { font: 500 11.5px var(--mono); color: var(--muted); letter-spacing: 0.04em; }
-.io b { font: 600 15.5px var(--display); }
-.io p { font-size: 14px; color: var(--muted); }
-
-/* demo + code */
-.term { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #16181d; box-shadow: 0 30px 60px -40px rgba(15, 17, 48, 0.45); }
-.term img { display: block; width: 100%; height: auto; }
-details { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
-details summary { cursor: pointer; padding: 12px 16px; font-weight: 500; }
-details img { display: block; width: 100%; height: auto; border-radius: 0 0 12px 12px; }
-.code { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; overflow: hidden; min-width: 0; border: 1px solid var(--code-line); }
-.code .bar { display: flex; align-items: center; gap: 2px; padding: 8px 10px 0; border-bottom: 1px solid var(--code-line); }
-.code .bar button.tab { font: 500 13px var(--body); color: var(--code-muted); background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px 9px; cursor: pointer; }
-.code .bar button.tab[aria-selected="true"] { color: var(--code-ink); border-bottom-color: var(--hero-teal); }
-.code .bar .copy { margin-left: auto; font: 500 12px var(--body); color: var(--code-muted); background: transparent; border: 1px solid var(--code-line); border-radius: 7px; padding: 4px 10px; cursor: pointer; margin-bottom: 6px; }
-.code .bar .copy:hover { color: var(--code-ink); }
-.code pre { margin: 0; padding: 18px 20px 20px; overflow-x: auto; font: 13.5px/1.7 var(--mono); }
-.code .c { color: var(--code-muted); }
-.code .k { color: #9fa4ff; }
-.code .s { color: #5fe0c9; }
-
-/* backends + roadmap */
+/* ---------- backends ---------- */
 .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 @media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.card { position: relative; overflow: hidden; background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; padding: 24px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+.card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--he); }
+.card.mpc::before { background: var(--mpc); }
 .card .hd { display: flex; align-items: center; gap: 10px; }
-.card .sq { width: 12px; height: 12px; border-radius: 3px; }
-.card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .card li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; font-size: 15px; }
 .card li .m { font: 600 13px var(--mono); color: var(--teal); line-height: 1.7; }
-.card li.todo .m { color: var(--muted); }
-.card li span small { display: block; color: var(--muted); font-size: 13.5px; }
-footer { border-top: 1px solid var(--line); }
-footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 26px; padding-block: 26px 40px; font-size: 14px; color: var(--muted); align-items: center; }
-footer a { color: var(--muted); }
-footer .mk { font: 700 16px var(--display); color: var(--ink); }
-footer .mk b { color: var(--teal); }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.card li.todo .m { color: var(--faint); }
+.card li small { display: block; color: var(--muted); font-size: 13.5px; }
+.own { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 16px 20px; border: 1.5px dashed var(--rule-2); border-radius: 14px; background: var(--paper); font-size: 15px; color: var(--muted); }
+.own b { color: var(--ink); font-weight: 600; }
+.own a { margin-left: auto; font-weight: 500; }
+
+/* ---------- demo ---------- */
+.demo { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 52px; align-items: center; }
+@media (max-width: 960px) { .demo { grid-template-columns: minmax(0, 1fr); gap: 32px; } }
+.demo-copy { display: grid; gap: 18px; align-content: start; min-width: 0; }
+.term { margin: 0; border-radius: 14px; overflow: hidden; background: #16181d; border: 1px solid #262a33; box-shadow: 0 36px 80px -44px rgba(11, 13, 38, 0.6); }
+.term img { display: block; width: 100%; height: auto; }
+
+/* ---------- code cells: source above, output below, like a notebook ---------- */
+.cell { background: var(--paper); border: 1px solid var(--rule-2); border-radius: 14px; overflow: hidden; min-width: 0; }
+.cell-bar { display: flex; align-items: center; gap: 10px; padding: 7px 10px 7px 16px; background: var(--wash); border-bottom: 1px solid var(--rule); }
+.cell-bar .lang { font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+.copy { margin-left: auto; font: 500 12px var(--body); color: var(--muted); background: var(--paper); border: 1px solid var(--rule-2); border-radius: 7px; padding: 4px 10px; cursor: pointer; }
+.copy:hover { color: var(--ink); border-color: var(--faint); }
+.cell pre { margin: 0; overflow-x: auto; font: 13px/1.7 var(--mono); color: var(--ink); }
+.cell pre.src { padding: 14px 18px 16px; background: var(--wash); }
+.cell-out { border-top: 1px solid var(--rule); }
+.cell-out .lab { display: block; padding: 10px 18px 0; font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+.cell-out pre { padding: 6px 18px 16px; font-size: 12px; line-height: 1.65; color: var(--ink-2); }
+.cell .k, .pout .k { color: var(--code-k); }
+.cell .s, .pout .s { color: var(--code-s); }
+.cell .c, .pout .c { color: var(--code-c); }
+.d-he { color: var(--he); font-weight: 600; }
+.d-mpc { color: var(--mpc); font-weight: 600; }
+.d-act { color: var(--brand); }
+.d-gap { color: var(--faint); }
+
+/* ---------- get started: rows of choices and the commands they produce (laid out like PyTorch's selector) ---------- */
+.picker { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule-2); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+.prow { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 1px; }
+.plab { background: var(--wash); display: flex; align-items: center; padding: 13px 18px; font: 600 13.5px/1.3 var(--body); color: var(--ink-2); }
+.popts { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1px; }
+.popts button { font: 500 14.5px/1.3 var(--body); color: var(--ink-2); background: var(--paper); border: 0; padding: 14px 10px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.popts button:hover { background: var(--brand-wash); color: var(--brand); }
+.popts button[aria-pressed="true"] { background: var(--brand-wash); color: var(--brand); font-weight: 600; box-shadow: inset 0 0 0 2px var(--brand); position: relative; z-index: 1; }
+.pout { position: relative; background: var(--paper); min-width: 0; }
+.pout pre { margin: 0; padding: 15px 84px 15px 18px; overflow-x: auto; font: 13px/1.7 var(--mono); color: var(--ink); }
+.pout .copy { position: absolute; top: 10px; right: 10px; }
+.pnotes { background: var(--paper); margin: 0; padding: 12px 18px 12px 34px; display: grid; gap: 5px; font-size: 13.5px; color: var(--muted); min-width: 0; }
+@media (max-width: 720px) {
+  .prow { grid-template-columns: minmax(0, 1fr); }
+  .plab { padding: 9px 14px 7px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .popts button { padding: 12px 6px; font-size: 13.5px; }
+}
+
+/* ---------- tutorial: numbered steps on a rail ---------- */
+.steps { list-style: none; margin: 0; padding: 0 0 0 54px; display: grid; gap: 60px; position: relative; }
+.steps::before { content: ""; position: absolute; left: 16px; top: 18px; bottom: 18px; width: 1px; background: var(--rule-2); }
+.step { position: relative; display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 22px 44px; align-items: start; }
+.step .no { position: absolute; left: -54px; top: -3px; width: 33px; height: 33px; border-radius: 50%; background: var(--paper); border: 1px solid var(--rule-2); display: grid; place-items: center; font: 600 13px var(--mono); color: var(--brand); box-shadow: 0 0 0 6px var(--paper); }
+.step .txt { display: grid; gap: 10px; align-content: start; }
+.step .txt p { color: var(--muted); font-size: 15.5px; }
+@media (max-width: 960px) { .step { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { .steps { padding-left: 42px; gap: 48px; } .steps::before { left: 13px; } .step .no { left: -42px; width: 27px; height: 27px; font-size: 12px; } }
+
+/* ---------- extend: three ways in, each opening its example ---------- */
+.paths { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .paths { grid-template-columns: minmax(0, 1fr); } }
+.path { text-align: left; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule-2); border-radius: 16px; padding: 18px 18px 16px; display: grid; gap: 8px; align-content: start; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.path:hover { border-color: rgba(35, 37, 155, 0.45); }
+.path[aria-selected="true"] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand), 0 18px 40px -30px rgba(35, 37, 155, 0.55); }
+.path .api { font: 500 12px var(--mono); color: var(--teal); }
+.path b { font: 600 17px/1.3 var(--display); }
+.path .d { color: var(--muted); font-size: 14px; }
+.path .m { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 8px; }
+.path .m em { font-style: normal; color: var(--ink); font-weight: 500; }
+.ppanel { display: grid; gap: 14px; margin-top: 18px; min-width: 0; }
+.ppanel .sum { font-size: 15px; color: var(--ink-2); max-width: 74ch; }
+.limits { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline; font-size: 14px; color: var(--muted); border-top: 1px solid var(--rule-2); padding-top: 18px; }
+.limits p { max-width: 70ch; }
+
+/* ---------- roadmap, drawn in the page's own type ---------- */
+.road { display: grid; gap: 22px; }
+.stages3 { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; }
+@media (max-width: 900px) { .stages3 { grid-template-columns: minmax(0, 1fr); } }
+.st { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.st .when { display: flex; align-items: center; gap: 10px; font: 600 11.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.st .when::after { content: ""; flex: 1; height: 2px; border-radius: 2px; }
+.st .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--mono); flex: none; }
+.st.done .when { color: var(--he); }
+.st.done .dot { background: var(--he); color: #ffffff; }
+.st.done .when::after { background: var(--he); }
+.st.next .when { color: var(--brand); }
+.st.next .dot { border: 2px solid var(--brand); background: var(--paper); box-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 10px var(--brand); }
+.st.next .when::after { background: repeating-linear-gradient(90deg, var(--faint) 0 5px, transparent 5px 10px); height: 1.5px; }
+.st.then .when { color: var(--muted); }
+.st.then .dot { border: 2px dashed var(--faint); }
+.st.then .when::after { display: none; }
+.st .box { border-radius: 14px; padding: 18px 18px 16px; display: grid; gap: 4px; min-height: 100%; }
+.st .box b { font: 600 17px/1.3 var(--display); }
+.st .box .s { font-size: 13.5px; color: var(--muted); margin-bottom: 8px; }
+.st .box ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; color: var(--ink-2); }
+.st.done .box { background: var(--he-fill); border: 1.5px solid var(--he-line); }
+.st.done li::marker { color: var(--he); }
+.st.next .box { background: var(--brand-wash); border: 1.5px solid var(--brand); }
+.st.next li::marker { color: var(--brand); }
+.st.then .box { background: var(--paper); border: 1.5px dashed var(--rule-2); }
+.st.then li::marker { color: var(--faint); }
+.details { background: var(--paper); border: 1px solid var(--rule); border-radius: 18px; padding: 22px; display: grid; gap: 18px; }
+.details .dh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.details .dh b { font: 600 16px var(--display); }
+.details .dh span { font-size: 13.5px; color: var(--muted); }
+.dsteps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 760px) { .dsteps { grid-template-columns: minmax(0, 1fr); } }
+.dsteps > div { border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; font-size: 13.5px; color: var(--muted); }
+.dsteps b { font: 600 14.5px var(--body); color: var(--ink); }
+.dsteps .s1 { border: 1.5px solid var(--brand); background: var(--brand-wash); }
+.dsteps .s2 { border: 1.5px dashed var(--rule-2); }
+.blk { display: grid; gap: 10px; }
+.blk .bh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.blk .bh b { font: 600 14.5px var(--body); margin-right: auto; }
+.blk .bh span { font-size: 12.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 7px; }
+.blk .bh i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.blk .bh i.ok { border: 1.5px solid var(--rule-2); background: var(--wash); }
+.blk .bh i.add { border: 1.5px dashed var(--brand); background: var(--brand-wash); }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.chips li { position: relative; font: 500 12.5px var(--mono); padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--rule-2); background: var(--wash); color: var(--ink-2); }
+.chips li.add { border: 1.5px dashed var(--brand); background: var(--brand-wash); color: var(--brand); }
+.chips li + li::before { content: "→"; position: absolute; left: -18px; top: 50%; transform: translateY(-50%); color: var(--faint); font-size: 12px; }
+
+/* ---------- footer ---------- */
+footer { background: var(--foot-bg); color: var(--foot-ink); }
+footer .wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px 40px; padding-block: 48px 40px; }
+@media (max-width: 760px) { footer .wrap { grid-template-columns: minmax(0, 1fr); } }
+.fmark { font: 700 22px/1 var(--display); letter-spacing: -0.01em; }
+.fmark b { color: #3dc2b6; }
+.fline { margin-top: 10px; font-size: 14px; color: var(--foot-muted); max-width: 46ch; }
+.flinks { display: flex; flex-wrap: wrap; gap: 10px 24px; align-content: start; font-size: 14px; }
+.flinks a { color: var(--foot-ink); text-decoration: none; }
+.flinks a:hover { color: #ffffff; text-decoration: underline; }
+.fmeta { grid-column: 1 / -1; border-top: 1px solid var(--foot-rule); padding-top: 18px; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--foot-muted); }
+/* ---------- pages: a head for each page but the home page ---------- */
+.phead { position: relative; overflow: hidden; isolation: isolate; border-bottom: 1px solid var(--rule); }
+.phead::before { content: ""; position: absolute; inset: -60px; z-index: -1; opacity: 0.55;
+  background-image: radial-gradient(circle at 1px 1px, rgba(35, 37, 155, 0.16) 1px, transparent 1.6px);
+  background-size: 26px 26px; transform: skewX(-14deg) rotate(-2deg);
+  mask-image: radial-gradient(ellipse 50% 90% at 88% 40%, #000 20%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 50% 90% at 88% 40%, #000 20%, transparent 72%); }
+.phead .wrap { display: grid; gap: 14px; padding-block: clamp(48px, 7vw, 84px) clamp(40px, 5vw, 60px); }
+.phead h1 { margin: 0; font: 600 clamp(34px, 4.6vw, 58px)/1.05 var(--display); letter-spacing: -0.03em; max-width: 20ch; text-wrap: balance; }
+.phead .lede { max-width: 68ch; }
+.phead + .band { padding-top: clamp(44px, 6vw, 72px); }
+h1:focus { outline: none; }
+.subnav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.subnav a { font: 500 14px var(--body); color: var(--ink-2); text-decoration: none; border: 1px solid var(--rule-2); background: var(--paper); border-radius: 999px; padding: 7px 14px; }
+.subnav a:hover { border-color: var(--brand); color: var(--brand); }
+.subnav a span { font: 500 11px var(--mono); color: var(--faint); margin-right: 8px; }
+.explore { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1040px) { .explore { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .explore { grid-template-columns: minmax(0, 1fr); } }
+.xcard { display: grid; grid-template-rows: auto auto 1fr auto; gap: 10px; padding: 22px 22px 20px; border: 1px solid var(--rule-2); border-radius: 16px; background: var(--paper); color: var(--ink); text-decoration: none; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; }
+.xcard:hover { border-color: var(--brand); color: var(--ink); transform: translateY(-2px); box-shadow: var(--shadow); }
+.xk { font: 500 11.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); }
+.xcard b { font: 600 18px/1.3 var(--display); letter-spacing: -0.01em; }
+.xcard .d { font-size: 14px; color: var(--muted); }
+.xcard .go, .next .go { font: 500 14px var(--body); color: var(--brand); }
+.xcard:hover .go, .next:hover .go { text-decoration: underline; text-underline-offset: 3px; }
+.next { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; margin-top: 56px; padding: 22px 24px; border: 1px solid var(--rule-2); border-radius: 16px; background: var(--paper); color: var(--ink); text-decoration: none; transition: border-color 0.15s, box-shadow 0.15s; }
+.next:hover { border-color: var(--brand); box-shadow: var(--shadow); color: var(--ink); }
+.next > span:first-child { display: grid; gap: 4px; }
+.next b { font: 600 20px/1.25 var(--display); letter-spacing: -0.01em; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
 </style>
 
 </head>
 <body>
 <header class="top" id="top">
   <div class="wrap">
-    <a class="mark" href="#">Cipher<b>Flow</b></a>
-    <nav aria-label="Sections">
-      <a class="opt" href="#results">Results</a>
-      <a class="opt" href="#ideas">Ideas</a>
-      <a class="opt" href="#how">How it works</a>
-      <a class="opt" href="#demo">Demo</a>
-      <a class="opt" href="#start">Quick start</a>
-      <a class="gh" href="https://github.com/UCF-ML-Research/CipherFlow"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+    <a class="mark" href="#home">Cipher<b>Flow</b></a>
+    <nav aria-label="Pages">
+      <a href="#how" data-route="how">How it works</a>
+      <a href="#start" data-route="start">Get started</a>
+      <a href="#tutorials" data-route="tutorials">Tutorials</a>
+      <a href="#roadmap" data-route="roadmap">Roadmap</a>
     </nav>
+    <a class="gh" href="https://github.com/UCF-ML-Research/CipherFlow"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
   </div>
 </header>
 
+<main id="main">
+<div class="view" data-view="home">
 <div class="hero">
-  <div class="wrap hero-in">
-    <span class="pill"><i></i>NeurIPS 2026 · Apache-2.0</span>
-    <h1><img src="assets/cipherflow-logo-light.png" width="1000" height="192" alt="CipherFlow"></h1>
-    <p class="tagline">A hardware-aware compiler framework for <em>efficient secure inference</em></p>
-    <p class="pitch">Private inference splits a model between homomorphic encryption and secure multi-party computation. CipherFlow finds the split for your hardware and network: for every operator of a PyTorch model, where it runs, where to convert, and where to bootstrap.</p>
-    <div class="cta">
-      <a class="btn solid" href="https://github.com/UCF-ML-Research/CipherFlow"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
-      <!-- arXiv paper: when the link exists, replace this <span> with
-           <a class="btn ghost" href="https://arxiv.org/abs/XXXX.XXXXX"> ...same icon... arXiv</a> -->
-      <span class="btn ghost soon" aria-disabled="true" title="The paper link will be added here"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1.5h5.6L13 4.9V13a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 13V3A1.5 1.5 0 0 1 4.5 1.5Zm5 1.2V5.2c0 .3.2.5.5.5h2.4L9 2.7ZM5.2 8.3l1.3 1.9-1.4 2.1h1.1l.9-1.4.9 1.4h1.1l-1.4-2.1 1.3-1.9H7.9l-.8 1.2-.8-1.2H5.2Zm5 0v4h1v-4h-1Z"/></svg>arXiv<small>soon</small></span>
-      <a class="btn ghost" href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md">View roadmap</a>
-      <a class="btn ghost" href="#start">Quick start</a>
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <div class="badges">
+        <span class="pill"><i></i>NeurIPS 2026 · Apache-2.0</span>
+        <!-- arXiv paper: when the link exists, replace this <span> with
+             <a class="pill" href="https://arxiv.org/abs/XXXX.XXXXX"> ...same icon... arXiv</a> -->
+        <span class="pill soon" aria-disabled="true" title="The paper link will be added here"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1.5h5.6L13 4.9V13a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 13V3A1.5 1.5 0 0 1 4.5 1.5Zm5 1.2V5.2c0 .3.2.5.5.5h2.4L9 2.7ZM5.2 8.3l1.3 1.9-1.4 2.1h1.1l.9-1.4.9 1.4h1.1l-1.4-2.1 1.3-1.9H7.9l-.8 1.2-.8-1.2H5.2Zm5 0v4h1v-4h-1Z"/></svg>arXiv<small>soon</small></span>
+      </div>
+      <h1 tabindex="-1"><img src="assets/cipherflow-logo-light.png" width="1000" height="192" alt="CipherFlow"></h1>
+      <p class="tagline">A hardware-aware compiler framework for <em>efficient secure inference</em></p>
+      <p class="pitch">Private inference splits a model between homomorphic encryption and secure multi-party computation. CipherFlow finds the split for your hardware and network: for every operator of a PyTorch model, where it runs, where to convert, and where to bootstrap.</p>
+      <div class="cta">
+        <a class="btn solid" href="https://github.com/UCF-ML-Research/CipherFlow"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+        <a class="btn ghost" href="#start">Get started</a>
+        <a class="btn ghost" href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md">View roadmap</a>
+      </div>
     </div>
 
-    <div class="live" aria-labelledby="live-title">
-      <div class="live-head">
-        <div class="live-title"><b id="live-title">Live plan · BERT-base, encoder block 1</b><span>Operators in execution order. Round-trip time 40 ms.</span></div>
-        <div class="ctrls">
+    <div class="plan-card" aria-labelledby="live-title">
+      <div class="pc-head">
+        <div class="pc-title"><b id="live-title">Live plan · BERT-base, encoder block 1</b><span>Round-trip time 40 ms</span></div>
+        <div class="pc-ctrls">
           <div class="seg" id="seg-hw" role="group" aria-label="Server hardware"></div>
           <div class="bwc">
             <div class="row"><label for="bw">Bandwidth</label><b id="bw-val"></b></div>
@@ -246,177 +477,588 @@ footer .mk b { color: var(--teal); }
           </div>
         </div>
       </div>
-      <div class="stage"><canvas id="flow" role="img" aria-label="The plan for block 1: each operator on the client and server lanes"></canvas></div>
-      <div class="live-foot">
+      <div class="pc-stage"><canvas id="flow" role="img" aria-label="The plan for encoder block 1: each operator, top to bottom, on the client and server lanes"></canvas><p class="sr" id="plan-sr" aria-live="polite"></p></div>
+      <div class="pc-foot">
         <div class="kpis" id="kpis"></div>
-        <div class="keys"><span><i class="k-he"></i>HE ciphertext, on the server</span><span><i class="k-mpc"></i>MPC shares, one per party</span><span><i class="k-cv">⇄</i>conversion</span></div>
+        <div class="keys"><span><i class="k-he"></i>HE: a ciphertext on the server</span><span><i class="k-mpc"></i>MPC: one share per party</span><span><i class="k-cv">⇄</i>conversion</span><span><i class="k-cv">↻</i>bootstrap</span></div>
+        <p class="src">Plans by <code>cipherflow.compile</code> with the paper's profiles (HE: NEXUS; MPC: SHAFT, two parties and a trusted dealer). Latency is the whole 12-block model, estimated from measured costs.</p>
       </div>
-      <p class="src">Plans by <code>cipherflow.compile</code> with the paper's profiles (HE: NEXUS; MPC: SHAFT, two parties and a trusted dealer). Latency is the whole 12-block model, estimated from measured costs.</p>
     </div>
   </div>
 </div>
 
-<main class="wrap">
-  <section id="results" aria-labelledby="h-results">
-    <div class="kicker">Results</div>
-    <h2 id="h-results">Faster than any fixed split</h2>
-    <div class="split">
-      <div class="big">
-        <div class="row"><div class="n">16.5<small>×</small></div><p>speedup on BERT-base over state-of-the-art static hybrid placements (BumbleBee, BOLT, BLB)</p></div>
-        <div class="row"><div class="n">22<small>×</small></div><p>speedup on ViT, measured on commodity CPU and GPU platforms in the NeurIPS 2026 evaluation</p></div>
+  <section class="band alt" id="results" aria-labelledby="h-results">
+    <div class="wrap results">
+      <div class="results-copy">
+        <div class="kicker">Results</div>
+        <h2 id="h-results">Faster than any fixed split</h2>
+        <div class="stats">
+          <div class="stat"><div class="n">16.5<small>×</small></div><p>speedup on BERT-base over state-of-the-art static hybrid placements (BumbleBee, BOLT, BLB)</p></div>
+          <div class="stat"><div class="n">22<small>×</small></div><p>speedup on ViT, measured on commodity CPU and GPU platforms in the NeurIPS 2026 evaluation</p></div>
+        </div>
       </div>
       <div class="chartbox">
         <div class="hd"><b>Estimated latency, whole model</b><span id="chart-sub"></span></div>
-        <div class="legend" aria-hidden="true"><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--brand)" stroke-width="2.6"/></svg>CipherFlow</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series-static)" stroke-width="2"/></svg>Best static hybrid</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series-static)" stroke-width="2" stroke-dasharray="5 4"/></svg>Best single primitive</span></div>
+        <div class="legend" aria-hidden="true"><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--brand)" stroke-width="2.6"/></svg>CipherFlow</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series)" stroke-width="2"/></svg>Best static hybrid</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series)" stroke-width="2" stroke-dasharray="5 4"/></svg>Best single primitive</span></div>
         <div id="chart"></div>
         <p class="note">Follows the hardware and bandwidth chosen above; click a bandwidth to select it. CipherFlow is never slower than the best static plan, and where a single primitive is best it chooses that plan.</p>
       </div>
     </div>
   </section>
 
-  <section id="ideas" aria-labelledby="h-ideas">
-    <div class="kicker">Ideas</div>
-    <h2 id="h-ideas">Measure, expand, fold</h2>
-    <div class="ideas">
-      <div class="idea">
-        <span class="num">01 · MicroBench</span>
-        <svg viewBox="0 0 300 64" aria-hidden="true"><g fill="none" stroke="var(--line)"><line x1="0" y1="56" x2="300" y2="56"/></g>
-          <g fill="var(--brand)"><rect x="8" y="30" width="22" height="26" rx="3"/><rect x="40" y="14" width="22" height="42" rx="3" opacity=".75"/><rect x="72" y="38" width="22" height="18" rx="3" opacity=".55"/></g>
-          <g fill="var(--teal)"><rect x="118" y="22" width="22" height="34" rx="3"/><rect x="150" y="6" width="22" height="50" rx="3" opacity=".75"/><rect x="182" y="34" width="22" height="22" rx="3" opacity=".55"/></g>
-          <g fill="var(--series-static)"><rect x="228" y="26" width="22" height="30" rx="3"/><rect x="260" y="42" width="22" height="14" rx="3" opacity=".7"/></g></svg>
-        <h3>Costs measured where you deploy</h3>
-        <p>Every operator, conversion and bootstrap is timed on the target hardware, with its bytes and rounds, so the plan follows measured costs instead of a fixed rule.</p>
-      </div>
-      <div class="idea">
-        <span class="num">02 · State expansion</span>
-        <svg viewBox="0 0 300 64" aria-hidden="true"><g stroke="var(--line)" stroke-width="1.2" fill="none"><path d="M20 14 L80 14 L140 32 L200 32 L260 50"/><path d="M20 32 L80 14"/><path d="M20 50 L80 50 L140 32"/><path d="M80 50 L140 50 L200 32"/><path d="M200 50 L260 50"/><path d="M140 14 L200 14 L260 32"/></g>
-          <path d="M20 32 L80 14 L140 32 L200 32 L260 50" fill="none" stroke="var(--teal)" stroke-width="2.4"/>
-          <g fill="var(--surface)" stroke="var(--muted)" stroke-width="1.2"><circle cx="20" cy="14" r="4"/><circle cx="20" cy="50" r="4"/><circle cx="80" cy="50" r="4"/><circle cx="140" cy="14" r="4"/><circle cx="140" cy="50" r="4"/><circle cx="200" cy="14" r="4"/><circle cx="200" cy="50" r="4"/><circle cx="260" cy="32" r="4"/></g>
-          <g fill="var(--teal)"><circle cx="20" cy="32" r="5"/><circle cx="80" cy="14" r="5"/><circle cx="140" cy="32" r="5"/><circle cx="200" cy="32" r="5"/><circle cx="260" cy="50" r="5"/></g></svg>
-        <h3>One search over domains and levels</h3>
-        <p>Each operator's state is its domain and, in HE, the CKKS levels left. Placement, conversions and bootstraps become one shortest-path search over these states.</p>
-      </div>
-      <div class="idea">
-        <span class="num">03 · BlockFold</span>
-        <svg viewBox="0 0 300 64" aria-hidden="true"><g fill="none" stroke="var(--line)" stroke-width="1.2"><path d="M14 32 H286"/></g>
-          <g fill="none" stroke="var(--brand)" stroke-width="1.6"><path d="M40 32 C60 6, 110 6, 130 32"/><path d="M40 32 C60 58, 110 58, 130 32"/></g>
-          <g fill="var(--brand)"><circle cx="40" cy="32" r="4.5"/><circle cx="130" cy="32" r="4.5"/></g>
-          <path d="M150 32 H168" stroke="var(--muted)" stroke-width="1.4" marker-end="none"/><path d="M166 27 L172 32 L166 37" fill="none" stroke="var(--muted)" stroke-width="1.4"/>
-          <rect x="190" y="20" width="76" height="24" rx="12" fill="var(--he-fill)" stroke="var(--teal)" stroke-width="1.6"/><text x="228" y="36" text-anchor="middle" font-family="Geist Mono, monospace" font-size="11" fill="var(--teal)">block</text></svg>
-        <h3>Residual blocks folded into steps</h3>
-        <p>Each residual block is a single-entry, single-exit region. Folding it into one step contains the growth from branching joins and keeps planning tractable on Transformer-scale graphs.</p>
+  <section class="band" id="explore" aria-labelledby="h-explore">
+    <div class="wrap">
+      <div class="head"><div class="kicker">Explore</div><h2 id="h-explore">From the idea to your first plan</h2></div>
+      <div class="explore">
+        <a class="xcard" href="#how"><span class="xk">How it works</span><b>From a PyTorch model to a placement plan</b><span class="d">The stack, the planner's three ideas, and the measured HE and MPC backends.</span><span class="go">Read how it works →</span></a>
+        <a class="xcard" href="#start"><span class="xk">Get started</span><b>Install CipherFlow</b><span class="d">Pick your setup for the install command and a first plan, then watch a plan being made in the terminal.</span><span class="go">Get started →</span></a>
+        <a class="xcard" href="#tutorials"><span class="xk">Tutorials</span><b>Plan a model, then add primitives</b><span class="d">Five steps from a PyTorch model to a checked plan, and three ways to bring your own HE or MPC primitives.</span><span class="go">Open the tutorials →</span></a>
+        <a class="xcard" href="#roadmap"><span class="xk">Roadmap</span><b>From encoders to generative models</b><span class="d">What is done, what comes next, and the operators decoders still need.</span><span class="go">See the roadmap →</span></a>
       </div>
     </div>
   </section>
+</div>
 
-  <section id="how" aria-labelledby="h-how">
+<div class="view" data-view="how" hidden>
+  <div class="phead"><div class="wrap">
     <div class="kicker">How it works</div>
-    <h2 id="h-how">From a PyTorch model to a placement plan</h2>
-    <p class="lede">CipherFlow plans against an abstraction of the backends: methods, each one operator in one domain with the CKKS levels it consumes, the inputs it accepts and its measured cost. A library plugs in by registering its methods and a cost profile.</p>
-    <div class="figure">
-      <img class="lt" src="assets/cipherflow-ecosystem-light.svg" width="1120" height="990" alt="CipherFlow in the private-inference stack: a PyTorch model is traced into an operator graph; the deployment gives hardware, network and security model; CipherFlow plans with MicroBench, state expansion and BlockFold; HE and MPC backends report methods and measured costs and receive plan.json; cipherflow.runtime checks the plan and emulates it on real inputs.">
-    </div>
-    <div class="io">
-      <div><span class="t">① input</span><b>Operator graph</b><p>Operators, shapes and residual edges, traced from an <code>nn.Module</code>.</p></div>
-      <div><span class="t">② input</span><b>Deployment</b><p>Hardware profile; bandwidth and RTT, given or measured; security model.</p></div>
-      <div><span class="t">③ input</span><b>Measured costs</b><p>Per operator and domain: time, bytes, rounds, CKKS levels.</p></div>
-      <div><span class="t">optional</span><b>Calibration</b><p>Value ranges on real inputs, so approximations hold where HE runs.</p></div>
-      <div class="out"><span class="t">④ output</span><b>plan.json</b><p>HE or MPC per operator; conversions and bootstraps; latency.</p></div>
+    <h1 id="h-how" tabindex="-1">From a PyTorch model to a placement plan</h1>
+    <p class="lede">CipherFlow plans against an abstraction of the backends: methods, each one operator in one domain with the CKKS levels it consumes, the inputs it accepts and its measured cost. A library plugs in by registering its methods and a cost profile, or by <a href="#extend">declaring its primitives</a>.</p>
+  </div></div>
+
+  <section class="band" aria-label="The stack and the planner's ideas">
+    <div class="wrap">
+      <figure class="arch" aria-label="CipherFlow in the private-inference stack. The model is traced into an operator graph; the planner combines it with the deployment and the backends' measured costs into plan.json; the backends run the plan.">
+        <div class="layer">
+          <div class="ltag">Model</div>
+          <div class="lbox"><b>PyTorch model → operator graph</b><span><code>nn.Module</code>, e.g. <code>demo/transformer.py</code> (BERT-base, ViT-B/16), traced by <code>cf.models.from_torch</code> into operators and residuals</span></div>
+        </div>
+        <div class="link"><span></span><div class="pair"><div class="flow down"><b><span class="n">①</span>graph G = (V, E)</b><span>operators · tensor shapes · residual edges</span></div></div></div>
+        <div class="layer">
+          <div class="ltag">Planning</div>
+          <div class="plan-row">
+            <div class="side">
+              <div class="lbox"><b><span class="n">②</span>Deployment D = (HW, BW, RTT)</b><ul><li>HW: <code>cpu</code> | <code>gpu</code> profile, or this machine (MicroBench)</li><li>BW/RTT: <code>--network 10Mbps/1ms</code>, or measured: <code>--ip SERVER</code></li><li>security: <code>2pc</code> | <code>2pc-dealer</code></li></ul></div>
+              <div class="lbox"><b><span class="n">opt</span>Calibration</b><span>value ranges on real inputs, so approximations hold where HE runs</span></div>
+            </div>
+            <div class="lbox core">
+              <div class="name">CipherFlow<small>planner</small></div>
+              <ol class="stages"><li><b>MicroBench</b><span>measures missing costs</span></li><li><b>State expansion</b><span>domain × CKKS level</span></li><li><b>BlockFold</b><span>folds residual blocks</span></li></ol>
+              <code class="call">plan = cf.compile(graph, deployment, profile, calibration=None)</code>
+              <span class="ret">returns plan.json · plan.explain(steps=True) · plan.steps()</span>
+            </div>
+          </div>
+        </div>
+        <div class="link"><span></span><div class="pair"><div class="flow down"><b><span class="n">④</span>plan.json</b><span>each operator: HE | MPC, level, kernel; each edge: conversions, bootstraps</span></div><div class="flow up"><b><span class="n">③</span>methods + measured costs</b><span>per operator and domain: time, bytes, rounds, CKKS levels used</span></div></div></div>
+        <div class="layer">
+          <div class="ltag">Backends</div>
+          <div class="lbox"><b>HE and MPC libraries</b>
+            <div class="dom2"><div class="he"><b>HE: OpenFHE · NEXUS</b><span>OpenFHE CKKS (CPU)</span><span>NEXUS: SEAL (CPU), Phantom (CUDA)</span></div><div class="mpc"><b>MPC: SCI · SHAFT</b><span>SCI/BOLT: 2PC (CPU)</span><span>SHAFT: 2PC + dealer (CPU, GPU)</span></div></div>
+            <span class="foot">HE ⇄ MPC conversions (hardened for OpenFHE) · bootstrapping</span>
+          </div>
+        </div>
+        <div class="link"><span></span><div class="pair"><div class="flow down"><b>runs the plan</b></div></div></div>
+        <div class="layer">
+          <div class="ltag">Execution</div>
+          <div class="lbox"><b>cipherflow.runtime: the plan on real inputs</b><span>check_plan (domains, levels) · calibrate (value ranges)</span><span>emulate: error vs PyTorch, GLUE accuracy (no cryptography)</span><span>encrypted two-party execution: planned (ROADMAP §6)</span></div>
+        </div>
+      </figure>
+
+      <h3 class="sub">Three ideas behind the planner</h3>
+      <div class="ideas">
+        <div class="idea">
+          <span class="num">MicroBench</span>
+          <svg viewBox="0 0 300 64" aria-hidden="true"><line x1="0" y1="56" x2="300" y2="56" stroke="var(--rule-2)"/>
+            <g fill="var(--brand)"><rect x="8" y="30" width="22" height="26" rx="3"/><rect x="40" y="14" width="22" height="42" rx="3" opacity=".75"/><rect x="72" y="38" width="22" height="18" rx="3" opacity=".55"/></g>
+            <g fill="var(--teal)"><rect x="118" y="22" width="22" height="34" rx="3"/><rect x="150" y="6" width="22" height="50" rx="3" opacity=".75"/><rect x="182" y="34" width="22" height="22" rx="3" opacity=".55"/></g>
+            <g fill="var(--series)"><rect x="228" y="26" width="22" height="30" rx="3"/><rect x="260" y="42" width="22" height="14" rx="3" opacity=".7"/></g></svg>
+          <h3>Costs measured where you deploy</h3>
+          <p>Every operator, conversion and bootstrap is timed on the target hardware, with its bytes and rounds, so the plan follows measured costs instead of a fixed rule.</p>
+        </div>
+        <div class="idea">
+          <span class="num">State expansion</span>
+          <svg viewBox="0 0 300 64" aria-hidden="true"><g stroke="var(--rule-2)" stroke-width="1.2" fill="none"><path d="M20 14 L80 14 L140 32 L200 32 L260 50"/><path d="M20 32 L80 14"/><path d="M20 50 L80 50 L140 32"/><path d="M80 50 L140 50 L200 32"/><path d="M200 50 L260 50"/><path d="M140 14 L200 14 L260 32"/></g>
+            <path d="M20 32 L80 14 L140 32 L200 32 L260 50" fill="none" stroke="var(--teal)" stroke-width="2.4"/>
+            <g fill="var(--paper)" stroke="var(--faint)" stroke-width="1.2"><circle cx="20" cy="14" r="4"/><circle cx="20" cy="50" r="4"/><circle cx="80" cy="50" r="4"/><circle cx="140" cy="14" r="4"/><circle cx="140" cy="50" r="4"/><circle cx="200" cy="14" r="4"/><circle cx="200" cy="50" r="4"/><circle cx="260" cy="32" r="4"/></g>
+            <g fill="var(--teal)"><circle cx="20" cy="32" r="5"/><circle cx="80" cy="14" r="5"/><circle cx="140" cy="32" r="5"/><circle cx="200" cy="32" r="5"/><circle cx="260" cy="50" r="5"/></g></svg>
+          <h3>One search over domains and levels</h3>
+          <p>Each operator's state is its domain and, in HE, the CKKS levels left. Placement, conversions and bootstraps become one shortest-path search over these states.</p>
+        </div>
+        <div class="idea">
+          <span class="num">BlockFold</span>
+          <svg viewBox="0 0 300 64" aria-hidden="true"><path d="M14 32 H286" fill="none" stroke="var(--rule-2)" stroke-width="1.2"/>
+            <g fill="none" stroke="var(--brand)" stroke-width="1.6"><path d="M40 32 C60 6, 110 6, 130 32"/><path d="M40 32 C60 58, 110 58, 130 32"/></g>
+            <g fill="var(--brand)"><circle cx="40" cy="32" r="4.5"/><circle cx="130" cy="32" r="4.5"/></g>
+            <path d="M150 32 H168" stroke="var(--faint)" stroke-width="1.4"/><path d="M166 27 L172 32 L166 37" fill="none" stroke="var(--faint)" stroke-width="1.4"/>
+            <rect x="190" y="20" width="76" height="24" rx="12" fill="var(--he-fill)" stroke="var(--teal)" stroke-width="1.6"/><text x="228" y="36" text-anchor="middle" font-family="Geist Mono, monospace" font-size="11" fill="var(--teal)">block</text></svg>
+          <h3>Residual blocks folded into steps</h3>
+          <p>Each residual block is a single-entry, single-exit region. Folding it into one step contains the growth from branching joins and keeps planning tractable on Transformer-scale graphs.</p>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section id="demo" aria-labelledby="h-demo">
-    <div class="kicker">Demo</div>
-    <h2 id="h-demo">A Transformer in, the plan out</h2>
-    <div class="split">
-      <div style="display:grid; gap:18px; align-content:start">
+  <section class="band alt" id="backends" aria-labelledby="h-backends">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">Backends</div>
+        <h2 id="h-backends">Measured <span class="dom he">HE</span> and <span class="dom mpc">MPC</span> backends</h2>
+        <p class="lede">Each backend reports its methods and the measured cost of every operator, conversion and bootstrap. CipherFlow plans with each pair of backends that fits the deployment and keeps the best plan.</p>
+      </div>
+      <div class="cols">
+        <div class="card">
+          <div class="hd"><h3>Homomorphic encryption</h3></div>
+          <ul>
+            <li><span class="m">✓</span><span><b>OpenFHE</b> CKKS<small>All operators on one 128-bit parameter set, fast and precise bootstrapping, hardened HE↔MPC conversion, wide-range GeLU, Softmax and LayerNorm</small></span></li>
+            <li><span class="m">✓</span><span><b>NEXUS</b><small>SEAL on CPU, Phantom on CUDA; reference-scaled costs</small></span></li>
+          </ul>
+        </div>
+        <div class="card mpc">
+          <div class="hd"><h3>Secure multi-party computation</h3></div>
+          <ul>
+            <li><span class="m">✓</span><span><b>SCI / BOLT</b> (EzPC)<small>Two parties, no third party; CPU</small></span></li>
+            <li><span class="m">✓</span><span><b>SHAFT</b> (CrypTen)<small>Two parties and a trusted dealer; CPU and GPU</small></span></li>
+            <li class="todo"><span class="m">○</span><span><b>SPU</b><small>Cheetah and SEMI2K; planned</small></span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="own"><b>Your library</b><span>Declare its primitives and what one call costs with <code>cf.PrimitiveBackend</code>; CipherFlow lowers every operator to them.</span><a href="#extend">Bring your own primitives →</a></div>
+      <a class="next" href="#start"><span><span class="xk">Next</span><b>Install CipherFlow and plan your first model</b></span><span class="go">Get started →</span></a>
+    </div>
+  </section>
+</div>
+
+<div class="view" data-view="start" hidden>
+  <div class="phead"><div class="wrap">
+    <div class="kicker">Get started</div>
+    <h1 id="h-start" tabindex="-1">Install CipherFlow</h1>
+    <p class="lede">Choose how you install and what you want to plan. The commands follow your choices.</p>
+  </div></div>
+
+  <section class="band" aria-label="Install">
+    <div class="wrap">
+      <div class="picker" id="picker">
+        <div class="prow"><div class="plab" id="pk-pkg">Package</div><div class="popts" role="group" aria-labelledby="pk-pkg" data-key="pkg"></div></div>
+        <div class="prow"><div class="plab" id="pk-model">Model</div><div class="popts" role="group" aria-labelledby="pk-model" data-key="model"></div></div>
+        <div class="prow"><div class="plab" id="pk-api">Interface</div><div class="popts" role="group" aria-labelledby="pk-api" data-key="api"></div></div>
+        <div class="prow"><div class="plab" id="pk-hw">Server</div><div class="popts" role="group" aria-labelledby="pk-hw" data-key="hw"></div></div>
+        <div class="prow"><div class="plab" id="pk-net">Network</div><div class="popts" role="group" aria-labelledby="pk-net" data-key="net"></div></div>
+        <div class="prow"><div class="plab" id="pk-install">Run this command</div><div class="pout"><pre id="cmd-install" aria-labelledby="pk-install"></pre><button class="copy" type="button" data-copy="cmd-install">Copy</button></div></div>
+        <div class="prow"><div class="plab" id="pk-plan">Then plan a model</div><div class="pout"><pre id="cmd-plan" aria-labelledby="pk-plan"></pre><button class="copy" type="button" data-copy="cmd-plan">Copy</button></div></div>
+        <div class="prow"><div class="plab" id="pk-notes">Notes</div><ul class="pnotes" id="cmd-notes" aria-labelledby="pk-notes"></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band alt" id="demo" aria-labelledby="h-demo">
+    <div class="wrap demo">
+      <div class="demo-copy">
+        <div class="kicker">Demo</div>
+        <h2 id="h-demo">A Transformer in, the plan out</h2>
         <p class="lede">Plan a BERT-base encoder written in PyTorch and read the plan operator by operator: HE or MPC, the CKKS levels, the conversions and bootstraps before each operator, and where each operator is in the code.</p>
-        <div class="code" data-tabs>
-          <div class="bar" role="tablist"><button class="tab" role="tab" aria-selected="true">Network given</button><button class="tab" role="tab" aria-selected="false">Network measured</button><button class="copy" type="button">Copy</button></div>
-          <pre>python -m demo.plan_pytorch_model \
+        <div class="seg" id="demo-tabs" role="group" aria-label="Network">
+          <button type="button" aria-pressed="true" data-demo="given">Network given</button>
+          <button type="button" aria-pressed="false" data-demo="measured">Network measured</button>
+        </div>
+        <div class="cell">
+          <div class="cell-bar"><span class="lang">Shell</span><button class="copy" type="button">Copy</button></div>
+          <pre class="src" data-demo="given">python -m demo.plan_pytorch_model \
     --model bert --network 10Mbps/1ms</pre>
-          <pre hidden><span class="c"># on the server</span>
+          <pre class="src" data-demo="measured" hidden><span class="c"># on the server</span>
 cipherflow netbench --serve
 <span class="c"># on the client</span>
 python -m demo.plan_pytorch_model \
     --model bert --ip SERVER_IP</pre>
         </div>
+        <p class="note">Run from the repository root, after installing from source.</p>
       </div>
-      <div style="display:grid; gap:14px; min-width:0">
-        <div class="term"><img src="assets/demo_network_given.gif" width="1004" height="691" loading="lazy" alt="Terminal: python -m demo.plan_pytorch_model --model bert --blocks 1 --network 10Mbps/1ms prints the plan's latency and placement, then every operator with HE or MPC, its CKKS levels, its place in the PyTorch code, and the conversions and bootstraps before it."></div>
-        <details><summary>Two terminals: the network measured between client and server</summary><img src="assets/demo_network_measured.gif" width="1004" height="756" loading="lazy" alt="Two terminals: the server runs cipherflow netbench --serve; the client measures the round-trip time and the bandwidth each way, then prints the plan for that network."></details>
-      </div>
+      <figure class="term">
+        <img data-demo="given" src="assets/demo_network_given.gif" width="1004" height="691" alt="Terminal: python -m demo.plan_pytorch_model --model bert --blocks 1 --network 10Mbps/1ms prints the plan's latency and placement, then every operator with HE or MPC, its CKKS levels, its place in the PyTorch code, and the conversions and bootstraps before it.">
+        <img data-demo="measured" src="assets/demo_network_measured.gif" width="1004" height="756" loading="lazy" hidden alt="Two terminals: the server runs cipherflow netbench --serve; the client measures the round-trip time and the bandwidth each way, then prints the plan for that network.">
+      </figure>
+    </div>
+    <div class="wrap">
+      <a class="next" href="#tutorials"><span><span class="xk">Next</span><b>Plan a model, step by step</b></span><span class="go">Open the tutorials →</span></a>
     </div>
   </section>
+</div>
 
-  <section id="start" aria-labelledby="h-start">
-    <div class="kicker">Quick start</div>
-    <h2 id="h-start">Plan your own model</h2>
-    <div class="code" data-tabs>
-      <div class="bar" role="tablist"><button class="tab" role="tab" aria-selected="true">Python</button><button class="tab" role="tab" aria-selected="false">Command line</button><button class="tab" role="tab" aria-selected="false">Install</button><button class="copy" type="button">Copy</button></div>
-      <pre><span class="k">import</span> torch
+<div class="view" data-view="tutorials" hidden>
+  <div class="phead"><div class="wrap">
+    <div class="kicker">Tutorials</div>
+    <h1 id="h-tutorials" tabindex="-1">Plan a model, then bring your own primitives</h1>
+    <p class="lede">Two walkthroughs with real code and the output it prints. The first plans a BERT-base encoder step by step; the second adds HE and MPC primitives of your own.</p>
+    <nav class="subnav" aria-label="Tutorials"><a href="#use"><span>1</span>Plan a model, step by step</a><a href="#extend"><span>2</span>Bring your own primitives</a></nav>
+  </div></div>
+
+  <section class="band" id="use" aria-labelledby="h-use">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">Tutorial 1</div>
+        <h2 id="h-use">Plan a model, step by step</h2>
+        <p class="lede">A plan says, for every operator, whether it runs in HE or MPC, how many CKKS levels it uses, and what converts or bootstraps before it. This tutorial plans the demo's BERT-base encoder. Install from source and run it from the repository root.</p>
+      </div>
+      <ol class="steps">
+        <li class="step">
+          <span class="no" aria-hidden="true">1</span>
+          <div class="txt"><h3><span class="sr">Step 1: </span>Trace the model</h3>
+            <p><code>from_torch</code> traces your encoder with torch.fx and maps it onto CipherFlow's operators: the Q/K/V projections, QKᵀ, Softmax, Attn·V, the linear layers, LayerNorm, GeLU and the residual adds. Each operator keeps its place in your code.</p>
+            <p>An operation outside this set raises <code>cf.UnsupportedModel</code>, which names each one.</p></div>
+          <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src"><span class="k">import</span> torch
 <span class="k">import</span> cipherflow <span class="k">as</span> cf
-<span class="k">from</span> demo.transformer <span class="k">import</span> bert                    <span class="c"># any encoder written in PyTorch</span>
+<span class="k">from</span> demo.transformer <span class="k">import</span> bert   <span class="c"># BERT-base in plain PyTorch</span>
 
-graph = cf.models.from_torch(bert(), torch.randn(<span class="s">1, 128, 768</span>))
-plan  = cf.compile(graph, cf.Deployment.of(<span class="s">"cpu"</span>, <span class="s">"10Mbps/1ms"</span>))
-print(plan.explain(steps=<span class="k">True</span>))                      <span class="c"># the plan, operator by operator</span>
-plan.to_json(<span class="s">"plan.json"</span>)</pre>
-      <pre hidden>cipherflow compile --torch demo/transformer.py:bert --input-shape 1,128,768 \
-    --network 10Mbps/1ms --steps -o plan.json
-cipherflow explain plan.json --steps
-cipherflow backends                      <span class="c"># HE and MPC backends, and which pairs fit</span></pre>
-      <pre hidden>git clone https://github.com/UCF-ML-Research/CipherFlow.git
-cd CipherFlow
-pip install -e .                          <span class="c"># PyTorch for from_torch, the demo and the runtime</span></pre>
+encoder = bert()
+graph = cf.models.from_torch(encoder, torch.zeros(1, 128, 768))
+<span class="k">for</span> node <span class="k">in</span> graph.nodes[:4]:
+    print(node.op_type, node.input_shape, node.attributes[<span class="s">"source"</span>])</pre><div class="cell-out"><span class="lab">Output</span><pre>Input (1, 128, 768) input x
+Linear_QKV (1, 128, 768) blocks.0.attn.{q,k,v}
+Attention_QK_MatMul (3, 1, 128, 768) blocks.0.attn: matmul
+Softmax (1, 12, 128, 128) blocks.0.attn: softmax</pre></div></div>
+        </li>
+        <li class="step">
+          <span class="no" aria-hidden="true">2</span>
+          <div class="txt"><h3><span class="sr">Step 2: </span>Describe the deployment</h3>
+            <p>A deployment is the server's hardware and the network between the client and the server. <code>cpu</code> and <code>gpu</code> select the built-in cost profiles. Give the network as bandwidth / round-trip time, or measure it with <code>cipherflow netbench</code>.</p>
+            <p><code>cf.match</code> shows which HE and MPC backend pairs can plan the model there. The default security model, <code>2pc</code>, allows two parties and no third party.</p></div>
+          <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src"><span class="c"># hardware profile; network as bandwidth / round-trip time</span>
+deployment = cf.Deployment.of(<span class="s">"cpu"</span>, <span class="s">"10Mbps/1ms"</span>)
+print(cf.match(graph, deployment))   <span class="c"># HE + MPC pairs that fit</span></pre><div class="cell-out"><span class="lab">Output</span><pre>backends for torch_BertEncoder:
+  nexus+sci              ok        30/30 cost entries exact; HE costs reference-scaled
+  openfhe-fast+sci       ok        30/30 cost entries exact
+  openfhe-precise+sci    ok        30/30 cost entries exact
+  nexus+shaft            excluded  security model 2pc-dealer (two parties + trusted dealer) is not allowed by security='2pc'; pass security='2pc-dealer' to allow it
+<span class="d-gap">…</span></pre></div></div>
+        </li>
+        <li class="step">
+          <span class="no" aria-hidden="true">3</span>
+          <div class="txt"><h3><span class="sr">Step 3: </span>Compile</h3>
+            <p><code>compile</code> plans the model with each backend pair that fits and keeps the best plan. It searches each operator's domain and CKKS level together, so it places conversions and bootstraps where they cost least.</p>
+            <p><code>plan.alternatives</code> lists the other pairs and their latencies.</p></div>
+          <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src">plan = cf.compile(graph, deployment)
+print(plan.explain())</pre><div class="cell-out"><span class="lab">Output</span><pre>CipherFlow plan  graph=torch_BertEncoder  hardware=cpu  BW=10 Mbps  RTT=1 ms  strategy=compiler
+  latency 25262.7 s  (operators 18549.8 s, conversions 1702.4 s, bootstraps 5010.5 s)
+  placement: 132 HE / 12 MPC operators, 24 conversions, 59 bootstraps, 16.47 GiB online communication
+  HE backend: openfhe-fast (OpenFHE CKKS, one-pass bootstrapping; 10.5-bit bootstrapping; costs measured)
+  MPC backend: sci (SCI/BOLT (EzPC); two parties, no third party)
+<span class="d-gap">…</span></pre></div></div>
+        </li>
+        <li class="step">
+          <span class="no" aria-hidden="true">4</span>
+          <div class="txt"><h3><span class="sr">Step 4: </span>Read the plan</h3>
+            <p><code>explain(steps=True)</code> lists the operators in execution order. Each row gives HE or MPC, the CKKS level before and after, and the line of your PyTorch code. The conversions and bootstraps that run before an operator sit above it.</p>
+            <p>Here Softmax runs in MPC, between two conversions, and everything else stays encrypted.</p></div>
+          <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src">print(plan.explain(steps=<span class="k">True</span>))</pre><div class="cell-out"><span class="lab">Output</span><pre>     #  operator               domain CKKS level PyTorch
+     0  Input                  <span class="d-he">HE</span>     8 -&gt; 8     input x (encrypted by the client)
+     1  Linear_QKV             <span class="d-he">HE</span>     8 -&gt; 7     blocks.0.attn.{q,k,v}
+     2  Attention_QK_MatMul    <span class="d-he">HE</span>     7 -&gt; 3     blocks.0.attn: matmul
+<span class="d-act">          convert HE -&gt; MPC  [1, 12, 128, 128]  (#2 -&gt; #3)  17.72 s</span>
+     3  Softmax                <span class="d-mpc">MPC</span>               blocks.0.attn: softmax
+<span class="d-act">          convert MPC -&gt; HE  [1, 12, 128, 128]  (#3 -&gt; #4)  124.15 s</span>
+     4  Attention_V_MatMul     <span class="d-he">HE</span>     7 -&gt; 3     blocks.0.attn: matmul
+     5  Out_Projection         <span class="d-he">HE</span>     2 -&gt; 1     blocks.0.attn.o
+     6  Residual_Add           <span class="d-he">HE</span>     1 -&gt; 1     blocks.0: add
+<span class="d-act">          bootstrap at level 1  (#6 -&gt; all its consumers)  52.74 s</span>
+     7  LayerNorm              <span class="d-he">HE</span>     4 -&gt; 1     blocks.0.ln1
+<span class="d-act">          bootstrap at level 1  (#7 -&gt; #8)  52.74 s</span>
+     8  FFN_Linear_1           <span class="d-he">HE</span>     8 -&gt; 7     blocks.0.mlp.fc1
+<span class="d-act">          bootstrap at level 7  (#8 -&gt; #9)  210.97 s</span>
+     9  GeLU                   <span class="d-he">HE</span>     8 -&gt; 2     blocks.0.mlp.act
+<span class="d-gap">…</span></pre></div></div>
+        </li>
+        <li class="step">
+          <span class="no" aria-hidden="true">5</span>
+          <div class="txt"><h3><span class="sr">Step 5: </span>Save it and check it on real data</h3>
+            <p><code>plan.json</code> holds the whole plan for other tools. <code>emulate</code> runs the model in float64 with each operator in its planned domain: the HE kernels' approximations, fixed point in MPC, and each conversion's rounding. It runs at plaintext speed and does not run the cryptography.</p>
+            <p>Calibrate on real inputs with <code>cf.runtime.calibrate</code>, and pass the calibration to <code>compile</code>. Operators whose values fall outside an approximation then stay out of HE.</p></div>
+          <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src">plan.to_json(<span class="s">"plan.json"</span>)      <span class="c"># cipherflow explain plan.json --steps</span>
+x = torch.randn(1, 128, 768)   <span class="c"># hidden states of a real input</span>
+result = cf.runtime.emulate(plan, encoder, x)
+print(result.summary())</pre><div class="cell-out"><span class="lab">Output</span><pre>output vs plaintext: max |err| 0.017, relative 0.00248
+conversions 24, bootstraps 59 executed (plan: 24 / 59)</pre></div></div>
+        </li>
+      </ol>
     </div>
   </section>
 
-  <section id="backends" aria-labelledby="h-backends">
-    <div class="kicker">Backends</div>
-    <h2 id="h-backends">Measured HE and MPC backends</h2>
-    <div class="cols">
-      <div class="card">
-        <div class="hd"><span class="sq" style="background:var(--he)"></span><h3>Homomorphic encryption</h3></div>
-        <ul>
-          <li><span class="m">✓</span><span><b>OpenFHE</b> CKKS<small>All operators on one 128-bit parameter set, fast and precise bootstrapping, hardened HE↔MPC conversion, wide-range GeLU, Softmax and LayerNorm</small></span></li>
-          <li><span class="m">✓</span><span><b>NEXUS</b><small>SEAL on CPU, Phantom on CUDA; reference-scaled costs</small></span></li>
-        </ul>
+  <section class="band alt" id="extend" aria-labelledby="h-extend">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">Tutorial 2</div>
+        <h2 id="h-extend">Bring your own primitives</h2>
+        <p class="lede">CipherFlow is not tied to the backends it ships with. Declare what your HE or MPC library can do and what one call costs, and the planner places operators on it as it does on the built-in backends. The examples continue the tutorial above: <code>graph</code> is BERT-base and <code>deployment</code> is a CPU server at 10 Mbps / 1 ms.</p>
       </div>
-      <div class="card">
-        <div class="hd"><span class="sq" style="background:var(--mpc)"></span><h3>Secure multi-party computation</h3></div>
-        <ul>
-          <li><span class="m">✓</span><span><b>SCI / BOLT</b> (EzPC)<small>Two parties, no third party; CPU</small></span></li>
-          <li><span class="m">✓</span><span><b>SHAFT</b> (CrypTen)<small>Two parties and a trusted dealer; CPU and GPU</small></span></li>
-          <li class="todo"><span class="m">○</span><span><b>SPU</b><small>Cheetah and SEMI2K; planned</small></span></li>
-        </ul>
+      <div class="paths" role="tablist" aria-label="What you bring">
+        <button class="path" type="button" role="tab" id="path-a" aria-selected="true" aria-controls="panel-a">
+          <span class="api">cf.Extension.primitive</span>
+          <b>A kernel for one operator</b>
+          <span class="d">You have a faster HE Softmax, say. Declare its cost and the CKKS levels it uses, and it replaces the backend's kernel for that operator.</span>
+          <span class="m"><em>Measure</em> one call on the operator's input shape: time and levels consumed.</span>
+        </button>
+        <button class="path" type="button" role="tab" id="path-b" aria-selected="false" aria-controls="panel-b">
+          <span class="api">cf.PrimitiveBackend</span>
+          <b>A library's basic operations</b>
+          <span class="d">You have HE add, multiply, rotate and bootstrap, or MPC multiply, truncate and compare. CipherFlow writes every operator as calls to them and prices it.</span>
+          <span class="m"><em>Measure</em> each operation: per ciphertext in HE; per element, with rounds per call, in MPC.</span>
+        </button>
+        <button class="path" type="button" role="tab" id="path-c" aria-selected="false" aria-controls="panel-c">
+          <span class="api">cf.Extension.operator</span>
+          <b>A new operator</b>
+          <span class="d">Your model has a step CipherFlow does not know, such as top-k. Register its PyTorch module as an operator and give it a primitive in each domain that can run it.</span>
+          <span class="m"><em>Measure</em> one call of your protocol: time, bytes and rounds.</span>
+        </button>
       </div>
+      <div class="ppanel" role="tabpanel" id="panel-a" aria-labelledby="path-a">
+        <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src">ext = cf.Extension(<span class="s">"my-he-softmax"</span>)
+ext.primitive(<span class="s">"Softmax"</span>, <span class="s">"HE"</span>,
+              levels=4,                                    <span class="c"># CKKS levels one call consumes</span>
+              cost=cf.Cost(local_ms=31_000),               <span class="c"># one call on scores [1, 12, 128, 128]</span>
+              accepts=<span class="k">lambda</span> node: <span class="k">None</span> <span class="k">if</span> node.input_shape[-1] == 128 <span class="k">else</span> <span class="s">"rows of 128 scores only"</span>)
+
+plan = cf.compile(graph, deployment, he=<span class="s">"openfhe-fast"</span>, mpc=<span class="s">"sci"</span>, extensions=[ext])
+print(plan.explain(steps=<span class="k">True</span>))</pre><div class="cell-out"><span class="lab">Output</span><pre>  latency 13676.2 s  (operators 6134.0 s, conversions 0.0 s, bootstraps 7542.1 s)
+  placement: 144 HE / 0 MPC operators, 0 conversions, 83 bootstraps, 0.00 GiB online communication
+<span class="d-gap">…</span>
+     2  Attention_QK_MatMul     <span class="d-he">HE</span>     7 -&gt; 3     blocks.0.attn: matmul
+<span class="d-act">          bootstrap at level 3  (#2 -&gt; #3)  105.48 s</span>
+     3  Softmax [my-he-softmax] <span class="d-he">HE</span>     8 -&gt; 4     blocks.0.attn: softmax
+<span class="d-act">          bootstrap at level 4  (#3 -&gt; #4)  105.48 s</span>
+     4  Attention_V_MatMul      <span class="d-he">HE</span>     7 -&gt; 3     blocks.0.attn: matmul
+<span class="d-gap">…</span></pre></div></div>
+        <p class="sum">Softmax now runs in HE, and the plan for BERT-base drops from 25,263 s to 13,676 s with no conversions left. The step table tags the operators your kernel runs.</p>
+      </div>
+      <div class="ppanel" role="tabpanel" id="panel-b" aria-labelledby="path-b" hidden>
+        <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src">my_ckks = cf.PrimitiveBackend.he(
+    <span class="s">"my-ckks"</span>, slots=32768, levels=10,
+    bootstrap=cf.Cost(local_ms=9_000),                          <span class="c"># one ciphertext</span>
+    primitives={<span class="s">"add"</span>: cf.Cost(0.3), <span class="s">"mul_plain"</span>: cf.Cost(3),
+                <span class="s">"mul"</span>: cf.Cost(40), <span class="s">"rotate"</span>: cf.Cost(35)})    <span class="c"># one call on one ciphertext</span>
+my_2pc = cf.PrimitiveBackend.mpc(
+    <span class="s">"my-2pc"</span>,
+    primitives={<span class="s">"mul"</span>: cf.Cost(3e-4, 128, 1),                   <span class="c"># per element: ms, bytes; rounds per call</span>
+                <span class="s">"matmul"</span>: cf.Cost(2e-5, 8, 2),
+                <span class="s">"trunc"</span>: cf.Cost(2e-4, 128, 1),
+                <span class="s">"cmp"</span>: cf.Cost(2e-3, 4000, 16)})
+
+print(my_ckks.lower(graph))                                     <span class="c"># each operator as primitive calls</span>
+plan = cf.compile(graph, deployment, he=<span class="s">"openfhe-fast"</span>, mpc=<span class="s">"sci"</span>,
+                  extensions=[my_ckks.extension(), my_2pc.extension()])
+print(plan.explain())</pre><div class="cell-out"><span class="lab">Output</span><pre>my-ckks (HE): every operator as primitive calls
+  Linear_QKV           blocks.0.attn.{q,k,v}            53.93 s  levels 1  [mul_plain 9,216, add 9,216, rotate 672]
+                                                    BSGS diagonal matrix-vector product, 768 diagonals x 3 block(s)
+  Softmax              blocks.0.attn: softmax           59.61 s  levels 19  [mul_plain 12, mul 102, rotate 42, add 66, bootstrap 6]
+                                                    exp by 8 squarings, row sums by rotation, 1/x by 4 Newton steps
+<span class="d-gap">…</span>
+  latency 8435.3 s  (operators 6185.5 s, conversions 8.8 s, bootstraps 2241.0 s)
+  placement: 143 HE / 1 MPC operators, 1 conversions, 59 bootstraps, 0.06 GiB online communication</pre></div></div>
+        <p class="sum">Each operator becomes calls of your operations, with the CKKS levels they use and bootstraps inside a kernel that needs more levels than the budget. With these illustrative costs, the plan runs 143 operators on <code>my-ckks</code> and one LayerNorm on <code>my-2pc</code>.</p>
+      </div>
+      <div class="ppanel" role="tabpanel" id="panel-c" aria-labelledby="path-c" hidden>
+        <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src"><span class="k">from</span> torch <span class="k">import</span> nn
+
+<span class="k">class</span> TopK(nn.Module):                                <span class="c"># scores -&gt; indices of the k largest</span>
+    <span class="k">def</span> __init__(self, k):
+        super().__init__()
+        self.k = k
+    <span class="k">def</span> forward(self, scores):
+        <span class="k">return</span> torch.topk(scores, self.k, dim=-1).indices
+
+<span class="k">class</span> Ranker(nn.Module):
+    <span class="k">def</span> __init__(self):
+        super().__init__()
+        self.encoder, self.head, self.topk = bert(2), nn.Linear(768, 768), TopK(4)
+    <span class="k">def</span> forward(self, x):
+        <span class="k">return</span> self.topk(self.head(self.encoder(x)))
+
+topk = cf.Extension(<span class="s">"my-topk"</span>).operator(TopK, <span class="s">"TopK"</span>)
+topk.primitive(<span class="s">"TopK"</span>, <span class="s">"MPC"</span>, cost=cf.Cost(local_ms=120, comm_bytes=8_000_000, comm_rounds=40))
+ranker = cf.models.from_torch(Ranker(), torch.zeros(1, 128, 768), extensions=[topk])
+plan = cf.compile(ranker, deployment, he=<span class="s">"openfhe-fast"</span>, mpc=<span class="s">"sci"</span>, extensions=[topk])
+print(plan.explain(steps=<span class="k">True</span>))</pre><div class="cell-out"><span class="lab">Output</span><pre>  latency 4258.1 s  (operators 3121.7 s, conversions 292.6 s, bootstraps 843.9 s)
+  placement: 23 HE / 3 MPC operators, 5 conversions, 10 bootstraps, 2.76 GiB online communication
+<span class="d-gap">…</span>
+    24  LayerNorm              <span class="d-he">HE</span>     4 -&gt; 1     encoder.blocks.1.ln2
+<span class="d-act">          bootstrap at level 1  (#24 -&gt; #25)  52.74 s</span>
+    25  Out_Projection         <span class="d-he">HE</span>     8 -&gt; 7     head
+<span class="d-act">          convert HE -&gt; MPC  [1, 128, 768]  (#25 -&gt; #26)  8.83 s</span>
+    26  TopK [my-topk]         <span class="d-mpc">MPC</span>               topk</pre></div></div>
+        <p class="sum"><code>from_torch</code> keeps <code>TopK</code> as one operator. It has only an MPC primitive, since CKKS has no comparison, so the plan converts to MPC before it.</p>
+      </div>
+      <div class="limits">
+        <p>Plans use the costs and levels you declare, as given. CipherFlow does not check an extension's correctness, precision or security, and does not execute extensions yet.</p>
+        <a href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/docs/tutorials/backend-primitives.md">Read the full tutorial</a>
+        <a href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md#extensions">Limits on the roadmap</a>
+      </div>
+      <a class="next" href="#roadmap"><span><span class="xk">Next</span><b>From encoders to generative models</b></span><span class="go">See the roadmap →</span></a>
     </div>
   </section>
+</div>
 
-  <section id="roadmap" aria-labelledby="h-roadmap">
+<div class="view" data-view="roadmap" hidden>
+  <div class="phead"><div class="wrap">
     <div class="kicker">Roadmap</div>
-    <h2 id="h-roadmap">From encoders to generative models</h2>
+    <h1 id="h-roadmap" tabindex="-1">From encoders to generative models</h1>
     <p class="lede">BERT and ViT encoders are done. Generative models come next, first the backend operators decoders need and then the models; after them, a runtime that executes plans under encryption.</p>
-    <div class="figure">
-      <img class="lt" src="assets/cipherflow-roadmap-light.svg" width="1120" height="600" loading="lazy" alt="CipherFlow roadmap. Done: discriminative Transformers (BERT-base, ViT-B/16). Next: generative models (GPT-2, then LLaMA-style decoders): backend operators for decoders, a torch.export front end, prefill and decode plans. Then: a private inference runtime. Below, the two steps of the next stage and a LLaMA-style decoder block marked by which operators exist today.">
+  </div></div>
+
+  <section class="band" aria-label="Roadmap">
+    <div class="wrap">
+      <div class="road">
+        <ol class="stages3">
+          <li class="st done"><span class="when"><span class="dot">✓</span>Done · v0.1–v0.4</span>
+            <div class="box"><b>① Discriminative Transformers</b><span class="s">BERT-base, ViT-B/16</span><ul><li>PyTorch front end</li><li>HE and MPC backends, measured</li><li>plans, calibration, emulation</li></ul></div></li>
+          <li class="st next"><span class="when"><span class="dot"></span>Next</span>
+            <div class="box"><b>② Generative models</b><span class="s">GPT-2, then LLaMA-style decoders</span><ul><li>backend operators for decoders</li><li>torch.export front end</li><li>prefill and decode plans</li></ul></div></li>
+          <li class="st then"><span class="when"><span class="dot"></span>Then</span>
+            <div class="box"><b>③ Private inference runtime</b><span class="s">plans executed under encryption</span><ul><li>two-party runtime: keys, transport</li><li>encrypted execution, BERT to LLMs</li><li>GPU backends and SPU</li></ul></div></li>
+        </ol>
+        <div class="details">
+          <div class="dh"><b>Details · ② Generative models</b><span>two steps: the operators decoders need, then the models</span></div>
+          <div class="dsteps">
+            <div class="s1"><b>Step 1 · backend operators</b><span>causal mask, RoPE, RMSNorm, SwiGLU, KV cache, embedding, LM head, sampling: HE kernels, MPC protocols, measured costs</span></div>
+            <div class="s2"><b>Step 2 · the models</b><span>torch.export front end; prefill and decode planned separately, KV cache as state; per-token latency; GPT-2, then LLaMA-style</span></div>
+          </div>
+          <div class="blk">
+            <div class="bh"><b>Step 1 in one LLaMA-style decoder block</b><span><i class="ok"></i>supported today</span><span><i class="add"></i>added in step 1</span><span>(execution order)</span></div>
+            <ol class="chips"><li class="add">Embedding</li><li class="add">RMSNorm</li><li>Q/K/V proj</li><li class="add">RoPE</li><li>QKᵀ</li><li class="add">causal mask</li><li>Softmax</li><li>Attn·V</li><li class="add">KV cache</li><li>Out proj</li><li>Add</li></ol>
+            <ol class="chips"><li class="add">RMSNorm</li><li>Gate/Up proj</li><li class="add">SiLU</li><li class="add">Gate × Up</li><li>Down proj</li><li>Add</li><li class="add">LM head</li><li class="add">Sampling</li></ol>
+          </div>
+        </div>
+      </div>
+      <a class="next" href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md"><span><span class="xk">On GitHub</span><b>The full roadmap, item by item</b></span><span class="go">Open ROADMAP.md →</span></a>
     </div>
-    <p><a href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md">The full roadmap</a> lists every done and planned item.</p>
   </section>
+</div>
 </main>
 
 <footer>
   <div class="wrap">
-    <span class="mk">Cipher<b>Flow</b></span>
-    <span id="ver"></span>
-    <a href="https://github.com/UCF-ML-Research/CipherFlow">GitHub</a>
-    <a href="planner/">Plan explorer</a>
-    <a href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md">Roadmap</a>
-    <span>Apache License 2.0</span>
+    <div><div class="fmark">Cipher<b>Flow</b></div><p class="fline">A hardware-aware compiler framework for efficient secure inference.</p></div>
+    <nav class="flinks" aria-label="Links">
+      <a href="https://github.com/UCF-ML-Research/CipherFlow">GitHub</a>
+      <a href="planner/">Plan explorer</a>
+      <a href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/ROADMAP.md">Roadmap</a>
+      <a href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/docs/tutorials/backend-primitives.md">Primitives tutorial</a>
+    </nav>
+    <div class="fmeta"><span id="ver"></span><span>NeurIPS 2026</span><span>Apache License 2.0</span></div>
   </div>
 </footer>
 <div id="tip" hidden></div>
 
+<script id="start-gen">
+// Get started: the choices, the commands they produce, and the notes that go with them.
+window.CFStart = (() => {
+  const REPO = 'https://github.com/UCF-ML-Research/CipherFlow';
+  const PICK = {
+    pkg: [['pip', 'Pip', 'Install the package from GitHub with pip'],
+          ['src', 'Source', 'Clone the repository: also the demo, the tests and the native backends']],
+    model: [['builtin', 'Built-in', 'BERT-base or ViT-B/16, built into CipherFlow'],
+            ['torch', 'PyTorch', 'Your encoder, written in PyTorch'],
+            ['hf', 'Hugging Face', 'A Hugging Face encoder, e.g. BertEncoder']],
+    api: [['py', 'Python', 'The Python API'], ['cli', 'Command line', 'The cipherflow command']],
+    hw: [['cpu', 'CPU', 'The built-in CPU profiles'], ['gpu', 'GPU', 'The built-in GPU profile (SHAFT)']],
+    net: [['given', 'Given', 'Bandwidth and round-trip time that you give'],
+          ['measured', 'Measured', 'Measured between client and server with cipherflow netbench']],
+  };
+  const DEFAULT = { pkg: 'pip', model: 'torch', api: 'py', hw: 'cpu', net: 'given' };
+  const note = (code, text) => text ? code.padEnd(Math.max(code.length + 2, 52)) + '# ' + text : code;
+
+  function install(s) {
+    const extra = s.model === 'builtin' ? '' : '[torch]';
+    const hf = s.model === 'hf' ? ' "transformers<5"' : '';
+    if (s.pkg === 'pip') return `pip install "cipherflow${extra} @ git+${REPO}.git"${hf}`;
+    return [`git clone ${REPO}.git`, 'cd CipherFlow', `pip install -e ${extra ? '".[torch]"' : '.'}${hf}`].join('\n');
+  }
+
+  function planPython(s) {
+    const L = [];
+    if (s.model !== 'builtin') L.push('import torch');
+    if (s.model === 'hf') L.push('from transformers import BertConfig', 'from transformers.models.bert.modeling_bert import BertEncoder');
+    L.push('import cipherflow as cf');
+    if (s.net === 'measured') L.push('from cipherflow import netbench');
+    if (s.model === 'torch' && s.pkg === 'src') L.push(note('from demo.transformer import bert', 'BERT-base in plain PyTorch'));
+    L.push('');
+    if (s.model === 'builtin') L.push(note('graph = cf.models.bert()', 'BERT-base; or cf.models.vit()'));
+    else {
+      if (s.model === 'hf') L.push(note('encoder = BertEncoder(BertConfig(attn_implementation="eager"))', 'BERT-base'));
+      else if (s.pkg === 'pip') L.push(note('encoder = ...', 'your encoder (an nn.Module)'));
+      else L.push('encoder = bert()');
+      L.push('graph = cf.models.from_torch(encoder, torch.zeros(1, 128, 768))');
+    }
+    if (s.net === 'measured') {
+      L.push(note('net = netbench.measure("SERVER_IP")', 'the server runs: cipherflow netbench --serve'),
+             'print(net.summary())', `deployment = cf.Deployment.of("${s.hw}", net.network())`);
+    } else {
+      L.push(note(`deployment = cf.Deployment.of("${s.hw}", "10Mbps/1ms")`, 'bandwidth / round-trip time'));
+    }
+    L.push('');
+    L.push(s.hw === 'gpu' ? note('plan = cf.compile(graph, deployment, security="2pc-dealer")', 'SHAFT: trusted dealer')
+                          : 'plan = cf.compile(graph, deployment)');
+    L.push(note('print(plan.explain(steps=True))', 'every operator: HE or MPC, levels, conversions'), 'plan.to_json("plan.json")');
+    return L.join('\n');
+  }
+
+  function planCli(s) {
+    const L = [];
+    if (s.net === 'measured') L.push('# on the server', 'cipherflow netbench --serve', '', '# on the client');
+    let model;
+    if (s.model === 'builtin') {
+      L.push('# built-in models: bert (BERT-base), vit (ViT-B/16)');
+      model = '--model bert';
+    } else if (s.model === 'hf') {
+      L.push("cat > encoder.py <<'EOF'", 'from transformers import BertConfig', 'from transformers.models.bert.modeling_bert import BertEncoder',
+             'encoder = BertEncoder(BertConfig(attn_implementation="eager"))', 'EOF');
+      model = '--torch encoder.py:encoder --input-shape 1,128,768';
+    } else if (s.pkg === 'pip') {
+      L.push('# model.py defines encoder: an nn.Module, or a function that returns one');
+      model = '--torch model.py:encoder --input-shape 1,128,768';
+    } else {
+      model = '--torch demo/transformer.py:bert --input-shape 1,128,768';
+    }
+    const hw = s.hw === 'gpu' ? '--hardware gpu --security 2pc-dealer' : '--hardware cpu';
+    const net = s.net === 'measured' ? '--ip SERVER_IP' : '--network 10Mbps/1ms';
+    L.push(`cipherflow compile ${model} \\`, `    ${hw} ${net} --steps -o plan.json`, 'cipherflow explain plan.json --steps');
+    return L.join('\n');
+  }
+
+  const plan = (s) => s.api === 'cli' ? planCli(s) : planPython(s);
+
+  function notes(s) {
+    const N = ['Python 3.10 or later. Plans use the shipped cost profiles, so no HE or MPC library is needed.'];
+    if (s.model === 'builtin') N.push('<code>bert</code> is BERT-base (12 blocks, 128 tokens); <code>vit</code> is ViT-B/16 (197 tokens).');
+    if (s.model === 'torch') N.push(s.pkg === 'pip'
+      ? 'Your encoder\'s forward takes hidden states [batch, tokens, hidden]. Operations CipherFlow cannot plan raise an error that names each one.'
+      : '<code>demo/transformer.py</code> has BERT and ViT encoders written in plain PyTorch. Your own encoder works the same way.');
+    if (s.model === 'hf') N.push('Pass the encoder (<code>model.encoder</code>), not the whole model: the client computes the embeddings. Tracing needs transformers 4.x with eager attention.');
+    if (s.hw === 'gpu') N.push('The GPU profile uses SHAFT, which assumes a trusted dealer, so GPU plans allow the security model <code>2pc-dealer</code>.');
+    if (s.net === 'measured') N.push('Start <code>cipherflow netbench --serve</code> on the server first (TCP port 7787). The client measures the round-trip time and the bandwidth each way, and plans with the slower direction.');
+    if (s.pkg === 'src') N.push(`To measure costs on your own machine instead, build the HE and MPC backends: see <a href="${REPO}#measuring-costs-on-your-machine">the README</a>.`);
+    return N;
+  }
+
+  const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const KW = /\b(import|from|as|for|in|class|def|return|lambda|None|True|False|if|else)\b/g;
+  function hl(code, py) {                       // strings, comments and (Python) keywords
+    return code.split('\n').map((line) => {
+      let o = '', seg = '', i = 0;
+      const flush = () => { if (seg) { o += py ? esc(seg).replace(KW, '<span class="k">$1</span>') : esc(seg); seg = ''; } };
+      while (i < line.length) {
+        const ch = line[i];
+        if (ch === '"' || ch === "'") {
+          const j = line.indexOf(ch, i + 1), end = j < 0 ? line.length : j + 1;
+          flush(); o += `<span class="s">${esc(line.slice(i, end))}</span>`; i = end; continue;
+        }
+        if (ch === '#') { flush(); o += `<span class="c">${esc(line.slice(i))}</span>`; i = line.length; break; }
+        seg += ch; i++;
+      }
+      flush();
+      return o;
+    }).join('\n');
+  }
+
+  return { PICK, DEFAULT, install, plan, notes, hl };
+})();
+</script>
 <script type="application/json" id="data">{"version":"0.5.0","bandwidths":["10Mbps","30Mbps","100Mbps","300Mbps","1Gbps","3Gbps","10Gbps"],"rtt":40.0,"hardware":{"cpu":"CPU","gpu":"GPU"},"ops":["Input","QK\u1d40","Softmax","Attn\u00b7V","Out-Proj","Add","LayerNorm","FFN-1","GeLU","FFN-2","Add","LayerNorm"],"src":["input x","blocks.0.attn: matmul","blocks.0.attn: softmax","blocks.0.attn: matmul","blocks.0.attn.o","blocks.0: add","blocks.0.ln1","blocks.0.mlp.fc1","blocks.0.mlp.act","blocks.0.mlp.fc2","blocks.0: add","blocks.0.ln2"],"plans":{"cpu":[{"dom":"MMMMMMMMMHMM","act":[[9,"c","MPC","HE"],[10,"c","HE","MPC"]],"cf":7966856.3,"hyb":13029197.0,"hybName":"BLB","one":9426964.0,"oneName":"all-MPC"},{"dom":"MMMMMMMMMMMM","act":[],"cf":3426174.7,"hyb":9960513.3,"hybName":"BLB","one":3426174.7,"oneName":"all-MPC"},{"dom":"MMMMMMMMMMMM","act":[],"cf":1325898.4,"hyb":8886474.0,"hybName":"BLB","one":1325898.4,"oneName":"all-MPC"},{"dom":"MMMMMMMMMMMM","act":[],"cf":725819.5,"hyb":8579605.7,"hybName":"BLB","one":725819.5,"oneName":"all-MPC"},{"dom":"MMMMMMMMMMMM","act":[],"cf":515791.8,"hyb":8472201.7,"hybName":"BLB","one":515791.8,"oneName":"all-MPC"},{"dom":"MMMMMMMMMMMM","act":[],"cf":455783.9,"hyb":8441514.9,"hybName":"BLB","one":455783.9,"oneName":"all-MPC"},{"dom":"MMMMMMMMMMMM","act":[],"cf":434781.2,"hyb":8430774.5,"hybName":"BLB","one":434781.2,"oneName":"all-MPC"}],"gpu":[{"dom":"HHHHHHHHHHHH","act":[[11,"b","",""]],"cf":480662.3,"hyb":7950320.9,"hybName":"BLB","one":480662.3,"oneName":"all-HE"},{"dom":"HHHHHHHHHHHH","act":[[11,"b","",""]],"cf":480662.3,"hyb":2942374.3,"hybName":"BLB","one":480662.3,"oneName":"all-HE"},{"dom":"HHHHHHHHHHHH","act":[[11,"b","",""]],"cf":480662.3,"hyb":1189593.0,"hybName":"BLB","one":480662.3,"oneName":"all-HE"},{"dom":"MMMMMMHMMMHH","act":[[6,"c","MPC","HE"],[7,"c","HE","MPC"],[10,"c","MPC","HE"]],"cf":345140.6,"hyb":688798.3,"hybName":"BLB","one":367062.9,"oneName":"all-MPC"},{"dom":"MMMMMMHMMMHH","act":[[6,"c","MPC","HE"],[7,"c","HE","MPC"],[10,"c","MPC","HE"]],"cf":149274.7,"hyb":513520.2,"hybName":"BLB","one":157026.5,"oneName":"all-MPC"},{"dom":"MMHMMMHMMMHH","act":[[2,"c","MPC","HE"],[3,"c","HE","MPC"],[6,"c","MPC","HE"],[7,"c","HE","MPC"],[10,"c","MPC","HE"]],"cf":90892.8,"hyb":463440.7,"hybName":"BLB","one":97016.1,"oneName":"all-MPC"},{"dom":"MMHMMMHMMMHH","act":[[2,"c","MPC","HE"],[3,"c","HE","MPC"],[6,"c","MPC","HE"],[7,"c","HE","MPC"],[10,"c","MPC","HE"]],"cf":70232.5,"hyb":445912.9,"hybName":"BLB","one":76012.4,"oneName":"all-MPC"}]}}</script>
 <script>
 (() => {
@@ -427,116 +1069,144 @@ pip install -e .                          <span class="c"># PyTorch for from_tor
   try { Object.assign(state, JSON.parse(localStorage.getItem('cf-site') || '{}')); } catch (e) {}
   if (!D.plans[state.hw]) state.hw = 'gpu';
   if (!(state.bw >= 0 && state.bw < D.bandwidths.length)) state.bw = 4;
-  const save = () => { try { localStorage.setItem('cf-site', JSON.stringify(state)); } catch (e) {} };
+  const save = () => { try { localStorage.setItem('cf-site', JSON.stringify({ hw: state.hw, bw: state.bw })); } catch (e) {} };
   const fmtS = (ms) => { const s = ms / 1000; return s >= 1000 ? Math.round(s).toLocaleString('en-US') + ' s' : s >= 100 ? s.toFixed(0) + ' s' : s.toFixed(1) + ' s'; };
   const bwText = (b) => b.replace('Mbps', ' Mbps').replace('Gbps', ' Gbps');
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const tip = $('tip');
+  const showTip = (html, ev) => { tip.innerHTML = html; tip.hidden = false; tip.style.left = Math.min(window.innerWidth - 300, ev.clientX + 14) + 'px'; tip.style.top = (ev.clientY + 14) + 'px'; };
   $('ver').textContent = 'v' + D.version;
-  $('bw-ticks').innerHTML = D.bandwidths.map(b => `<span>${b.replace('bps', '')}</span>`).join('');
+  $('bw').max = String(D.bandwidths.length - 1);
+  $('bw-ticks').innerHTML = D.bandwidths.map((b) => `<span>${b.replace('bps', '')}</span>`).join('');
 
-  // ---- sticky header turns solid once the page scrolls
+  // ---- the header gets a rule once the page scrolls
   const top = $('top');
   const onScroll = () => top.classList.toggle('scrolled', window.scrollY > 8);
   window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
-  // ---- the live two-lane plan (canvas)
+  // ---- the live plan sheet: operators top to bottom; HE is a ciphertext on the server lane, MPC one share on each lane
   const cv = $('flow'), ctx = cv.getContext('2d');
-  let W = 0, H = 260, dpr = 1, nodes = [], parts = [], last = 0, spawnAt = 0;
+  const ROW = 34, TOP = 48, BOT = 18, N = D.ops.length;
+  let W = 0, H = 0, nodes = [], parts = [], last = 0, spawnAt = 0;
   const COL = {};
-  function colors() { for (const k of ['--hero-he', '--hero-mpc', '--hero-ink', '--hero-muted', '--hero-teal', '--hero-brand']) COL[k] = css(k); }
-  const hex = (h) => { const n = parseInt(h.replace('#', ''), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  function colors() { for (const k of ['--he', '--mpc', '--ink', '--muted', '--faint', '--brand', '--paper']) COL[k] = css(k); }
+  const hex = (h) => { const v = parseInt(h.replace('#', ''), 16); return [v >> 16 & 255, v >> 8 & 255, v & 255]; };
+  const rgba = (h, a) => `rgba(${hex(h).join(',')},${a})`;
   const mix = (a, b, t) => { const x = hex(a), y = hex(b); return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(',')})`; };
   const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-  const geo = () => ({ yC: 74, yS: 170, L: 132, R: 34 });
-
-  function layout() {
-    const r = cv.getBoundingClientRect(); dpr = window.devicePixelRatio || 1;
-    W = Math.max(700, r.width); cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  function geo() {
+    const l = Math.min(178, W * 0.37), r = W - 66;
+    return { xC: l + (r - l) * 0.18, xS: l + (r - l) * 0.82, label: 20, tag: W - 20 };
   }
-  function plan() { return D.plans[state.hw][state.bw]; }
+  function layout() {
+    const dpr = window.devicePixelRatio || 1;
+    W = Math.max(280, cv.getBoundingClientRect().width); H = TOP + N * ROW + BOT;
+    cv.style.height = H + 'px'; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  const yOf = (i) => TOP + i * ROW + ROW / 2;
+  const plan = () => D.plans[state.hw][state.bw];
   function setTargets(instant) {
     const p = plan();
-    D.ops.forEach((name, i) => {
-      const m = i === 0 ? -1 : (p.dom[i] === 'M' ? 1 : 0);          // -1: the client's input
+    for (let i = 0; i < N; i++) {
+      const m = i === 0 ? -1 : (p.dom[i] === 'M' ? 1 : 0);
       if (!nodes[i]) nodes[i] = { m, t: m };
       nodes[i].t = m; if (instant) nodes[i].m = m;
-    });
+    }
   }
-  const xOf = (i) => { const g = geo(); return g.L + i * (W - g.L - g.R) / (D.ops.length - 1); };
-  const lanesOf = (i) => { const d = plan().dom; return i === 0 ? ['C'] : (d[i] === 'M' ? ['C', 'S'] : ['S']); };
-  const yLane = (l) => l === 'C' ? geo().yC : geo().yS;
-
-  function drawStatic(now) {
-    const g = geo();
-    ctx.clearRect(0, 0, W, H);
-    // lanes
-    ctx.font = '500 11px "Geist Mono", ui-monospace, monospace'; ctx.textBaseline = 'middle';
-    for (const [lab, sub, y] of [['CLIENT', 'input, keys', g.yC], ['SERVER', 'weights', g.yS]]) {
-      ctx.strokeStyle = 'rgba(34,36,154,0.18)'; ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
-      ctx.beginPath(); ctx.moveTo(g.L - 22, y); ctx.lineTo(W - 12, y); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = COL['--hero-ink']; ctx.fillText(lab, 16, y - 7);
-      ctx.fillStyle = COL['--hero-muted']; ctx.font = '400 10.5px "Geist Mono", ui-monospace, monospace'; ctx.fillText(sub, 16, y + 8);
-      ctx.font = '500 11px "Geist Mono", ui-monospace, monospace';
+  const lanesOf = (i) => i === 0 ? ['C'] : (plan().dom[i] === 'M' ? ['C', 'S'] : ['S']);
+  function rr(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function marker(x, y, glyph) {
+    ctx.fillStyle = COL['--paper']; ctx.strokeStyle = COL['--faint']; ctx.lineWidth = 1;
+    rr(x - 12, y - 9, 24, 18, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = COL['--ink']; ctx.textAlign = 'center'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace'; ctx.fillText(glyph, x, y + 0.5);
+  }
+  function drawStatic() {
+    const g = geo(), p = plan();
+    ctx.clearRect(0, 0, W, H); ctx.textBaseline = 'middle';
+    ctx.font = '600 10.5px "Geist Mono", ui-monospace, monospace'; ctx.fillStyle = COL['--ink'];
+    ctx.textAlign = 'center'; ctx.fillText('CLIENT', g.xC, 15); ctx.fillText('SERVER', g.xS, 15);
+    ctx.font = '400 10px "Geist Mono", ui-monospace, monospace'; ctx.fillStyle = COL['--faint'];
+    ctx.fillText('input, keys', g.xC, 29); ctx.fillText('weights', g.xS, 29);
+    ctx.textAlign = 'left'; ctx.fillText('OPERATOR', g.label, 15);
+    ctx.textAlign = 'right'; ctx.fillText('DOMAIN', g.tag, 15);
+    ctx.strokeStyle = rgba(COL['--brand'], 0.22); ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
+    for (const x of [g.xC, g.xS]) { ctx.beginPath(); ctx.moveTo(x, TOP - 6); ctx.lineTo(x, H - BOT + 6); ctx.stroke(); }
+    ctx.setLineDash([]);
+    // conversions sit between the lanes, bootstraps beside the server lane, on the boundary above their operator
+    for (const a of p.act) {
+      const y = TOP + a[0] * ROW;
+      if (a[1] === 'c') marker((g.xC + g.xS) / 2, y, '⇄'); else marker(g.xS + 34, y, '↻');
     }
-    // conversion / bootstrap markers from the plan
-    const acts = plan().act;
-    for (const a of acts) {
-      const x = xOf(a[0]) - (W - g.L - g.R) / (D.ops.length - 1) / 2, y = (g.yC + g.yS) / 2;
-      ctx.fillStyle = '#ffffff'; ctx.strokeStyle = COL['--hero-muted']; ctx.lineWidth = 1;
-      roundRect(x - 11, y - 9, 22, 18, 5); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = COL['--hero-ink']; ctx.textAlign = 'center'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace';
-      ctx.fillText(a[1] === 'c' ? '⇄' : '↻', x, y + 0.5); ctx.textAlign = 'start';
-    }
-    // nodes
-    D.ops.forEach((name, i) => {
-      const n = nodes[i], x = xOf(i), r = 15;
-      if (n.m < 0) {                                               // the client's input
-        ctx.fillStyle = 'rgba(34,36,154,0.06)'; ctx.strokeStyle = COL['--hero-ink']; ctx.lineWidth = 1.4;
-        roundRect(x - 17, g.yC - 13, 34, 26, 7); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = COL['--hero-ink']; ctx.textAlign = 'center'; ctx.font = '500 13px "Geist Mono", ui-monospace, monospace'; ctx.fillText('x', x, g.yC + 0.5);
-      } else {
-        const m = n.m, top = g.yS - (g.yS - g.yC) * m, col = mix(COL['--hero-he'], COL['--hero-mpc'], m);
-        ctx.fillStyle = col.replace('rgb', 'rgba').replace(')', ',0.12)'); ctx.strokeStyle = col; ctx.lineWidth = 1.8;
-        roundRect(x - r, top - r, 2 * r, g.yS - top + 2 * r, r); ctx.fill(); ctx.stroke();
+    for (let i = 0; i < N; i++) {
+      const nd = nodes[i], y = yOf(i);
+      ctx.textAlign = 'left'; ctx.font = '500 13px "Geist", system-ui, sans-serif'; ctx.fillStyle = COL['--ink'];
+      ctx.fillText(D.ops[i], g.label, y);
+      ctx.textAlign = 'right'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace';
+      if (nd.m < 0) {                                              // the client's input
+        ctx.fillStyle = rgba(COL['--brand'], 0.07); ctx.strokeStyle = COL['--ink']; ctx.lineWidth = 1.3;
+        rr(g.xC - 12, y - 10, 24, 20, 6); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = COL['--ink']; ctx.textAlign = 'center'; ctx.font = '500 12px "Geist Mono", ui-monospace, monospace'; ctx.fillText('x', g.xC, y + 0.5);
+        const mpc = p.dom[0] === 'M';
+        ctx.textAlign = 'right'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace';
+        ctx.fillStyle = mpc ? COL['--mpc'] : COL['--he']; ctx.fillText(mpc ? 'MPC' : 'HE', g.tag, y);
+        continue;
       }
-      ctx.fillStyle = COL['--hero-muted']; ctx.textAlign = 'center'; ctx.font = '500 11px "Geist", sans-serif';
-      ctx.fillText(name, x, g.yS + 34);
-      if (i > 0) { ctx.font = '500 10px "Geist Mono", monospace'; ctx.fillStyle = n.t > 0.5 ? COL['--hero-mpc'] : COL['--hero-he']; ctx.fillText(n.t > 0.5 ? 'MPC' : 'HE', x, g.yS + 50); }
-      ctx.textAlign = 'start';
-    });
+      const m = Math.max(0, Math.min(1, nd.m)), col = mix(COL['--he'], COL['--mpc'], m);
+      if (m > 0.02) {                                              // a share on each lane, joined
+        ctx.strokeStyle = rgba(COL['--mpc'], 0.5 * m); ctx.lineWidth = 1.2; ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(g.xC + 8, y); ctx.lineTo(g.xS - 9, y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = rgba(COL['--mpc'], m); ctx.beginPath(); ctx.arc(g.xC, y, 6, 0, 7); ctx.fill();
+      }
+      if (m < 0.98) { ctx.strokeStyle = rgba(COL['--he'], 0.22 * (1 - m)); ctx.lineWidth = 4; rr(g.xS - 9, y - 9, 18, 18, 6 + 3 * m); ctx.stroke(); }
+      ctx.fillStyle = col; rr(g.xS - 6, y - 6, 12, 12, 3 + 3 * m); ctx.fill();   // a ciphertext square turns into a share dot
+      ctx.textAlign = 'right'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace';
+      ctx.fillStyle = nd.t > 0.5 ? COL['--mpc'] : COL['--he']; ctx.fillText(nd.t > 0.5 ? 'MPC' : 'HE', g.tag, y);
+    }
   }
-  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-
-  // a particle is one value moving through the chain; it is drawn once per lane it occupies
-  function drawParticle(p) {
-    const k = Math.floor(p.t), f = p.t - k;
-    if (k >= D.ops.length - 1) return;
-    const A = lanesOf(k), B = lanesOf(k + 1), x = xOf(k) + (xOf(k + 1) - xOf(k)) * f, e = ease(Math.min(1, Math.max(0, (f - 0.15) / 0.7)));
-    const pairs = A.length === B.length ? A.map((a, j) => [a, B[j]]) : A.length < B.length ? B.map(b => [A[0], b]) : A.map(a => [a, B[0]]);
-    const dstMPC = B.length === 2 && k + 1 > 0, srcMPC = A.length === 2, srcInput = k === 0;
-    const asMPC = f < 0.5 ? (srcInput ? null : srcMPC) : dstMPC;
-    const ys = pairs.map(([a, b]) => yLane(a) + (yLane(b) - yLane(a)) * e);
-    if (asMPC && ys.length === 2) { ctx.strokeStyle = 'rgba(224,97,47,0.38)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(x, ys[0]); ctx.lineTo(x, ys[1]); ctx.stroke(); ctx.setLineDash([]); }
-    for (const y of ys) {
-      if (asMPC === null) { ctx.fillStyle = COL['--hero-ink']; ctx.beginPath(); ctx.arc(x, y, 3.2, 0, 7); ctx.fill(); }
-      else if (asMPC) { ctx.fillStyle = COL['--hero-mpc']; ctx.beginPath(); ctx.arc(x, y, 3.6, 0, 7); ctx.fill(); }
-      else { ctx.fillStyle = COL['--hero-he']; roundRect(x - 5, y - 5, 10, 10, 2.5); ctx.fill(); ctx.strokeStyle = 'rgba(19,153,122,0.28)'; ctx.lineWidth = 3; roundRect(x - 7, y - 7, 14, 14, 4); ctx.stroke(); }
+  // a particle is one value moving down the chain; it is drawn once per lane it occupies
+  function drawParticle(pt) {
+    const k = Math.floor(pt.t), f = pt.t - k;
+    if (k >= N - 1) return;
+    const g = geo(), xL = (l) => l === 'C' ? g.xC : g.xS;
+    const A = lanesOf(k), B = lanesOf(k + 1), y = yOf(k) + ROW * f, e = ease(Math.min(1, Math.max(0, (f - 0.15) / 0.7)));
+    const pairs = A.length === B.length ? A.map((a, j) => [a, B[j]]) : A.length < B.length ? B.map((b) => [A[0], b]) : A.map((a) => [a, B[0]]);
+    const asMPC = f < 0.5 ? (k === 0 ? null : A.length === 2) : B.length === 2;
+    const xs = pairs.map(([a, b]) => xL(a) + (xL(b) - xL(a)) * e);
+    if (asMPC && xs.length === 2) { ctx.strokeStyle = rgba(COL['--mpc'], 0.35); ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(xs[0], y); ctx.lineTo(xs[1], y); ctx.stroke(); ctx.setLineDash([]); }
+    for (const x of xs) {
+      if (asMPC === null) { ctx.fillStyle = COL['--ink']; ctx.beginPath(); ctx.arc(x, y, 3.2, 0, 7); ctx.fill(); }
+      else if (asMPC) { ctx.fillStyle = COL['--mpc']; ctx.beginPath(); ctx.arc(x, y, 3.6, 0, 7); ctx.fill(); }
+      else { ctx.fillStyle = COL['--he']; rr(x - 4.5, y - 4.5, 9, 9, 2.5); ctx.fill(); ctx.strokeStyle = rgba(COL['--he'], 0.28); ctx.lineWidth = 3; rr(x - 6.5, y - 6.5, 13, 13, 4); ctx.stroke(); }
     }
   }
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
-    for (const n of nodes) n.m += (n.t - n.m) * Math.min(1, dt * 7);
+    for (const nd of nodes) nd.m += (nd.t - nd.m) * Math.min(1, dt * 7);
     if (now > spawnAt) { parts.push({ t: 0 }); spawnAt = now + 520; }
-    for (const p of parts) p.t += dt * 1.15;
-    parts = parts.filter(p => p.t < D.ops.length - 1);
-    drawStatic(now); parts.forEach(drawParticle);
-    requestAnimationFrame(frame);
+    for (const pt of parts) pt.t += dt * 1.1;
+    parts = parts.filter((pt) => pt.t < N - 1);
+    drawStatic(); parts.forEach(drawParticle);
   }
   function still() {                                    // reduced motion: one value per segment, no animation
-    for (const n of nodes) n.m = n.t;
+    for (const nd of nodes) nd.m = nd.t;
     parts = D.ops.slice(0, -1).map((_, k) => ({ t: k + 0.3 }));
-    drawStatic(0); parts.forEach(drawParticle);
+    drawStatic(); parts.forEach(drawParticle);
   }
+  let running = false, visible = true;
+  function loop(t) { if (!visible || reduce) { running = false; return; } frame(t); requestAnimationFrame(loop); }
+  function kick() { if (!running && visible && !reduce) { running = true; last = performance.now(); requestAnimationFrame(loop); } }
+  if ('IntersectionObserver' in window) new IntersectionObserver((es) => { visible = es[0].isIntersecting; kick(); }).observe(cv);
+  cv.addEventListener('mousemove', (ev) => {
+    const r = cv.getBoundingClientRect(), i = Math.floor((ev.clientY - r.top - TOP) / ROW);
+    if (i < 0 || i >= N) { tip.hidden = true; return; }
+    const p = plan(), mpc = p.dom[i] === 'M';
+    const what = i === 0 ? (mpc ? 'the client secret-shares its input' : 'the client encrypts its input')
+                         : (mpc ? 'MPC: one share per party' : 'HE: a ciphertext on the server');
+    const before = p.act.filter((a) => a[0] === i).map((a) => a[1] === 'c' ? `converted ${a[2]} → ${a[3]} before it` : 'bootstrapped before it');
+    showTip(`<b>${D.ops[i]}</b> · ${what}${before.length ? '<br>' + before.join('<br>') : ''}<br><span>${D.src[i]}</span>`, ev);
+  });
+  cv.addEventListener('mouseleave', () => { tip.hidden = true; });
 
   // ---- controls, numbers, chart
   function seg() {
@@ -554,7 +1224,10 @@ pip install -e .                          <span class="c"># PyTorch for from_tor
       ['lead', fmtS(r.cf), 'CipherFlow, whole model'],
       ['', (r.hyb / r.cf).toFixed(1) + '×', `faster than the best static hybrid (${r.hybName})`],
       ['', (r.one / r.cf).toFixed(2) + '×', `vs. the best single primitive (${r.oneName})`],
-    ].map(([c, v, k]) => `<div class="kpi"><span class="v ${c}">${v}</span><span class="k">${k}</span></div>`).join('');
+    ].map(([c, v, k]) => `<div class="kpi"><span class="kv ${c}">${v}</span><span class="kl">${k}</span></div>`).join('');
+    const p = plan();
+    $('plan-sr').textContent = `${D.hardware[state.hw]} server at ${bwText(D.bandwidths[state.bw])}: ` +
+      D.ops.slice(1).map((o, i) => `${o} ${p.dom[i + 1] === 'M' ? 'MPC' : 'HE'}`).join(', ') + `. Whole model ${fmtS(r.cf)}.`;
   }
   function chart() {
     const rows = D.plans[state.hw];
@@ -563,40 +1236,36 @@ pip install -e .                          <span class="c"># PyTorch for from_tor
     const Wc = narrow ? 420 : 620, Hc = 280, L = 62, R = narrow ? 14 : 138, T = 14, B = 32;
     const series = [
       { key: 'cf', name: 'CipherFlow', color: 'var(--brand)', dash: '', w: 2.8 },
-      { key: 'hyb', name: 'Best static hybrid', color: 'var(--series-static)', dash: '', w: 2 },
-      { key: 'one', name: 'Best single primitive', color: 'var(--series-static)', dash: '5 4', w: 2 },
+      { key: 'hyb', name: 'Best static hybrid', color: 'var(--series)', dash: '', w: 2 },
+      { key: 'one', name: 'Best single primitive', color: 'var(--series)', dash: '5 4', w: 2 },
     ];
-    const vals = rows.flatMap(r => [r.cf, r.hyb, r.one]);
+    const vals = rows.flatMap((r) => [r.cf, r.hyb, r.one]);
     const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...vals) / 1000))), hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...vals) / 1000)));
     const X = (i) => L + i * (Wc - L - R) / (rows.length - 1);
     const Y = (ms) => T + (Math.log10(hi) - Math.log10(ms / 1000)) / (Math.log10(hi) - Math.log10(lo)) * (Hc - T - B);
     let s = `<svg viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="Estimated latency of the whole model against bandwidth, log scale">`;
     for (let e = Math.log10(lo); e <= Math.log10(hi) + 1e-9; e++) {
       const v = Math.pow(10, e), y = Y(v * 1000);
-      s += `<line x1="${L}" x2="${Wc - R}" y1="${y}" y2="${y}" stroke="var(--line)"/>`;
+      s += `<line x1="${L}" x2="${Wc - R}" y1="${y}" y2="${y}" stroke="var(--rule)"/>`;
       s += `<text x="${L - 8}" y="${y + 4}" text-anchor="end">${v.toLocaleString('en-US')} s</text>`;
     }
     rows.forEach((r, i) => { s += `<text x="${X(i)}" y="${Hc - 10}" text-anchor="middle">${D.bandwidths[i].replace('bps', '')}</text>`; });
-    s += `<rect x="${X(state.bw) - 14}" y="${T}" width="28" height="${Hc - T - B}" rx="6" fill="var(--sunk)"/>`;
+    s += `<rect x="${X(state.bw) - 14}" y="${T}" width="28" height="${Hc - T - B}" rx="6" fill="var(--wash-2)"/>`;
     for (const se of series) {
       s += `<polyline points="${rows.map((r, i) => `${X(i)},${Y(r[se.key])}`).join(' ')}" fill="none" stroke="${se.color}" stroke-width="${se.w}" stroke-dasharray="${se.dash}" stroke-linejoin="round" stroke-linecap="round"/>`;
-      rows.forEach((r, i) => { s += `<circle cx="${X(i)}" cy="${Y(r[se.key])}" r="${i === state.bw ? 5.2 : 3.2}" fill="${se.color}" stroke="var(--surface)" stroke-width="2"/>`; });
+      rows.forEach((r, i) => { s += `<circle cx="${X(i)}" cy="${Y(r[se.key])}" r="${i === state.bw ? 5.2 : 3.2}" fill="${se.color}" stroke="var(--paper)" stroke-width="2"/>`; });
     }
     if (!narrow) {
-      const ends = series.map(se => ({ se, y: Y(rows[rows.length - 1][se.key]) })).sort((a, b) => a.y - b.y);
+      const ends = series.map((se) => ({ se, y: Y(rows[rows.length - 1][se.key]) })).sort((a, b) => a.y - b.y);
       for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 15) ends[i].y = ends[i - 1].y + 15;
       for (const e of ends) s += `<text class="lab" x="${Wc - R + 12}" y="${e.y + 4}">${e.se.name}</text>`;
     }
     const step = (Wc - L - R) / (rows.length - 1);
     rows.forEach((r, i) => { s += `<rect class="hit" data-i="${i}" x="${X(i) - step / 2}" y="${T}" width="${step}" height="${Hc - T - B}" fill="transparent" style="cursor:pointer"/>`; });
     $('chart').innerHTML = s + '</svg>';
-    const tip = $('tip');
-    $('chart').querySelectorAll('.hit').forEach(h => {
+    $('chart').querySelectorAll('.hit').forEach((h) => {
       const i = +h.dataset.i, r = rows[i];
-      h.addEventListener('mousemove', (ev) => {
-        tip.innerHTML = `<b>${bwText(D.bandwidths[i])}</b><br>CipherFlow ${fmtS(r.cf)}<br>Best static hybrid ${fmtS(r.hyb)} (${r.hybName})<br>Best single primitive ${fmtS(r.one)} (${r.oneName})`;
-        tip.hidden = false; tip.style.left = Math.min(window.innerWidth - 270, ev.clientX + 14) + 'px'; tip.style.top = (ev.clientY + 14) + 'px';
-      });
+      h.addEventListener('mousemove', (ev) => showTip(`<b>${bwText(D.bandwidths[i])}</b><br>CipherFlow ${fmtS(r.cf)}<br>Best static hybrid ${fmtS(r.hyb)} (${r.hybName})<br>Best single primitive ${fmtS(r.one)} (${r.oneName})`, ev));
       h.addEventListener('mouseleave', () => { tip.hidden = true; });
       h.addEventListener('click', () => { state.bw = i; save(); render(); });
     });
@@ -605,31 +1274,96 @@ pip install -e .                          <span class="c"># PyTorch for from_tor
     seg(); setTargets(instant);
     $('bw').value = state.bw; $('bw-val').textContent = bwText(D.bandwidths[state.bw]);
     kpis(); chart();
-    if (reduce) still();
+    if (reduce) still(); else if (!running) { drawStatic(); parts.forEach(drawParticle); }
   }
   $('bw').addEventListener('input', (e) => { state.bw = +e.target.value; save(); render(); });
 
-  // ---- tabbed code blocks with copy
-  document.querySelectorAll('[data-tabs]').forEach(box => {
-    const tabs = [...box.querySelectorAll('.tab')], pres = [...box.querySelectorAll('pre')];
-    tabs.forEach((t, i) => t.addEventListener('click', () => {
-      tabs.forEach((u, j) => u.setAttribute('aria-selected', String(i === j)));
-      pres.forEach((p, j) => { p.hidden = i !== j; });
-    }));
-    const copy = box.querySelector('.copy');
-    copy.addEventListener('click', () => {
-      const pre = pres.find(p => !p.hidden);
-      const done = () => { copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy'; }, 1400); };
-      const select = () => { const rg = document.createRange(); rg.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(rg); };
-      try { navigator.clipboard.writeText(pre.textContent).then(done, select); } catch (e) { select(); }
-    });
+  // ---- copy buttons: the visible source of a cell, or a picker command
+  function copyPre(pre, btn) {
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 1400); };
+    const select = () => { const rg = document.createRange(); rg.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(rg); };
+    try { navigator.clipboard.writeText(pre.textContent).then(done, select); } catch (e) { select(); }
+  }
+  document.querySelectorAll('.cell .copy').forEach((btn) => btn.addEventListener('click', () => {
+    copyPre([...btn.closest('.cell').querySelectorAll('pre.src')].find((p) => !p.hidden), btn);
+  }));
+  document.querySelectorAll('.pout .copy').forEach((btn) => btn.addEventListener('click', () => copyPre($(btn.dataset.copy), btn)));
+
+  // ---- demo: the network given or measured, with its command and its recording
+  const demoButtons = [...document.querySelectorAll('#demo-tabs button')];
+  demoButtons.forEach((b) => b.addEventListener('click', () => {
+    demoButtons.forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+    document.querySelectorAll('#demo pre[data-demo], #demo img[data-demo]').forEach((el) => { el.hidden = el.dataset.demo !== b.dataset.demo; });
+  }));
+
+  // ---- get started: the install picker (one row of choices per question, like PyTorch's)
+  const G = window.CFStart, pick = Object.assign({}, G.DEFAULT);
+  try { Object.assign(pick, JSON.parse(localStorage.getItem('cf-start') || '{}')); } catch (e) {}
+  for (const k of Object.keys(G.PICK)) if (!G.PICK[k].some(([v]) => v === pick[k])) pick[k] = G.DEFAULT[k];
+  const pickButtons = [];
+  document.querySelectorAll('.popts').forEach((row) => {
+    const k = row.dataset.key;
+    for (const [v, label, title] of G.PICK[k]) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = label; b.title = title; b.dataset.key = k; b.dataset.value = v;
+      b.addEventListener('click', () => {
+        pick[k] = v;
+        try { localStorage.setItem('cf-start', JSON.stringify(pick)); } catch (e) {}
+        renderPick();
+      });
+      row.appendChild(b); pickButtons.push(b);
+    }
   });
+  function renderPick() {
+    for (const b of pickButtons) b.setAttribute('aria-pressed', String(pick[b.dataset.key] === b.dataset.value));
+    $('cmd-install').innerHTML = G.hl(G.install(pick), false);
+    $('cmd-plan').innerHTML = G.hl(G.plan(pick), pick.api === 'py');
+    $('cmd-notes').innerHTML = G.notes(pick).map((n) => `<li>${n}</li>`).join('');
+  }
+  renderPick();
+
+  // ---- extend: the three ways to add primitives, as tabs
+  const paths = [...document.querySelectorAll('.path')];
+  paths.forEach((p) => p.addEventListener('click', () => {
+    paths.forEach((q) => {
+      const on = q === p;
+      q.setAttribute('aria-selected', String(on));
+      $(q.getAttribute('aria-controls')).hidden = !on;
+    });
+  }));
+
+  // ---- pages: each nav link opens its own view; the URL's #anchor says which (section anchors still work)
+  const ROUTES = { home: 'home', results: 'home', explore: 'home', how: 'how', backends: 'how', start: 'start', demo: 'start',
+                   tutorials: 'tutorials', use: 'tutorials', extend: 'tutorials', roadmap: 'roadmap' };
+  const NAMES = { how: 'How it works', start: 'Get started', tutorials: 'Tutorials', roadmap: 'Roadmap' };
+  const views = [...document.querySelectorAll('[data-view]')], baseTitle = document.title;
+  let routed = false;
+  function route() {
+    const key = decodeURIComponent(location.hash.slice(1)), view = ROUTES[key] || 'home';
+    let shown = null;
+    for (const v of views) { const on = v.dataset.view === view; v.hidden = !on; if (on) shown = v; }
+    document.querySelectorAll('[data-route]').forEach((a) => {
+      if (a.dataset.route === view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    document.title = NAMES[view] ? `${NAMES[view]} · ${baseTitle}` : baseTitle;
+    const target = key && key !== view && key !== 'home' ? document.getElementById(key) : null;
+    if (target) target.scrollIntoView({ behavior: 'instant', block: 'start' });
+    else window.scrollTo({ top: 0, behavior: 'instant' });
+    if (routed && shown) { const h = shown.querySelector('h1'); if (h) h.focus({ preventScroll: true }); }
+    routed = true;
+  }
+  window.addEventListener('hashchange', route);
 
   colors(); layout(); render(true);
   let lastNarrow = null;
-  const ro = new ResizeObserver(() => { layout(); if (reduce) still(); const n = $('chart').clientWidth < 520; if (n !== lastNarrow) { lastNarrow = n; chart(); } });
-  ro.observe(cv);
-  const start = () => { if (reduce) still(); else requestAnimationFrame((t) => { last = t; frame(t); }); };
+  const ro = new ResizeObserver(() => {
+    layout();
+    if (reduce) still(); else if (!running) { drawStatic(); parts.forEach(drawParticle); }
+    const nn = $('chart').clientWidth < 520; if (nn !== lastNarrow) { lastNarrow = nn; chart(); }
+  });
+  ro.observe(cv); ro.observe($('chart'));
+  const start = () => { colors(); if (reduce) still(); else { drawStatic(); kick(); } };
+  route();
   (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(start, start);
 })();
 </script>
