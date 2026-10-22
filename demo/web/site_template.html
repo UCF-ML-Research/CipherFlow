@@ -1018,7 +1018,7 @@ window.CFStart = (() => {
     if (s.model === 'hf') N.push('Pass the encoder (<code>model.encoder</code>), not the whole model: the client computes the embeddings. Tracing needs transformers 4.x with eager attention.');
     if (s.hw === 'gpu') N.push('The GPU profile uses SHAFT, which assumes a trusted dealer, so GPU plans allow the security model <code>2pc-dealer</code>.');
     if (s.net === 'measured') N.push('Start <code>cipherflow netbench --serve</code> on the server first (TCP port 7787). The client measures the round-trip time and the bandwidth each way, and plans with the slower direction.');
-    if (s.pkg === 'src') N.push(`To measure costs on your own machine instead, build the HE and MPC backends: see <a href="${REPO}#measuring-costs-on-your-machine">the README</a>.`);
+    if (s.pkg === 'src') N.push(`To measure costs on your own machine instead, build the HE and MPC backends: see <a href="${REPO}/blob/main/docs/backends.md#measuring-costs-on-your-machine">Backends and cost profiles</a>.`);
     return N;
   }
 

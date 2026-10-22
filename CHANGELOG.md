@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- README as a summary: About, Demo, Installation, Quick start, Supported models, Backends, Adding new backend
+  primitives, a Documentation index, Status. The details moved to `docs/user-guide.md` (installing, planning,
+  the network, reading a plan, supported models, real data, reproducing the paper), `docs/backends.md`
+  (backends, profiles, measuring costs, checking a machine, known limitations) and `docs/architecture.md`
+  (the layered figure, the interfaces, how the planner decides, repository layout). The FAQ and the website
+  link to them.
 - FAQ (`docs/FAQ.md`): installing, models, deployments and backends, reading a plan, accuracy and security,
   extending, reproducing the paper, troubleshooting; linked from the README.
 - Website redesign: the home page keeps the hero, the results and four cards into the other pages; How it works,

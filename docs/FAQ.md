@@ -29,7 +29,7 @@ It picks the plan with the lowest estimated latency for your hardware and networ
 
 Not yet. CipherFlow plans and checks plans, and it emulates them on real data: `cf.runtime.emulate` runs each
 operator's numerical model, without the cryptography. Running a plan under encryption, with the client and
-the server as separate processes, is the next milestone (section 6 of the [roadmap](../ROADMAP.md)).
+the server as separate processes, is on the [roadmap](../ROADMAP.md) (section 6).
 
 ### What do the client and the server hold?
 
@@ -110,7 +110,7 @@ Encoders shaped like BERT-base, with hidden size 768 and 12 heads:
 - your own encoder written in PyTorch, including `nn.MultiheadAttention` blocks;
 - Hugging Face `BertEncoder` and `ViTEncoder`.
 
-[Supported models](../README.md#supported-models) lists what is estimated and what is refused.
+[Supported models](user-guide.md#supported-models) lists what is estimated and what is refused.
 
 ### How do I plan my own PyTorch model?
 
@@ -228,7 +228,7 @@ On CPU, yes. `cf.compile(graph, cf.Deployment.local("100Mbps/20ms"))` (or
 `cipherflow profile --model bert --dry-run` shows what is missing.
 
 This runs the backends, so they must be built first (see
-[Measuring costs on your machine](../README.md#measuring-costs-on-your-machine)):
+[Measuring costs on your machine](backends.md#measuring-costs-on-your-machine)):
 - OpenFHE 1.4 for the `openfhe-*` kernels.
 - The SCI/BOLT bridge programs for MPC (`CIPHERFLOW_SCI_BIN`). Their sources are not in this repository yet.
 
@@ -306,7 +306,7 @@ Not exactly, for three reasons:
 Check a plan with `cf.runtime.emulate(plan, encoder, x)`, which reports the error against the plaintext model.
 Then calibrate on real inputs (`cf.runtime.calibrate`) and plan with the calibration, so that operators whose
 values leave an approximation's range stay out of HE. See
-[Running a plan on real data](../README.md#running-a-plan-on-real-data).
+[Running a plan on real data](user-guide.md#running-a-plan-on-real-data).
 
 ### What does each party learn?
 
@@ -331,7 +331,7 @@ unhardened mask, and plans that use them warn about it.
 - the same input always gives a bit-identical result;
 - threads agree with a serial run.
 
-`--memtest` also tests the memory. See [Checking a machine](../README.md#checking-a-machine).
+`--memtest` also tests the memory. See [Checking a machine](backends.md#checking-a-machine).
 
 ## Extending CipherFlow
 
@@ -364,7 +364,7 @@ plan = cf.compile(cf.models.bert_paper(12), cf.Deployment.of("gpu", "10Mbps/1ms"
                   profile="paper-gpu", security="2pc-dealer")
 ```
 
-See [Reproducing the paper](../README.md#reproducing-the-paper).
+See [Reproducing the paper](user-guide.md#reproducing-the-paper).
 
 ### Why do my numbers differ from the paper's?
 
