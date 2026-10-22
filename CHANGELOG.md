@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- FAQ (`docs/FAQ.md`): installing, models, deployments and backends, reading a plan, accuracy and security,
+  extending, reproducing the paper, troubleshooting; linked from the README.
 - Website redesign: the home page keeps the hero, the results and four cards into the other pages; How it works,
   Get started (install and the demo), Tutorials and Roadmap are pages of their own behind the nav links
   (`#how`, `#start`, `#tutorials`, `#roadmap`; the old section anchors still lead to their content). The hero sets

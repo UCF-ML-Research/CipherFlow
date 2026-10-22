@@ -12,6 +12,7 @@
   <a href="#quick-start"><b>Quick start</b></a> |
   <a href="cipherflow/README.md#api"><b>API</b></a> |
   <a href="cipherflow/README.md#plan-format"><b>Plan format</b></a> |
+  <a href="docs/FAQ.md"><b>FAQ</b></a> |
   <a href="ROADMAP.md"><b>Roadmap</b></a> |
   <a href="https://claude.ai/artifact/DZBuQxQxf73muUsyQ19ZtS"><b>Website</b></a>
   <!-- | <a href="PAPER_URL"><b>Paper (NeurIPS 2026)</b></a> -->
@@ -135,6 +136,7 @@ profiles, which have no cost for the projections.
 
 See [`cipherflow/README.md`](cipherflow/README.md) for the full [API](cipherflow/README.md#api), including
 [extensions](cipherflow/README.md#extensions), and the [plan format](cipherflow/README.md#plan-format).
+The [FAQ](docs/FAQ.md) answers common questions about installing, models, deployments and reading a plan.
 
 ## Adding new backend primitives
 
