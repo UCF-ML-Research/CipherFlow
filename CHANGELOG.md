@@ -38,9 +38,11 @@
   comparison). Every operator is lowered to kernel templates over them, priced from the counts of calls
   (`backend.lower(graph)`), and planned as an extension (`backend.extension()`), which also brings the HE
   backend's level budget and bootstrapping. Demo: `python -m demo.extensions.primitive_backend`.
-- README: an overview figure after the first paragraph (`docs/assets/cipherflow-overview-v3.png`): a PyTorch
-  model and a target deployment go in; MicroBench, state expansion and BlockFold choose HE or MPC for each
-  operator; out comes a deployment plan with its latency and communication.
+- README: an About for readers new to private inference. The first paragraph introduces CipherFlow as a
+  compiler for privacy-preserving machine learning (PPML) inference, followed by an overview figure
+  (`docs/assets/cipherflow-overview-v4.png`): a PyTorch model and a target deployment go in; CipherFlow measures
+  costs, explores the choices for every operator and builds the plan; out comes a private inference plan with
+  its latency and communication. The second paragraph names HE, MPC, conversions and bootstrapping.
 
 ## v0.5.0 (2026-10-19)
 

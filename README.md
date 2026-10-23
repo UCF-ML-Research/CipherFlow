@@ -21,20 +21,21 @@
 
 ## About
 
-**CipherFlow** is a hardware-aware compiler framework for secure inference (NeurIPS 2026). It turns a model
-written in PyTorch into a plan for two-party private inference that mixes homomorphic encryption (HE) and
-secure multi-party computation (MPC). Other approaches optimize within one primitive, or fix the split with
-linear layers in HE and non-linear ones in MPC. CipherFlow instead places every operator for the deployment
-at hand. It searches jointly over each operator's domain, the HE↔MPC conversions, and the CKKS levels and
-bootstraps, using state-expanded planning with residual blocks folded (BlockFold), and it prices every choice
-with costs measured on the target hardware and network. Its inputs are a model, the hardware, and the
-network, which is either given or measured between the two parties. It returns a plan that says, for every
-operator, whether it runs in HE or MPC and where to convert or bootstrap, with the expected latency and
-communication. It also checks that plan and emulates it on real inputs.
+**CipherFlow** (NeurIPS 2026) is a compiler for privacy-preserving machine learning (PPML) inference. Give it
+a PyTorch model and a target deployment, meaning the server's hardware and its network to the client, and it
+plans how each operation of the model should run privately. It measures the costs of the available
+privacy-preserving methods, explores the choices for every operator, and builds the fastest plan for that
+deployment. Each plan comes with its estimated latency and communication, an operator-by-operator
+explanation, and a check on real inputs.
 
 <p align="center">
-  <img alt="CipherFlow takes a PyTorch model and target deployment, uses MicroBench, state expansion, and BlockFold to choose HE or MPC for each operator, and produces a deployment plan with estimated latency and communication." src="docs/assets/cipherflow-overview-v3.png" width="100%">
+  <img alt="CipherFlow takes a PyTorch model and a target deployment, measures costs, explores privacy-preserving choices for every operator, and builds a private inference plan with its estimated latency and communication." src="docs/assets/cipherflow-overview-v4.png" width="100%">
 </p>
+
+Under the hood, the two privacy-preserving methods are homomorphic encryption (HE) and secure multi-party
+computation (MPC). For every operator, CipherFlow jointly chooses HE or MPC, where to convert between them,
+and where to refresh ciphertexts (bootstrapping), using measured hardware and network costs. State-expanded
+planning and BlockFold keep this search fast on Transformer-scale models.
 
 CipherFlow plans against an abstraction of the backends. A backend is a set of
 *methods*, each one operator in one domain with the CKKS levels it consumes, the shapes and value ranges it
