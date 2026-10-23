@@ -224,15 +224,11 @@ h3 { margin: 0; font: 600 19px/1.3 var(--display); letter-spacing: -0.01em; }
 .lines svg { width: 100%; height: auto; display: block; }
 .lines text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
 .lines .lab { font-family: var(--body); font-size: 12px; fill: var(--ink); }
-/* against other planners: a second row under the results, its chart on the same bandwidth axis */
-.vs { margin-top: clamp(64px, 8vw, 104px); }
-.vs h3 { font: 600 clamp(24px, 2.6vw, 32px)/1.15 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
-.vs .vs-p { color: var(--muted); font-size: 15.5px; max-width: 52ch; }
-.stats.mini { margin-top: 4px; }
-.stats.mini .stat { padding-block: 16px; gap: 6px; }
-.stats.mini .stat .n { font-size: clamp(38px, 4.4vw, 52px); }
-.stats.mini .stat p { font-size: 14px; }
-.vs .more { font-weight: 500; font-size: 15px; }
+.lines .axt { font-family: var(--body); font-size: 12px; font-weight: 500; fill: var(--ink-2); }
+/* against other planners: a second chart under the results chart, on the same bandwidth axis */
+.charts { display: grid; gap: 24px; min-width: 0; scroll-margin-top: 80px; }
+#vs { scroll-margin-top: 80px; }
+@media (min-width: 901px) { .results { align-items: start; } .results-copy { position: sticky; top: 96px; } }
 .vs-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 13px; color: var(--muted); }
 .lines .pt { font-family: var(--body); font-size: 11.5px; font-weight: 600; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
 #tip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--paper); font: 12px/1.5 var(--body); padding: 8px 10px; border-radius: 8px; max-width: 280px; box-shadow: 0 10px 30px -12px rgba(11, 13, 38, 0.5); }
@@ -377,18 +373,12 @@ h3 { margin: 0; font: 600 19px/1.3 var(--display); letter-spacing: -0.01em; }
 .path .d { color: var(--muted); font-size: 14px; }
 .path .m { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 8px; }
 .path .m em { font-style: normal; color: var(--ink); font-weight: 500; }
-/* where each way plugs in: the same four layers on every card, yours dashed, the ones CipherFlow writes for you dotted */
-.lstack { margin-top: auto; display: grid; gap: 5px; padding-top: 12px; }
-.lstack .lh { font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 1px; }
-.ls { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 32px; padding: 4px 8px 4px 10px; border-radius: 9px; border: 1.5px solid var(--rule); background: var(--wash); font-size: 12.5px; line-height: 1.3; color: var(--muted); }
-.ls i { font: 500 10px var(--mono); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
-.ls em { font: 600 9.5px/1 var(--mono); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; color: #ffffff; }
-.ls.you { border: 1.5px dashed var(--brand); background: var(--brand-wash); color: var(--brand); font-weight: 500; }
-.ls.you i { color: var(--brand); }
-.ls.you em { background: var(--brand); }
-.ls.auto { border: 1.5px dotted var(--brand-2); background: var(--paper); color: var(--ink-2); }
-.ls.auto i { color: var(--muted); }
-.ls.auto em { background: var(--muted); }
+/* the layers, named like the cards: yours filled, the ones CipherFlow builds for you dashed */
+.lstack { margin-top: auto; display: grid; gap: 4px; padding-top: 14px; }
+.ls { display: flex; justify-content: space-between; align-items: center; gap: 8px; height: 27px; padding: 0 11px; border-radius: 7px; border: 1.5px solid transparent; background: var(--wash-2); font: 500 12px/1 var(--mono); letter-spacing: 0.03em; color: var(--faint); }
+.ls em { font: 600 10px/1 var(--mono); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; }
+.ls.you { background: var(--brand); color: #ffffff; }
+.ls.auto { background: var(--paper); border: 1.5px dashed var(--brand-2); color: var(--brand); }
 .ppanel { display: grid; gap: 14px; margin-top: 18px; min-width: 0; }
 .runit { display: flex; align-items: center; border: 1px solid var(--rule-2); border-radius: 12px; overflow: hidden; }
 .runit .rl { align-self: stretch; display: flex; align-items: center; padding: 0 14px; background: var(--wash); border-right: 1px solid var(--rule); font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
@@ -560,36 +550,24 @@ h1:focus { outline: none; }
     <div class="wrap results">
       <div class="results-copy">
         <div class="kicker">Results</div>
-        <h2 id="h-results">Faster than any fixed split</h2>
+        <h2 id="h-results">Performance</h2>
         <div class="stats">
           <div class="stat"><div class="n">16.5<small>×</small></div><p>speedup on BERT-base over state-of-the-art static hybrid placements (BumbleBee, BOLT, BLB)</p></div>
           <div class="stat"><div class="n">22<small>×</small></div><p>speedup on ViT, measured on commodity CPU and GPU platforms in the NeurIPS 2026 evaluation</p></div>
         </div>
       </div>
-      <div class="chartbox">
-        <div class="hd"><b>Estimated latency, whole model</b><span id="chart-sub"></span></div>
-        <div class="legend" aria-hidden="true"><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--brand)" stroke-width="2.6"/></svg>CipherFlow</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series)" stroke-width="2"/></svg>Best static hybrid</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series)" stroke-width="2" stroke-dasharray="5 4"/></svg>Best single primitive</span></div>
-        <div class="lines" id="chart"></div>
-        <p class="note">Follows the hardware and bandwidth chosen above; click a bandwidth to select it. CipherFlow is never slower than the best static plan, and where a single primitive is best it chooses that plan.</p>
-      </div>
-    </div>
-    <div class="wrap results vs" id="vs">
-      <div class="results-copy">
-        <div class="kicker">Against other planners</div>
-        <h3>CostSphere and EncFormer, re-implemented on the same costs</h3>
-        <p class="vs-p">Neither paper released code, so both placement methods are rebuilt from the papers at CipherFlow's operator granularity. Every planner gets the same measured costs and one evaluator scores every plan, so a gap comes from the planning method alone.</p>
-        <div class="stats mini">
-          <div class="stat"><div class="n">2–24<small>×</small></div><p>slower: EncFormer's fixed split, linear layers in HE and the rest in MPC, over BERT-base and ViT, CPU and GPU, and 16 networks</p></div>
-          <div class="stat"><div class="n">0.98–1.05<small>×</small></div><p>CostSphere's ILP, given CipherFlow's measured costs. It is faster in one of those 64 settings, by 1.7%, where CipherFlow's planner overprices a conversion; the fix is on the roadmap.</p></div>
+      <div class="charts">
+        <div class="chartbox">
+          <div class="hd"><b>vs static strategies</b><span id="chart-sub"></span></div>
+          <div class="legend" aria-hidden="true"><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--brand)" stroke-width="2.6"/></svg>CipherFlow</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series)" stroke-width="2"/></svg>Best static hybrid</span></div>
+          <div class="lines" id="chart"></div>
         </div>
-        <a class="more" href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/docs/comparison.md">How the comparison was run →</a>
-      </div>
-      <div class="chartbox">
-        <div class="hd"><b>BERT-base latency relative to CipherFlow</b><span id="vs-sub"></span></div>
-        <div class="vs-pick"><span id="vs-pick-lab">Compare with</span><div class="seg" id="vs-pick" role="group" aria-labelledby="vs-pick-lab"></div></div>
-        <div class="legend" id="vs-legend" aria-hidden="true"></div>
-        <div class="lines" id="vs-chart"></div>
-        <p class="note" id="vs-note"></p>
+        <div class="chartbox" id="vs">
+          <div class="hd"><b>vs other compilers</b><span id="vs-sub"></span></div>
+          <div class="vs-pick"><span id="vs-pick-lab">Compare with</span><div class="seg" id="vs-pick" role="group" aria-labelledby="vs-pick-lab"></div></div>
+          <div class="legend" id="vs-legend" aria-hidden="true"></div>
+          <div class="lines" id="vs-chart"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -600,7 +578,7 @@ h1:focus { outline: none; }
       <div class="explore">
         <a class="xcard" href="#how"><span class="xk">How it works</span><b>From a PyTorch model to a placement plan</b><span class="d">The stack, the planner's three ideas, and the measured HE and MPC backends.</span><span class="go">Read how it works →</span></a>
         <a class="xcard" href="#start"><span class="xk">Get started</span><b>Install CipherFlow</b><span class="d">Pick your setup for the install command and a first plan, then watch a plan being made in the terminal.</span><span class="go">Get started →</span></a>
-        <a class="xcard" href="#tutorials"><span class="xk">Tutorials</span><b>Plan a model, then add primitives</b><span class="d">Five steps from a PyTorch model to a checked plan, and three ways to bring your own HE or MPC primitives.</span><span class="go">Open the tutorials →</span></a>
+        <a class="xcard" href="#tutorials"><span class="xk">Tutorials</span><b>Plan a model, then bring your own</b><span class="d">Five steps from a PyTorch model to a checked plan, and three ways to bring your own kernels, primitives and applications.</span><span class="go">Open the tutorials →</span></a>
         <a class="xcard" href="#roadmap"><span class="xk">Roadmap</span><b>From encoders to generative models</b><span class="d">What is done, what comes next, and the operators decoders still need.</span><span class="go">See the roadmap →</span></a>
       </div>
     </div>
@@ -774,9 +752,9 @@ python -m demo.plan_pytorch_model \
 <div class="view" data-view="tutorials" hidden>
   <div class="phead"><div class="wrap">
     <div class="kicker">Tutorials</div>
-    <h1 id="h-tutorials" tabindex="-1">Plan a model, then bring your own primitives</h1>
-    <p class="lede">Two walkthroughs with real code and the output it prints. The first plans a BERT-base encoder step by step; the second adds HE and MPC primitives of your own.</p>
-    <nav class="subnav" aria-label="Tutorials"><a href="#use"><span>1</span>Plan a model, step by step</a><a href="#extend"><span>2</span>Bring your own primitives</a></nav>
+    <h1 id="h-tutorials" tabindex="-1">Plan a model, then bring your own applications &amp; primitives</h1>
+    <p class="lede">Two walkthroughs with real code and the output it prints. The first plans a BERT-base encoder step by step; the second brings kernels, primitives and applications of your own.</p>
+    <nav class="subnav" aria-label="Tutorials"><a href="#use"><span>1</span>Plan a model, step by step</a><a href="#extend"><span>2</span>Bring your own applications &amp; primitives</a></nav>
   </div></div>
 
   <section class="band" id="use" aria-labelledby="h-use">
@@ -873,48 +851,48 @@ conversions 24, bootstraps 59 executed (plan: 24 / 59)</pre></div></div>
     <div class="wrap">
       <div class="head">
         <div class="kicker">Tutorial 2</div>
-        <h2 id="h-extend">Bring your own primitives</h2>
-        <p class="lede">CipherFlow is not tied to the backends it ships with. Declare what your HE or MPC library can do and what one call costs, and the planner places operators on it as it does on the built-in backends. The examples continue the tutorial above: <code>graph</code> is BERT-base and <code>deployment</code> is a CPU server at 10 Mbps / 1 ms. Each card shows the layer your code plugs into, and each example has a demo to run from the repository root.</p>
+        <h2 id="h-extend">Bring your own applications &amp; primitives</h2>
+        <p class="lede">CipherFlow is not tied to the models and backends it ships with. Bring a faster kernel, a library's primitives, or an application with a step of its own; declare what one call costs, and the planner places it as it does the built-in ones. Each card shows the layer your code goes into. The examples continue the tutorial above: <code>graph</code> is BERT-base and <code>deployment</code> is a CPU server at 10 Mbps / 1 ms; each has a demo to run from the repository root.</p>
       </div>
       <div class="paths" role="tablist" aria-label="What you bring">
         <button class="path" type="button" role="tab" id="path-a" aria-selected="true" aria-controls="panel-a">
           <span class="api">cf.Extension.primitive</span>
-          <b>A kernel for one operator</b>
-          <span class="d">You have a faster HE Softmax, say. Declare its cost and the CKKS levels it uses, and it replaces the backend's kernel for that operator.</span>
+          <b>Kernel</b>
+          <span class="d">A faster implementation of one operator, such as an HE Softmax. Declare its cost and the CKKS levels it uses, and it replaces the backend's kernel for that operator.</span>
           <span class="m"><em>Measure</em> one call on the operator's input shape: time and levels consumed.</span>
-          <span class="lstack" aria-hidden="true"><span class="lh">Where it plugs in</span>
-            <span class="ls"><i>Operators</i><span>traced from PyTorch</span></span>
-            <span class="ls"><i>Planner</i><span>places every operator</span></span>
-            <span class="ls you"><i>Kernels</i><span>your HE Softmax</span><em>you</em></span>
-            <span class="ls"><i>Basic ops</i><span>the library's own</span></span>
+          <span class="lstack" aria-hidden="true">
+            <span class="ls"><span>Application</span></span>
+            <span class="ls"><span>Planner</span></span>
+            <span class="ls you"><span>Kernel</span><em>yours</em></span>
+            <span class="ls"><span>Primitive</span></span>
           </span>
-          <span class="sr">It plugs in at the kernel layer: one operator in one domain.</span>
+          <span class="sr">Your code goes into the kernel layer.</span>
         </button>
         <button class="path" type="button" role="tab" id="path-b" aria-selected="false" aria-controls="panel-b">
           <span class="api">cf.PrimitiveBackend</span>
-          <b>A library's basic operations</b>
-          <span class="d">You have HE add, multiply, rotate and bootstrap, or MPC multiply, truncate and compare. CipherFlow writes every operator as calls to them and prices it.</span>
+          <b>Primitive</b>
+          <span class="d">A library's basic operations: HE add, multiply, rotate and bootstrap, or MPC multiply, truncate and compare. CipherFlow builds every kernel from them and prices it.</span>
           <span class="m"><em>Measure</em> each operation: per ciphertext in HE; per element, with rounds per call, in MPC.</span>
-          <span class="lstack" aria-hidden="true"><span class="lh">Where it plugs in</span>
-            <span class="ls"><i>Operators</i><span>traced from PyTorch</span></span>
-            <span class="ls"><i>Planner</i><span>places every operator</span></span>
-            <span class="ls auto"><i>Kernels</i><span>written from your ops</span><em>CipherFlow</em></span>
-            <span class="ls you"><i>Basic ops</i><span>your add, mul, rotate…</span><em>you</em></span>
+          <span class="lstack" aria-hidden="true">
+            <span class="ls"><span>Application</span></span>
+            <span class="ls"><span>Planner</span></span>
+            <span class="ls auto"><span>Kernel</span><em>built for you</em></span>
+            <span class="ls you"><span>Primitive</span><em>yours</em></span>
           </span>
-          <span class="sr">It plugs in at the basic-operation layer; CipherFlow writes the kernels from your operations.</span>
+          <span class="sr">Your code goes into the primitive layer; CipherFlow builds the kernels from it.</span>
         </button>
         <button class="path" type="button" role="tab" id="path-c" aria-selected="false" aria-controls="panel-c">
           <span class="api">cf.Extension.operator</span>
-          <b>A new operator</b>
-          <span class="d">Your model has a step CipherFlow does not know, such as top-k. Register its PyTorch module as an operator and give it a primitive in each domain that can run it.</span>
+          <b>Application</b>
+          <span class="d">An application with a step CipherFlow does not know, such as top-k for RAG retrieval. Register the step's PyTorch module as a new operator and give it a kernel in each domain that can run it.</span>
           <span class="m"><em>Measure</em> one call of your protocol: time, bytes and rounds.</span>
-          <span class="lstack" aria-hidden="true"><span class="lh">Where it plugs in</span>
-            <span class="ls you"><i>Operators</i><span>your TopK module</span><em>you</em></span>
-            <span class="ls"><i>Planner</i><span>places every operator</span></span>
-            <span class="ls you"><i>Kernels</i><span>your TopK in MPC</span><em>you</em></span>
-            <span class="ls"><i>Basic ops</i><span>the library's own</span></span>
+          <span class="lstack" aria-hidden="true">
+            <span class="ls you"><span>Application</span><em>yours</em></span>
+            <span class="ls"><span>Planner</span></span>
+            <span class="ls you"><span>Kernel</span><em>yours</em></span>
+            <span class="ls"><span>Primitive</span></span>
           </span>
-          <span class="sr">It plugs in at two layers: a new operator in the graph, and its kernel in each domain that can run it.</span>
+          <span class="sr">Your code goes into the application layer, a new operator, and the kernel layer, its kernel.</span>
         </button>
       </div>
       <div class="ppanel" role="tabpanel" id="panel-a" aria-labelledby="path-a">
@@ -994,7 +972,7 @@ print(plan.explain(steps=<span class="k">True</span>))</pre><div class="cell-out
     25  Out_Projection         <span class="d-he">HE</span>     8 -&gt; 7     head
 <span class="d-act">          convert HE -&gt; MPC  [1, 128, 768]  (#25 -&gt; #26)  8.83 s</span>
     26  TopK [my-topk]         <span class="d-mpc">MPC</span>               topk</pre></div></div>
-        <p class="sum"><code>from_torch</code> keeps <code>TopK</code> as one operator. It has only an MPC primitive, since CKKS has no comparison, so the plan converts to MPC before it.</p>
+        <p class="sum"><code>from_torch</code> keeps <code>TopK</code> as one operator. It has only an MPC kernel, since CKKS has no comparison, so the plan converts to MPC before it.</p>
       </div>
       <div class="limits">
         <p>Plans use the costs and levels you declare, as given. CipherFlow does not check an extension's correctness, precision or security, and does not execute extensions yet.</p>
@@ -1487,11 +1465,11 @@ window.CFStart = (() => {
       D.ops.slice(1).map((o, i) => `${o} ${p.dom[i + 1] === 'M' ? 'MPC' : 'HE'}`).join(', ') + `. Whole model ${fmtS(r.cf)}.`;
   }
 
-  // ---- line charts against bandwidth, log or linear scale: the chosen bandwidth is shaded; hover for values, click to choose
+  // ---- line charts against bandwidth, log or linear scale: every point drawn alike; hover for values
   const narrowOf = (el) => (el.clientWidth || 600) < 520;
-  function lineChart(el, { rows, series, lo, hi, ticks, fmt, aria, tipOf, Hc = 280, scale = 'log' }) {
+  function lineChart(el, { rows, series, lo, hi, ticks, fmt, aria, tipOf, Hc = 300, scale = 'log', xTitle = 'Bandwidth', yTitle }) {
     const narrow = narrowOf(el);
-    const Wc = narrow ? 420 : 620, L = 62, R = narrow ? 14 : 138, T = 14, B = 32;
+    const Wc = narrow ? 420 : 620, L = 80, R = narrow ? 14 : 138, T = 14, B = 50;
     const X = (i) => L + i * (Wc - L - R) / (rows.length - 1);
     const f = scale === 'log' ? Math.log10 : (v) => v;
     const Y = (v) => T + (f(hi) - f(v)) / (f(hi) - f(lo)) * (Hc - T - B);
@@ -1500,15 +1478,15 @@ window.CFStart = (() => {
       const y = Y(v);
       s += `<line x1="${L}" x2="${Wc - R}" y1="${y}" y2="${y}" stroke="var(--rule)"/><text x="${L - 8}" y="${y + 4}" text-anchor="end">${fmt(v)}</text>`;
     }
-    rows.forEach((r, i) => { s += `<text x="${X(i)}" y="${Hc - 10}" text-anchor="middle">${D.bandwidths[i].replace('bps', '')}</text>`; });
-    s += `<rect x="${X(state.bw) - 14}" y="${T}" width="28" height="${Hc - T - B}" rx="6" fill="var(--wash-2)"/>`;
+    rows.forEach((r, i) => { s += `<text x="${X(i)}" y="${Hc - B + 18}" text-anchor="middle">${D.bandwidths[i].replace('bps', '')}</text>`; });
+    s += `<text class="axt" x="${(L + Wc - R) / 2}" y="${Hc - 6}" text-anchor="middle">${xTitle}</text>`;
+    s += `<text class="axt" transform="translate(14 ${(T + Hc - B) / 2}) rotate(-90)" text-anchor="middle">${yTitle}</text>`;
     let notes = '';
     for (const se of series) {
       s += `<polyline points="${rows.map((r, i) => `${X(i)},${Y(se.val(r))}`).join(' ')}" fill="none" stroke="${se.color}" stroke-width="${se.w}" stroke-dasharray="${se.dash || ''}" stroke-linejoin="round" stroke-linecap="round"/>`;
       rows.forEach((r, i) => {
-        const big = i === state.bw;
-        s += se.ring ? `<circle cx="${X(i)}" cy="${Y(se.val(r))}" r="${big ? 6.6 : 5}" fill="var(--paper)" stroke="${se.color}" stroke-width="1.8"/>`
-                     : `<circle cx="${X(i)}" cy="${Y(se.val(r))}" r="${big ? 5.2 : 3.2}" fill="${se.color}" stroke="var(--paper)" stroke-width="2"/>`;
+        s += se.ring ? `<circle cx="${X(i)}" cy="${Y(se.val(r))}" r="5" fill="var(--paper)" stroke="${se.color}" stroke-width="1.8"/>`
+                     : `<circle cx="${X(i)}" cy="${Y(se.val(r))}" r="3.6" fill="${se.color}" stroke="var(--paper)" stroke-width="2"/>`;
       });
       if (se.note) rows.forEach((r, i) => {                  // a value written by its point, above it unless at the top
         const n = se.note(r, i), y = Y(se.val(r));
@@ -1524,30 +1502,28 @@ window.CFStart = (() => {
       for (const e of ends) s += `<text class="lab" x="${Wc - R + 12}" y="${e.y + 4}">${e.se.name}</text>`;
     }
     const step = (Wc - L - R) / (rows.length - 1);
-    rows.forEach((r, i) => { s += `<rect class="hit" data-i="${i}" x="${X(i) - step / 2}" y="${T}" width="${step}" height="${Hc - T - B}" fill="transparent" style="cursor:pointer"/>`; });
+    rows.forEach((r, i) => { s += `<rect class="hit" data-i="${i}" x="${X(i) - step / 2}" y="${T}" width="${step}" height="${Hc - T - B}" fill="transparent"/>`; });
     el.innerHTML = s + '</svg>';
     el.dataset.narrow = String(narrow);
     el.querySelectorAll('.hit').forEach((h) => {
       const i = +h.dataset.i;
       h.addEventListener('mousemove', (ev) => showTip(tipOf(rows[i], i), ev));
       h.addEventListener('mouseleave', () => { tip.hidden = true; });
-      h.addEventListener('click', () => { stopSweep(); state.bw = i; save(); render(); });
     });
   }
   function chart() {
-    const rows = D.plans[state.hw], vals = rows.flatMap((r) => [r.cf, r.hyb, r.one]).map((ms) => ms / 1000);
+    const rows = D.plans[state.hw], vals = rows.flatMap((r) => [r.cf, r.hyb]).map((ms) => ms / 1000);
     const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...vals)))), hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...vals))));
     const ticks = []; for (let e = Math.log10(lo); e <= Math.log10(hi) + 1e-9; e++) ticks.push(Math.pow(10, e));
     $('chart-sub').textContent = `${D.hardware[state.hw]} server · RTT 40 ms · log scale`;
     lineChart($('chart'), {
-      rows, lo, hi, ticks, fmt: (v) => v.toLocaleString('en-US') + ' s',
-      aria: 'Estimated latency of the whole model against bandwidth, log scale',
+      rows, lo, hi, ticks, fmt: (v) => v.toLocaleString('en-US') + ' s', yTitle: 'Latency, whole model',
+      aria: 'Latency of the whole model for CipherFlow and the best static hybrid against bandwidth, log scale',
       series: [
         { name: 'CipherFlow', color: 'var(--brand)', w: 2.8, val: (r) => r.cf / 1000 },
         { name: 'Best static hybrid', color: 'var(--series)', w: 2, val: (r) => r.hyb / 1000 },
-        { name: 'Best single primitive', color: 'var(--series)', dash: '5 4', w: 2, val: (r) => r.one / 1000 },
       ],
-      tipOf: (r, i) => `<b>${bwText(D.bandwidths[i])}</b><br>CipherFlow ${fmtS(r.cf)}<br>Best static hybrid ${fmtS(r.hyb)} (${r.hybName})<br>Best single primitive ${fmtS(r.one)} (${r.oneName})`,
+      tipOf: (r, i) => `<b>${bwText(D.bandwidths[i])}</b><br>CipherFlow ${fmtS(r.cf)}<br>Best static hybrid ${fmtS(r.hyb)} (${r.hybName})`,
     });
   }
   // the comparison, one planner at a time on its own scale: EncFormer's gap spans 2-24x (log), CostSphere's a few percent
@@ -1578,10 +1554,8 @@ window.CFStart = (() => {
       const hi = Math.max(1.06, Math.ceil((Math.max(...vals) + 0.01) * 50) / 50);
       const ticks = []; for (let k = Math.ceil(lo * 50); k <= Math.round(hi * 50); k++) ticks.push(k / 50);
       $('vs-sub').textContent = `${hw} server · RTT 40 ms · zoomed linear scale`;
-      $('vs-note').textContent = 'The axis is zoomed: here CostSphere stays within 5% of CipherFlow. Where it finds CipherFlow\'s plan, its rings sit on ' +
-        'CipherFlow\'s line; where the plan mixes HE and MPC, CipherFlow is faster, because it also models residual joins and exact CKKS levels.';
       lineChart($('vs-chart'), {
-        rows, Hc: 250, scale: 'linear', lo, hi, ticks, fmt: (v) => v.toFixed(2) + '×',
+        rows, Hc: 270, scale: 'linear', lo, hi, ticks, fmt: (v) => v.toFixed(2) + '×', yTitle: 'Latency vs CipherFlow',
         aria: 'CostSphere\'s latency relative to CipherFlow against bandwidth, zoomed linear scale',
         series: [{ name: 'CostSphere', color: 'var(--series)', w: 2, ring: true, val: (r) => r.cs / r.cf,
                    note: (r) => Math.abs(r.cs / r.cf - 1) >= 0.005 ? pct(r.cs / r.cf) : '' }, cf],
@@ -1593,13 +1567,10 @@ window.CFStart = (() => {
       });
     } else {
       $('vs-sub').textContent = `${hw} server · RTT 40 ms · log scale`;
-      $('vs-note').textContent = 'Above 1×: slower than CipherFlow. EncFormer\'s split is the same on every network, so it falls furthest behind where the ' +
-        'best plan uses one method throughout: all-MPC on a CPU server with a fast network, all-HE on a GPU server with a slow one.';
       lineChart($('vs-chart'), {
-        rows, Hc: 250, lo: 0.8, hi: 30, ticks: [1, 2, 5, 10, 20], fmt: (v) => v + '×',
+        rows, Hc: 270, lo: 0.8, hi: 30, ticks: [1, 2, 5, 10, 20], fmt: (v) => v + '×', yTitle: 'Latency vs CipherFlow',
         aria: 'EncFormer\'s latency relative to CipherFlow against bandwidth, log scale',
-        series: [{ name: 'EncFormer', color: 'var(--series)', dash: '5 4', w: 2, val: (r) => r.enc / r.cf,
-                   note: (r, i) => i === state.bw ? (r.enc / r.cf).toFixed(1) + '×' : '' }, cf],
+        series: [{ name: 'EncFormer', color: 'var(--series)', dash: '5 4', w: 2, val: (r) => r.enc / r.cf }, cf],
         tipOf: (r, i) => `<b>${bwText(D.bandwidths[i])}</b> · ${hw} server<br>EncFormer: ${times(r.enc / r.cf)} CipherFlow's latency`,
       });
     }
