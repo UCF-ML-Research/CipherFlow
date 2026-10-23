@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Website: the comparison with CostSphere and EncFormer under the results, as latency relative to CipherFlow
+  against bandwidth (BERT-base, RTT 40 ms, CPU or GPU as chosen above), one planner at a time: EncFormer on a
+  log scale, CostSphere on a zoomed linear scale with each gap written by its point. `python -m
+  demo.compare.prior_planners --site` writes its data, `demo/web/compare_data.json`, which `build_page` adds to
+  the page. The live plan on
+  the home page is drawn by hand like the README's overview figure (a teal box with a lock for HE, an amber bar
+  with a shield on each party's share for MPC) and guides the visitor: numbered steps (server, network, the
+  plan), a sweep through the bandwidths, a sentence that says what the plan does and what the last change
+  moved, and tooltips on tap as well as hover. In the tutorials, each way to bring your own primitives shows
+  the layer it plugs into (operators, planner, kernels, basic operations) and the demo that runs it.
 - netbench: `cipherflow netbench --serve` stops by itself after one measurement. The client tells the server when
   it is done (a new request type; older servers ignore it, and servers keep running for older clients).
   `--keep` keeps serving; `netbench.Server(once=..., on_measured=...)` in Python. Port probes and clients that

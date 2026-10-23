@@ -7,6 +7,7 @@ method, not from kernels or hardware. docs/comparison.md describes the method an
 
     python -m demo.compare.prior_planners              # the paper's grid and both papers' networks (about 25 min)
     python -m demo.compare.prior_planners --quick      # BERT-base, four networks (about 2 min)
+    python -m demo.compare.prior_planners --site       # the website's chart data (demo/web/compare_data.json)
 
 The evaluator charges a conversion on every edge whose two ends run in different domains, at that
 edge's shape, and a bootstrap whenever an HE operator's inherited CKKS level is too low.
@@ -40,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import math
 import statistics
 from contextlib import contextmanager
@@ -62,6 +64,11 @@ GRID = [(f"{label}/{rtt:g}ms", bw, rtt) for label, bw in (("10Mbps", 10e6), ("10
 PAPER_NETWORKS = [("EncFormer LAN", 1e9, 0.3), ("EncFormer WAN1", 400e6, 4.0), ("EncFormer WAN2", 100e6, 4.0),
                   ("EncFormer WAN3", 100e6, 80.0), ("CostSphere LAN", 2e9, 0.0), ("CostSphere WAN", 100e6, 80.0)]
 ENCFORMER_CONVERSION = 0.30
+# the website's chart: the bandwidths of its results chart (demo/web/demo_data.json) at RTT 40 ms
+SITE_BANDWIDTHS = [("10Mbps", 10e6), ("30Mbps", 30e6), ("100Mbps", 100e6), ("300Mbps", 300e6), ("1Gbps", 1e9),
+                   ("3Gbps", 3e9), ("10Gbps", 10e9)]
+SITE_RTT = 40.0
+SITE_DATA = Path(__file__).resolve().parents[1] / "web" / "compare_data.json"
 
 
 # ----------------------------------------------------------------- the common evaluator
@@ -319,13 +326,33 @@ def summary(rows: List[dict]) -> str:
     return "\n".join(out)
 
 
+def site_data(path: Path = SITE_DATA) -> dict:
+    """The website's comparison: BERT-base on both platforms at RTT 40 ms, at its results chart's bandwidths."""
+    rows = compare(["bert"], list(PLATFORMS), [(f"{b}/{SITE_RTT:g}ms", bw, SITE_RTT) for b, bw in SITE_BANDWIDTHS],
+                   window=False)
+    keys = {"cf": "cipherflow_ms", "cfEdge": "cipherflow_edge_shapes_ms", "cs": "costsphere_ms",
+            "csBest": "costsphere_best_ms", "enc": "encformer_ms"}
+    data = {"model": "bert", "rtt_ms": SITE_RTT, "bandwidths": [b for b, _ in SITE_BANDWIDTHS],
+            "plans": {plat: [{k: round(r[v], 1) for k, v in keys.items()} for r in rows if r["platform"] == plat]
+                      for plat in PLATFORMS}}
+    path.write_text(json.dumps(data, indent=1) + "\n")
+    print(summary(rows))
+    print(f"the website's comparison: {path}")
+    return data
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--quick", action="store_true", help="BERT-base, four networks")
     ap.add_argument("--encformer-conversions", action="store_true",
                     help="give every planner EncFormer's conversion (bytes and local time x 0.30)")
     ap.add_argument("--out", default="prior_planners.csv", help="CSV of every plan's latency")
+    ap.add_argument("--site", action="store_true",
+                    help="write the website's chart data (demo/web/compare_data.json): BERT-base, RTT 40 ms")
     a = ap.parse_args(argv)
+    if a.site:
+        site_data()
+        return 0
     if a.quick:
         models, networks = ["bert"], [GRID[1], GRID[6], GRID[9], PAPER_NETWORKS[1]]
     else:

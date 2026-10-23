@@ -1,6 +1,8 @@
 """The CostSphere and EncFormer re-implementations in demo/compare (see docs/comparison.md)."""
 import itertools
+import json
 import math
+from pathlib import Path
 
 import pytest
 
@@ -56,3 +58,15 @@ def test_encformer_split_and_cipherflow_is_never_slower(block):
     assert ours <= min(score(graph, cm, net, costsphere(chain, n)[0], prof.he_level_budget)[0]
                        for n in range(1, 21)) + 1e-6
     assert math.isfinite(ours)
+
+
+def test_the_websites_comparison_has_the_results_charts_networks():
+    from demo.web.build_page import site_data
+    web = Path(__file__).resolve().parents[1] / "demo" / "web"
+    site = json.loads((web / "compare_data.json").read_text())
+    demo = json.loads((web / "demo_data.json").read_text())
+    assert site["bandwidths"] == demo["bandwidths"] and site["rtt_ms"] == 40.0
+    for rows in site["plans"].values():
+        assert len(rows) == len(site["bandwidths"])
+        assert all(r["enc"] >= r["cf"] > 0 and r["cs"] > 0 for r in rows)
+    assert site_data(demo)["compare"]["plans"] == site["plans"]

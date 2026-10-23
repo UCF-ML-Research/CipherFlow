@@ -100,6 +100,7 @@ compared here.
 python -m demo.compare.prior_planners --quick                    # BERT-base, four networks, about 2 minutes
 python -m demo.compare.prior_planners                            # the comparison above, about 25 minutes
 python -m demo.compare.prior_planners --encformer-conversions    # every planner with EncFormer's conversion
+python -m demo.compare.prior_planners --site                     # the website's chart: BERT-base at RTT 40 ms
 ```
 
 Each run prints the tables and writes every plan's latency, conversions and bootstraps to a CSV. The Eq. 13

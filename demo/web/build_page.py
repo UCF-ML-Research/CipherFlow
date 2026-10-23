@@ -1,8 +1,14 @@
-"""Build the website and the plan visualization from demo_data.json.
+"""Build the website and the plan visualization from demo_data.json and compare_data.json.
+
+Inputs
+  demo/web/demo_data.json          plans for the demo (python -m demo.web.build_data)
+  demo/web/compare_data.json       CostSphere and EncFormer against CipherFlow on the same bandwidths
+                                   (python -m demo.compare.prior_planners --site); without it the website
+                                   leaves out its comparison chart
 
 Outputs
   docs/index.html                  the CipherFlow website (site_template.html, with one BERT-base block's
-                                   plans at RTT 40 ms taken from demo_data.json)
+                                   plans at RTT 40 ms taken from demo_data.json, and the comparison)
   docs/planner/index.html          the plan visualization (template.html with all of demo_data.json)
   demo/web/cipherflow_demo.html    the visualization as an artifact body (the viewer adds the document
                                    skeleton; not tracked)
@@ -64,7 +70,19 @@ def site_data(data: dict) -> dict:
     return {"version": data["cipherflow_version"], "bandwidths": data["bandwidths"], "rtt": SITE_RTT,
             "hardware": {"cpu": "CPU", "gpu": "GPU"},
             "ops": [model["nodes"][i]["label"] for i in idx], "src": [model["nodes"][i]["src"] for i in idx],
-            "plans": plans}
+            "plans": plans, "compare": compare_data(data["bandwidths"])}
+
+
+def compare_data(bandwidths) -> dict:
+    """CostSphere and EncFormer against CipherFlow (demo/compare), on the bandwidths of the results chart."""
+    path = HERE / "compare_data.json"
+    if not path.exists():
+        return None
+    c = json.loads(path.read_text())
+    if c["bandwidths"] != bandwidths or c["rtt_ms"] != SITE_RTT:
+        raise SystemExit(f"{path.name} has other networks than demo_data.json: "
+                         "rerun python -m demo.compare.prior_planners --site")
+    return {"plans": c["plans"]}
 
 
 def main() -> None:

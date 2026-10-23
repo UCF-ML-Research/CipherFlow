@@ -1,12 +1,14 @@
 <title>CipherFlow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Patrick+Hand&display=swap">
 <style>
 /* Layout: one page per nav link (views switched by the URL's #anchor), each in white and pale bands. Home is the
-   hero, the copy beside a live plan sheet (operators top to bottom on client and server lanes), the results, and
-   four cards into the other pages. Colour carries meaning only: indigo is the compiler, green is HE (ciphertexts
-   on the server), orange is MPC (one share per party). One light palette for every viewer. */
+   hero, the copy beside a live plan sheet (operators top to bottom on client and server lanes), the results, the
+   comparison with other planners, and four cards into the other pages. Colour carries meaning only: indigo is the
+   compiler, green is HE (ciphertexts on the server), orange is MPC (one share per party). The plan sheet is drawn
+   by hand, like the README's overview figure: navy ink, a teal box with a lock for HE, an amber bar with a shield
+   on each party's share for MPC. One light palette for every viewer. */
 :root {
   --paper: #ffffff;
   --wash: #f6f7fb;
@@ -36,6 +38,14 @@
   --foot-muted: #9ea3c4;
   --foot-rule: #262a50;
   --shadow: 0 1px 2px rgba(11, 13, 38, 0.05), 0 24px 60px -32px rgba(35, 37, 155, 0.3);
+  --sk-ink: #1f2350;
+  --sk-paper: #fffdf8;
+  --sk-grid: rgba(35, 37, 155, 0.055);
+  --sk-he: #93e4d4;
+  --sk-mpc: #ffd383;
+  --sk-in: #c7b8fb;
+  --sk-hl: #ffd84a;
+  --hand: "Patrick Hand", "Segoe Print", "Bradley Hand", cursive;
   --display: "Bricolage Grotesque", "Geist", system-ui, sans-serif;
   --body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -104,8 +114,9 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--wash-2); c
 }
 .hero::after { content: ""; position: absolute; z-index: -1; width: 820px; height: 820px; right: -260px; top: -260px; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(4, 127, 120, 0.08), rgba(35, 37, 155, 0.05) 55%, transparent); }
-.hero-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 56px; align-items: center; padding-block: 56px 80px; }
-@media (max-width: 1040px) { .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 44px; padding-block: 40px 64px; } }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 56px; align-items: start; padding-block: 56px 80px; }
+.hero-copy { padding-top: 34px; }
+@media (max-width: 1040px) { .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 44px; padding-block: 40px 64px; } .hero-copy { padding-top: 0; } }
 .hero-copy { display: grid; gap: 24px; align-content: center; min-width: 0; }
 .hero h1 { margin: 0; line-height: 0; }
 .hero h1 img { width: min(470px, 100%); height: auto; }
@@ -114,34 +125,58 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--wash-2); c
 .pitch { font-size: 17px; color: var(--muted); max-width: 52ch; }
 .cta { display: flex; flex-wrap: wrap; gap: 10px; }
 
-.plan-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 20px; box-shadow: var(--shadow); min-width: 0; display: grid; }
-.pc-head { display: grid; gap: 14px; padding: 18px 20px 16px; border-bottom: 1px solid var(--rule); }
-.pc-title { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 14px; }
-.pc-title b { font: 600 15px var(--display); letter-spacing: 0.005em; }
-.pc-title span { font-size: 12.5px; color: var(--muted); }
-.pc-ctrls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+/* the plan sheet: a hand-drawn card on warm paper; three numbered steps (server, network, the plan) */
+.plan-card { position: relative; background: var(--sk-paper); border: 2px solid var(--sk-ink); border-radius: 22px 16px 24px 15px / 15px 24px 16px 22px; box-shadow: 4px 5px 0 rgba(31, 35, 80, 0.9), 0 30px 60px -36px rgba(35, 37, 155, 0.35); min-width: 0; display: grid; color: var(--sk-ink); }
+.pc-head { display: grid; gap: 14px; padding: 16px 18px 14px; border-bottom: 2px dashed rgba(31, 35, 80, 0.2); }
+.pc-title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.pc-title b { font: 400 23px/1.15 var(--hand); letter-spacing: 0.005em; text-wrap: balance; }
+.tryit { font: 400 16px/1 var(--hand); background: var(--sk-hl); padding: 5px 10px 4px; border-radius: 5px 10px 6px 9px; transform: rotate(-4deg); box-shadow: 1.5px 2px 0 rgba(31, 35, 80, 0.85); }
+.pc-ctrls { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: start; }
+.ctl { display: grid; gap: 7px; min-width: 0; }
+.ctl-lab { display: inline-flex; align-items: center; gap: 7px; font: 400 17px/1 var(--hand); color: var(--sk-ink); }
+.ctl-lab i { font: 400 14px/1 var(--hand); font-style: normal; width: 22px; height: 22px; flex: none; display: inline-grid; place-items: center; border: 1.6px solid var(--sk-ink); border-radius: 50% 46% 52% 48%; background: var(--paper); padding-top: 1px; }
 .seg { display: inline-flex; border: 1px solid var(--rule-2); border-radius: 10px; padding: 3px; gap: 3px; background: var(--paper); }
 .seg button { font: 500 13px var(--body); color: var(--muted); background: transparent; border: 0; border-radius: 7px; padding: 7px 13px; cursor: pointer; }
 .seg button:hover { color: var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: #ffffff; }
-.bwc { display: grid; gap: 3px; flex: 1 1 240px; min-width: 0; max-width: 360px; }
-.bwc .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--muted); }
-.bwc .row b { font: 500 15px var(--mono); color: var(--ink); }
-.bwc input { width: 100%; accent-color: var(--teal); margin: 4px 0 0; }
-.bwc .ticks { display: flex; justify-content: space-between; font: 10px var(--mono); color: var(--faint); }
-.pc-stage { padding: 6px 4px 0; }
-.pc-stage canvas { display: block; width: 100%; height: 470px; }
-.pc-foot { display: grid; gap: 14px; padding: 16px 20px 18px; border-top: 1px solid var(--rule); background: linear-gradient(var(--paper), var(--wash)); border-radius: 0 0 20px 20px; }
-.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.kpi .kv { display: block; font: 600 26px/1.1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.kpi .kv.lead { color: var(--teal); }
-.kpi .kl { display: block; margin-top: 4px; font-size: 12px; line-height: 1.4; color: var(--muted); }
-@media (max-width: 520px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpi .kv { font-size: 22px; } }
-.keys { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--muted); align-items: center; }
-.keys i { display: inline-block; vertical-align: -1px; margin-right: 6px; }
-.k-he { width: 10px; height: 10px; border-radius: 3px; background: var(--he); box-shadow: 0 0 0 2px rgba(11, 138, 111, 0.22); }
-.k-mpc { width: 9px; height: 9px; border-radius: 50%; background: var(--mpc); }
-.k-cv { font: 600 10.5px var(--mono); font-style: normal; color: var(--ink); border: 1px solid var(--faint); border-radius: 4px; padding: 0 4px; }
+.plan-card .seg { width: fit-content; border: 2px solid var(--sk-ink); border-radius: 13px 9px 12px 10px; background: var(--paper); box-shadow: 2px 2.5px 0 rgba(31, 35, 80, 0.85); }
+.plan-card .seg button { font: 400 17px/1 var(--hand); color: var(--sk-ink); padding: 8px 13px 7px; }
+.plan-card .seg button[aria-pressed="true"] { background: var(--sk-ink); color: #ffffff; }
+.bwc { flex: 1 1 260px; max-width: 380px; }
+.bwc .row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.bwc .row b { font: 400 19px/1 var(--hand); color: var(--brand); }
+.bwc .rtt { font: 400 14px/1 var(--hand); color: var(--muted); }
+.sweep { margin-left: auto; font: 400 15.5px/1 var(--hand); color: var(--sk-ink); background: var(--paper); border: 1.6px solid var(--sk-ink); border-radius: 10px 7px 10px 8px; padding: 5px 10px 4px; cursor: pointer; box-shadow: 1.5px 2px 0 rgba(31, 35, 80, 0.85); white-space: nowrap; }
+.sweep:hover { background: var(--wash); }
+.sweep[aria-pressed="true"] { background: var(--sk-hl); }
+.bwc input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 24px; margin: 0; background: transparent; cursor: pointer; }
+.bwc input[type="range"]::-webkit-slider-runnable-track { height: 9px; border-radius: 9px; background: var(--wash-2); border: 1.6px solid var(--sk-ink); }
+.bwc input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8.2px; border-radius: 50%; background: var(--sk-mpc); border: 2px solid var(--sk-ink); box-shadow: 1.5px 2px 0 var(--sk-ink); }
+.bwc input[type="range"]::-moz-range-track { height: 9px; border-radius: 9px; background: var(--wash-2); border: 1.6px solid var(--sk-ink); }
+.bwc input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--sk-mpc); border: 2px solid var(--sk-ink); box-shadow: 1.5px 2px 0 var(--sk-ink); }
+.bwc .ticks { display: flex; justify-content: space-between; font: 400 13.5px/1 var(--hand); color: var(--muted); padding-inline: 2px; }
+.pc-stage { display: grid; gap: 2px; padding: 12px 4px 0; background-image: linear-gradient(var(--sk-grid) 1px, transparent 1px), linear-gradient(90deg, var(--sk-grid) 1px, transparent 1px); background-size: 20px 20px; background-position: -1px -1px; }
+.stage-cap { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding-inline: 14px; }
+.stage-cap > span:last-child { font: 400 14.5px/1.2 var(--hand); color: var(--muted); }
+.pc-stage canvas { display: block; width: 100%; height: 520px; }
+.pc-foot { display: grid; gap: 12px; padding: 14px 18px 15px; border-top: 2px dashed rgba(31, 35, 80, 0.2); }
+.say { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); min-height: 3.1em; }
+.say > b:first-child { color: var(--sk-ink); }
+.say .chg { background: linear-gradient(transparent 52%, rgba(255, 216, 74, 0.75) 52%); padding-inline: 2px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.kpi { border: 1.6px solid var(--sk-ink); border-radius: 13px 9px 12px 10px / 10px 12px 9px 13px; background: var(--paper); padding: 8px 11px 9px; box-shadow: 2px 3px 0 rgba(31, 35, 80, 0.85); min-width: 0; }
+.kpi .kv { display: block; font: 600 25px/1.1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ink); }
+.kpi .kv.lead { color: var(--brand); }
+.kpi .kl { display: block; margin-top: 3px; font-size: 12px; line-height: 1.35; color: var(--muted); }
+@media (max-width: 520px) {
+  .kpis { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .kpi { display: flex; align-items: baseline; gap: 12px; }
+  .kpi .kv { font-size: 21px; flex: none; min-width: 4.4ch; }
+  .kpi .kl { margin-top: 0; }
+}
+.keys { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; color: var(--ink-2); align-items: center; }
+.keys > span { display: inline-flex; align-items: center; gap: 7px; }
+.keys svg { height: 20px; width: auto; flex: none; overflow: visible; }
 .src { font-size: 11.5px; color: var(--faint); line-height: 1.5; }
 .src code { font-size: 0.95em; }
 
@@ -174,9 +209,20 @@ h3 { margin: 0; font: 600 19px/1.3 var(--display); letter-spacing: -0.01em; }
 .chartbox .hd span { font-size: 12.5px; color: var(--muted); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--muted); }
 .legend svg { display: inline-block; width: 22px; height: 8px; vertical-align: middle; margin-right: 6px; }
-#chart svg { width: 100%; height: auto; display: block; }
-#chart text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
-#chart .lab { font-family: var(--body); font-size: 12px; fill: var(--ink); }
+.lines svg { width: 100%; height: auto; display: block; }
+.lines text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+.lines .lab { font-family: var(--body); font-size: 12px; fill: var(--ink); }
+/* against other planners: a second row under the results, its chart on the same bandwidth axis */
+.vs { margin-top: clamp(64px, 8vw, 104px); }
+.vs h3 { font: 600 clamp(24px, 2.6vw, 32px)/1.15 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
+.vs .vs-p { color: var(--muted); font-size: 15.5px; max-width: 52ch; }
+.stats.mini { margin-top: 4px; }
+.stats.mini .stat { padding-block: 16px; gap: 6px; }
+.stats.mini .stat .n { font-size: clamp(38px, 4.4vw, 52px); }
+.stats.mini .stat p { font-size: 14px; }
+.vs .more { font-weight: 500; font-size: 15px; }
+.vs-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 13px; color: var(--muted); }
+.lines .pt { font-family: var(--body); font-size: 11.5px; font-weight: 600; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
 #tip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--paper); font: 12px/1.5 var(--body); padding: 8px 10px; border-radius: 8px; max-width: 280px; box-shadow: 0 10px 30px -12px rgba(11, 13, 38, 0.5); }
 #tip span { color: var(--faint); font-family: var(--mono); font-size: 11px; }
 
@@ -311,7 +357,7 @@ h3 { margin: 0; font: 600 19px/1.3 var(--display); letter-spacing: -0.01em; }
 /* ---------- extend: three ways in, each opening its example ---------- */
 .paths { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 @media (max-width: 900px) { .paths { grid-template-columns: minmax(0, 1fr); } }
-.path { text-align: left; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule-2); border-radius: 16px; padding: 18px 18px 16px; display: grid; gap: 8px; align-content: start; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.path { text-align: left; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule-2); border-radius: 16px; padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
 .path:hover { border-color: rgba(35, 37, 155, 0.45); }
 .path[aria-selected="true"] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand), 0 18px 40px -30px rgba(35, 37, 155, 0.55); }
 .path .api { font: 500 12px var(--mono); color: var(--teal); }
@@ -319,7 +365,23 @@ h3 { margin: 0; font: 600 19px/1.3 var(--display); letter-spacing: -0.01em; }
 .path .d { color: var(--muted); font-size: 14px; }
 .path .m { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 8px; }
 .path .m em { font-style: normal; color: var(--ink); font-weight: 500; }
+/* where each way plugs in: the same four layers on every card, yours dashed, the ones CipherFlow writes for you dotted */
+.lstack { margin-top: auto; display: grid; gap: 5px; padding-top: 12px; }
+.lstack .lh { font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 1px; }
+.ls { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 32px; padding: 4px 8px 4px 10px; border-radius: 9px; border: 1.5px solid var(--rule); background: var(--wash); font-size: 12.5px; line-height: 1.3; color: var(--muted); }
+.ls i { font: 500 10px var(--mono); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+.ls em { font: 600 9.5px/1 var(--mono); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; color: #ffffff; }
+.ls.you { border: 1.5px dashed var(--brand); background: var(--brand-wash); color: var(--brand); font-weight: 500; }
+.ls.you i { color: var(--brand); }
+.ls.you em { background: var(--brand); }
+.ls.auto { border: 1.5px dotted var(--brand-2); background: var(--paper); color: var(--ink-2); }
+.ls.auto i { color: var(--muted); }
+.ls.auto em { background: var(--muted); }
 .ppanel { display: grid; gap: 14px; margin-top: 18px; min-width: 0; }
+.runit { display: flex; align-items: center; border: 1px solid var(--rule-2); border-radius: 12px; overflow: hidden; }
+.runit .rl { align-self: stretch; display: flex; align-items: center; padding: 0 14px; background: var(--wash); border-right: 1px solid var(--rule); font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+.runit pre { flex: 1; min-width: 0; padding: 11px 84px 11px 14px; }
+.runit .copy { top: 50%; transform: translateY(-50%); }
 .ppanel .sum { font-size: 15px; color: var(--ink-2); max-width: 74ch; }
 .limits { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline; font-size: 14px; color: var(--muted); border-top: 1px solid var(--rule-2); padding-top: 18px; }
 .limits p { max-width: 70ch; }
@@ -453,20 +515,27 @@ h1:focus { outline: none; }
 
     <div class="plan-card" aria-labelledby="live-title">
       <div class="pc-head">
-        <div class="pc-title"><b id="live-title">Live plan · BERT-base, encoder block 1</b><span>Round-trip time 40 ms</span></div>
+        <div class="pc-title"><span class="tryit" aria-hidden="true">try it!</span><b id="live-title">Plan BERT-base for your server and network</b></div>
         <div class="pc-ctrls">
-          <div class="seg" id="seg-hw" role="group" aria-label="Server hardware"></div>
-          <div class="bwc">
-            <div class="row"><label for="bw">Bandwidth</label><b id="bw-val"></b></div>
-            <input type="range" id="bw" min="0" max="6" step="1" value="4">
-            <div class="ticks" id="bw-ticks"></div>
+          <div class="ctl">
+            <span class="ctl-lab" id="hw-lab"><i aria-hidden="true">1</i>Server</span>
+            <div class="seg" id="seg-hw" role="group" aria-labelledby="hw-lab"></div>
+          </div>
+          <div class="ctl bwc">
+            <div class="row"><label class="ctl-lab" for="bw"><i aria-hidden="true">2</i>Network</label><b id="bw-val"></b><span class="rtt">RTT 40 ms</span><button class="sweep" id="sweep" type="button" aria-pressed="false" title="Step through every bandwidth, from 10 Mbps to 10 Gbps">▶ Sweep</button></div>
+            <input type="range" id="bw" min="0" max="6" step="1" value="4" aria-describedby="bw-val">
+            <div class="ticks" id="bw-ticks" aria-hidden="true"></div>
           </div>
         </div>
       </div>
-      <div class="pc-stage"><canvas id="flow" role="img" aria-label="The plan for encoder block 1: each operator, top to bottom, on the client and server lanes"></canvas><p class="sr" id="plan-sr" aria-live="polite"></p></div>
+      <div class="pc-stage">
+        <div class="stage-cap"><span class="ctl-lab"><i aria-hidden="true">3</i>The plan</span><span>block 1 of 12, top to bottom · hover or tap an operator</span></div>
+        <canvas id="flow" role="img" aria-label="The plan for encoder block 1: each operator, top to bottom, on the client and server lanes"></canvas><p class="sr" id="plan-sr" aria-live="polite"></p>
+      </div>
       <div class="pc-foot">
+        <p class="say" id="plan-say"></p>
         <div class="kpis" id="kpis"></div>
-        <div class="keys"><span><i class="k-he"></i>HE: a ciphertext on the server</span><span><i class="k-mpc"></i>MPC: one share per party</span><span><i class="k-cv">⇄</i>conversion</span><span><i class="k-cv">↻</i>bootstrap</span></div>
+        <div class="keys" id="keys"></div>
         <p class="src">Plans by <code>cipherflow.compile</code> with the paper's profiles (HE: NEXUS; MPC: SHAFT, two parties and a trusted dealer). Latency is the whole 12-block model, estimated from measured costs.</p>
       </div>
     </div>
@@ -486,8 +555,27 @@ h1:focus { outline: none; }
       <div class="chartbox">
         <div class="hd"><b>Estimated latency, whole model</b><span id="chart-sub"></span></div>
         <div class="legend" aria-hidden="true"><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--brand)" stroke-width="2.6"/></svg>CipherFlow</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series)" stroke-width="2"/></svg>Best static hybrid</span><span><svg><line x1="1" y1="4" x2="21" y2="4" stroke="var(--series)" stroke-width="2" stroke-dasharray="5 4"/></svg>Best single primitive</span></div>
-        <div id="chart"></div>
+        <div class="lines" id="chart"></div>
         <p class="note">Follows the hardware and bandwidth chosen above; click a bandwidth to select it. CipherFlow is never slower than the best static plan, and where a single primitive is best it chooses that plan.</p>
+      </div>
+    </div>
+    <div class="wrap results vs" id="vs">
+      <div class="results-copy">
+        <div class="kicker">Against other planners</div>
+        <h3>CostSphere and EncFormer, re-implemented on the same costs</h3>
+        <p class="vs-p">Neither paper released code, so both placement methods are rebuilt from the papers at CipherFlow's operator granularity. Every planner gets the same measured costs and one evaluator scores every plan, so a gap comes from the planning method alone.</p>
+        <div class="stats mini">
+          <div class="stat"><div class="n">2–24<small>×</small></div><p>slower: EncFormer's fixed split, linear layers in HE and the rest in MPC, over BERT-base and ViT, CPU and GPU, and 16 networks</p></div>
+          <div class="stat"><div class="n">0.98–1.05<small>×</small></div><p>CostSphere's ILP, given CipherFlow's measured costs. It is faster in one of those 64 settings, by 1.7%, where CipherFlow's planner overprices a conversion; the fix is on the roadmap.</p></div>
+        </div>
+        <a class="more" href="https://github.com/UCF-ML-Research/CipherFlow/blob/main/docs/comparison.md">How the comparison was run →</a>
+      </div>
+      <div class="chartbox">
+        <div class="hd"><b>BERT-base latency relative to CipherFlow</b><span id="vs-sub"></span></div>
+        <div class="vs-pick"><span id="vs-pick-lab">Compare with</span><div class="seg" id="vs-pick" role="group" aria-labelledby="vs-pick-lab"></div></div>
+        <div class="legend" id="vs-legend" aria-hidden="true"></div>
+        <div class="lines" id="vs-chart"></div>
+        <p class="note" id="vs-note"></p>
       </div>
     </div>
   </section>
@@ -772,7 +860,7 @@ conversions 24, bootstraps 59 executed (plan: 24 / 59)</pre></div></div>
       <div class="head">
         <div class="kicker">Tutorial 2</div>
         <h2 id="h-extend">Bring your own primitives</h2>
-        <p class="lede">CipherFlow is not tied to the backends it ships with. Declare what your HE or MPC library can do and what one call costs, and the planner places operators on it as it does on the built-in backends. The examples continue the tutorial above: <code>graph</code> is BERT-base and <code>deployment</code> is a CPU server at 10 Mbps / 1 ms.</p>
+        <p class="lede">CipherFlow is not tied to the backends it ships with. Declare what your HE or MPC library can do and what one call costs, and the planner places operators on it as it does on the built-in backends. The examples continue the tutorial above: <code>graph</code> is BERT-base and <code>deployment</code> is a CPU server at 10 Mbps / 1 ms. Each card shows the layer your code plugs into, and each example has a demo to run from the repository root.</p>
       </div>
       <div class="paths" role="tablist" aria-label="What you bring">
         <button class="path" type="button" role="tab" id="path-a" aria-selected="true" aria-controls="panel-a">
@@ -780,21 +868,43 @@ conversions 24, bootstraps 59 executed (plan: 24 / 59)</pre></div></div>
           <b>A kernel for one operator</b>
           <span class="d">You have a faster HE Softmax, say. Declare its cost and the CKKS levels it uses, and it replaces the backend's kernel for that operator.</span>
           <span class="m"><em>Measure</em> one call on the operator's input shape: time and levels consumed.</span>
+          <span class="lstack" aria-hidden="true"><span class="lh">Where it plugs in</span>
+            <span class="ls"><i>Operators</i><span>traced from PyTorch</span></span>
+            <span class="ls"><i>Planner</i><span>places every operator</span></span>
+            <span class="ls you"><i>Kernels</i><span>your HE Softmax</span><em>you</em></span>
+            <span class="ls"><i>Basic ops</i><span>the library's own</span></span>
+          </span>
+          <span class="sr">It plugs in at the kernel layer: one operator in one domain.</span>
         </button>
         <button class="path" type="button" role="tab" id="path-b" aria-selected="false" aria-controls="panel-b">
           <span class="api">cf.PrimitiveBackend</span>
           <b>A library's basic operations</b>
           <span class="d">You have HE add, multiply, rotate and bootstrap, or MPC multiply, truncate and compare. CipherFlow writes every operator as calls to them and prices it.</span>
           <span class="m"><em>Measure</em> each operation: per ciphertext in HE; per element, with rounds per call, in MPC.</span>
+          <span class="lstack" aria-hidden="true"><span class="lh">Where it plugs in</span>
+            <span class="ls"><i>Operators</i><span>traced from PyTorch</span></span>
+            <span class="ls"><i>Planner</i><span>places every operator</span></span>
+            <span class="ls auto"><i>Kernels</i><span>written from your ops</span><em>CipherFlow</em></span>
+            <span class="ls you"><i>Basic ops</i><span>your add, mul, rotate…</span><em>you</em></span>
+          </span>
+          <span class="sr">It plugs in at the basic-operation layer; CipherFlow writes the kernels from your operations.</span>
         </button>
         <button class="path" type="button" role="tab" id="path-c" aria-selected="false" aria-controls="panel-c">
           <span class="api">cf.Extension.operator</span>
           <b>A new operator</b>
           <span class="d">Your model has a step CipherFlow does not know, such as top-k. Register its PyTorch module as an operator and give it a primitive in each domain that can run it.</span>
           <span class="m"><em>Measure</em> one call of your protocol: time, bytes and rounds.</span>
+          <span class="lstack" aria-hidden="true"><span class="lh">Where it plugs in</span>
+            <span class="ls you"><i>Operators</i><span>your TopK module</span><em>you</em></span>
+            <span class="ls"><i>Planner</i><span>places every operator</span></span>
+            <span class="ls you"><i>Kernels</i><span>your TopK in MPC</span><em>you</em></span>
+            <span class="ls"><i>Basic ops</i><span>the library's own</span></span>
+          </span>
+          <span class="sr">It plugs in at two layers: a new operator in the graph, and its kernel in each domain that can run it.</span>
         </button>
       </div>
       <div class="ppanel" role="tabpanel" id="panel-a" aria-labelledby="path-a">
+        <div class="pout runit"><span class="rl">Run the demo</span><pre id="run-a">python -m demo.extensions.new_he_primitive</pre><button class="copy" type="button" data-copy="run-a">Copy</button></div>
         <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src">ext = cf.Extension(<span class="s">"my-he-softmax"</span>)
 ext.primitive(<span class="s">"Softmax"</span>, <span class="s">"HE"</span>,
               levels=4,                                    <span class="c"># CKKS levels one call consumes</span>
@@ -814,6 +924,7 @@ print(plan.explain(steps=<span class="k">True</span>))</pre><div class="cell-out
         <p class="sum">Softmax now runs in HE, and the plan for BERT-base drops from 25,263 s to 13,676 s with no conversions left. The step table tags the operators your kernel runs.</p>
       </div>
       <div class="ppanel" role="tabpanel" id="panel-b" aria-labelledby="path-b" hidden>
+        <div class="pout runit"><span class="rl">Run the demo</span><pre id="run-b">python -m demo.extensions.primitive_backend</pre><button class="copy" type="button" data-copy="run-b">Copy</button></div>
         <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src">my_ckks = cf.PrimitiveBackend.he(
     <span class="s">"my-ckks"</span>, slots=32768, levels=10,
     bootstrap=cf.Cost(local_ms=9_000),                          <span class="c"># one ciphertext</span>
@@ -840,6 +951,7 @@ print(plan.explain())</pre><div class="cell-out"><span class="lab">Output</span>
         <p class="sum">Each operator becomes calls of your operations, with the CKKS levels they use and bootstraps inside a kernel that needs more levels than the budget. With these illustrative costs, the plan runs 143 operators on <code>my-ckks</code> and one LayerNorm on <code>my-2pc</code>.</p>
       </div>
       <div class="ppanel" role="tabpanel" id="panel-c" aria-labelledby="path-c" hidden>
+        <div class="pout runit"><span class="rl">Run the demo</span><pre id="run-c">python -m demo.extensions.private_rag</pre><button class="copy" type="button" data-copy="run-c">Copy</button></div>
         <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src"><span class="k">from</span> torch <span class="k">import</span> nn
 
 <span class="k">class</span> TopK(nn.Module):                                <span class="c"># scores -&gt; indices of the k largest</span>
@@ -1051,11 +1163,12 @@ window.CFStart = (() => {
   const D = JSON.parse(document.getElementById('data').textContent);
   const $ = (id) => document.getElementById(id);
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const state = { hw: 'gpu', bw: 4 };
+  const state = { hw: 'gpu', bw: 4, vs: 'enc' };
   try { Object.assign(state, JSON.parse(localStorage.getItem('cf-site') || '{}')); } catch (e) {}
   if (!D.plans[state.hw]) state.hw = 'gpu';
   if (!(state.bw >= 0 && state.bw < D.bandwidths.length)) state.bw = 4;
-  const save = () => { try { localStorage.setItem('cf-site', JSON.stringify({ hw: state.hw, bw: state.bw })); } catch (e) {} };
+  if (state.vs !== 'cs') state.vs = 'enc';
+  const save = () => { try { localStorage.setItem('cf-site', JSON.stringify({ hw: state.hw, bw: state.bw, vs: state.vs })); } catch (e) {} };
   const fmtS = (ms) => { const s = ms / 1000; return s >= 1000 ? Math.round(s).toLocaleString('en-US') + ' s' : s >= 100 ? s.toFixed(0) + ' s' : s.toFixed(1) + ' s'; };
   const bwText = (b) => b.replace('Mbps', ' Mbps').replace('Gbps', ' Gbps');
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -1070,19 +1183,80 @@ window.CFStart = (() => {
   const onScroll = () => top.classList.toggle('scrolled', window.scrollY > 8);
   window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
-  // ---- the live plan sheet: operators top to bottom; HE is a ciphertext on the server lane, MPC one share on each lane
+  // ---- the live plan sheet, drawn by hand like the README's overview figure: operators top to bottom; HE runs on
+  //      the server alone (a teal box with a lock), MPC on both lanes at once (an amber bar, a shield on each share)
   const cv = $('flow'), ctx = cv.getContext('2d');
-  const ROW = 34, TOP = 48, BOT = 18, N = D.ops.length;
-  let W = 0, H = 0, nodes = [], parts = [], last = 0, spawnAt = 0;
+  const HAND = '"Patrick Hand", "Segoe Print", "Bradley Hand", cursive';
+  const ROW = 32, TOP = 64, BOT = 12, N = D.ops.length;
+  let W = 0, H = 0, nodes = [], parts = [], last = 0, spawnAt = 0, hover = -1, changedAt = [], prevKey = null, prevDom = '', note = '';
   const COL = {};
-  function colors() { for (const k of ['--he', '--mpc', '--ink', '--muted', '--faint', '--brand', '--paper']) COL[k] = css(k); }
+  function colors() { for (const k of ['--he', '--mpc', '--ink', '--muted', '--faint', '--brand', '--paper', '--sk-ink', '--sk-he', '--sk-mpc', '--sk-in', '--sk-hl']) COL[k] = css(k); }
   const hex = (h) => { const v = parseInt(h.replace('#', ''), 16); return [v >> 16 & 255, v >> 8 & 255, v & 255]; };
   const rgba = (h, a) => `rgba(${hex(h).join(',')},${a})`;
   const mix = (a, b, t) => { const x = hex(a), y = hex(b); return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(',')})`; };
   const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  // icons on a 16-unit grid (the lane heads on 24); the legend under the sheet draws the same paths in SVG
+  const ICON = {
+    lock: 'M4.2 7.4h7.6a1.2 1.2 0 0 1 1.2 1.2v4.4a1.2 1.2 0 0 1-1.2 1.2H4.2A1.2 1.2 0 0 1 3 13V8.6a1.2 1.2 0 0 1 1.2-1.2z',
+    shackle: 'M5.4 7.4V5.6a2.6 2.6 0 0 1 5.2 0v1.8',
+    shield: 'M8 1.8l5 1.8v4c0 3.1-2.1 5.3-5 6.6-2.9-1.3-5-3.5-5-6.6v-4z',
+    swap: 'M3 5.6h9.6M9.8 2.8l2.8 2.8-2.8 2.8M13 10.4H3.4M6.2 7.6l-2.8 2.8 2.8 2.8',
+    refresh: 'M12.7 8.7a4.8 4.8 0 1 1-1.5-4.2M11.8 1.7v3.2H8.6',
+    laptop: 'M5 3.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5h-17V5A1.5 1.5 0 0 1 5 3.5zM1.5 15h21l-1.7 2.8H3.2z',
+    server: 'M4 2.5h16v7H4zM4 11.5h16v7H4zM7 6h.5M7 15h.5M10.5 6H17M10.5 15H17',
+  };
+  const PATH = Object.fromEntries(Object.entries(ICON).map(([k, d]) => [k, new Path2D(d)]));
+  function icon(name, x, y, size, units, { fill, stroke, lw = 1.6, alpha = 1 } = {}) {
+    if (alpha <= 0.01) return;
+    const k = size / units;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x - size / 2, y - size / 2); ctx.scale(k, k);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(PATH[name]); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw / k; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(PATH[name]); }
+    ctx.restore();
+  }
+  function lock(x, y, a) {
+    icon('shackle', x, y, 15, 16, { stroke: COL['--sk-ink'], lw: 1.7, alpha: a });
+    icon('lock', x, y, 15, 16, { fill: COL['--sk-ink'], alpha: a });
+    if (a > 0.01) { ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = COL['--sk-he']; ctx.beginPath(); ctx.arc(x, y + 2.6, 1.3, 0, 7); ctx.fill(); ctx.restore(); }
+  }
+  const shield = (x, y, a) => icon('shield', x, y, 14, 16, { fill: 'rgba(255,255,255,0.6)', stroke: COL['--sk-ink'], lw: 1.5, alpha: a });
+  // hand-drawn strokes: a seeded wobble, so a shape looks the same in every frame
+  function rng(seed) { let s = (Math.imul(seed + 1, 2654435761) >>> 0) || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+  function rr(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function wob(x, y, w, h, r, seed, amp = 1.1) {
+    const R = rng(seed), j = () => (R() - 0.5) * 2 * amp;
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath(); ctx.moveTo(x + r + j(), y + j());
+    ctx.quadraticCurveTo(x + w / 2 + j(), y + j(), x + w - r + j(), y + j());
+    ctx.quadraticCurveTo(x + w, y, x + w + j(), y + r + j());
+    ctx.quadraticCurveTo(x + w + j(), y + h / 2 + j(), x + w + j(), y + h - r + j());
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r + j(), y + h + j());
+    ctx.quadraticCurveTo(x + w / 2 + j(), y + h + j(), x + r + j(), y + h + j());
+    ctx.quadraticCurveTo(x, y + h, x + j(), y + h - r + j());
+    ctx.quadraticCurveTo(x + j(), y + h / 2 + j(), x + j(), y + r + j());
+    ctx.quadraticCurveTo(x, y, x + r + 3 + j(), y + j());               // the pen overshoots where it started
+  }
+  function sketch(x, y, w, h, r, seed, fill, offset = 1.3) {
+    if (fill) { ctx.fillStyle = fill; rr(x + offset, y + offset, w, h, r); ctx.fill(); }   // the wash, a little off the line
+    ctx.save(); ctx.strokeStyle = COL['--sk-ink']; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.lineWidth = 1.7; wob(x, y, w, h, r, seed, 1.3); ctx.stroke();
+    ctx.globalAlpha = 0.5; ctx.lineWidth = 1.1; wob(x, y, w, h, r, seed + 7919, 1.8); ctx.stroke();
+    ctx.restore();
+  }
+  function ring(x, y, r, seed, fill) {
+    const R = rng(seed);
+    ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(x + 1, y + 1.2, r, 0, 7); ctx.fill();
+    ctx.save(); ctx.strokeStyle = COL['--sk-ink']; ctx.lineCap = 'round';
+    for (const [lw, a] of [[1.7, 1], [1.1, 0.45]]) {
+      const a0 = R() * 6.28; ctx.lineWidth = lw; ctx.globalAlpha = a;
+      ctx.beginPath(); ctx.arc(x + (R() - 0.5) * 1.4, y + (R() - 0.5) * 1.4, r + (R() - 0.5) * 1.2, a0, a0 + 6.6); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function badge(x, y, name, seed) { sketch(x - 13, y - 8.5, 26, 17, 6, seed, COL['--paper'], 0); icon(name, x, y, 14, 16, { stroke: COL['--sk-ink'], lw: 1.6 }); }
   function geo() {
-    const l = Math.min(178, W * 0.37), r = W - 66;
-    return { xC: l + (r - l) * 0.18, xS: l + (r - l) * 0.82, label: 20, tag: W - 20 };
+    const l = Math.min(150, W * 0.3), r = W - (W < 420 ? 50 : 70);
+    return { xC: l + (r - l) * 0.2, xS: l + (r - l) * 0.8, label: 16, tag: W - 14 };
   }
   function layout() {
     const dpr = window.devicePixelRatio || 1;
@@ -1101,56 +1275,63 @@ window.CFStart = (() => {
     }
   }
   const lanesOf = (i) => i === 0 ? ['C'] : (plan().dom[i] === 'M' ? ['C', 'S'] : ['S']);
-  function rr(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-  function marker(x, y, glyph) {
-    ctx.fillStyle = COL['--paper']; ctx.strokeStyle = COL['--faint']; ctx.lineWidth = 1;
-    rr(x - 12, y - 9, 24, 18, 5); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = COL['--ink']; ctx.textAlign = 'center'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace'; ctx.fillText(glyph, x, y + 0.5);
-  }
-  function drawStatic() {
-    const g = geo(), p = plan();
+  function tag(mpc, y) { ctx.textAlign = 'right'; ctx.font = `16px ${HAND}`; ctx.fillStyle = mpc ? COL['--mpc'] : COL['--he']; ctx.fillText(mpc ? 'MPC' : 'HE', geo().tag, y + 1); }
+  function drawStatic(now = performance.now(), under = null) {
+    const g = geo(), p = plan(), small = W < 400;
     ctx.clearRect(0, 0, W, H); ctx.textBaseline = 'middle';
-    ctx.font = '600 10.5px "Geist Mono", ui-monospace, monospace'; ctx.fillStyle = COL['--ink'];
-    ctx.textAlign = 'center'; ctx.fillText('CLIENT', g.xC, 15); ctx.fillText('SERVER', g.xS, 15);
-    ctx.font = '400 10px "Geist Mono", ui-monospace, monospace'; ctx.fillStyle = COL['--faint'];
-    ctx.fillText('input, keys', g.xC, 29); ctx.fillText('weights', g.xS, 29);
-    ctx.textAlign = 'left'; ctx.fillText('OPERATOR', g.label, 15);
-    ctx.textAlign = 'right'; ctx.fillText('DOMAIN', g.tag, 15);
-    ctx.strokeStyle = rgba(COL['--brand'], 0.22); ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
-    for (const x of [g.xC, g.xS]) { ctx.beginPath(); ctx.moveTo(x, TOP - 6); ctx.lineTo(x, H - BOT + 6); ctx.stroke(); }
-    ctx.setLineDash([]);
-    // conversions sit between the lanes, bootstraps beside the server lane, on the boundary above their operator
-    for (const a of p.act) {
-      const y = TOP + a[0] * ROW;
-      if (a[1] === 'c') marker((g.xC + g.xS) / 2, y, '⇄'); else marker(g.xS + 34, y, '↻');
+    // the two parties, at the head of their lanes
+    for (const [x, name, sub, ic, tint] of [[g.xC, 'Client', small ? 'input, keys' : 'your input, your keys', 'laptop', '--sk-in'],
+                                            [g.xS, 'Server', small ? 'weights' : 'the model weights', 'server', '--sk-he']]) {
+      icon(ic, x, 13, 25, 24, { fill: rgba(COL[tint], 0.6), stroke: COL['--sk-ink'], lw: 1.6 });
+      ctx.textAlign = 'center'; ctx.fillStyle = COL['--sk-ink']; ctx.font = `19px ${HAND}`; ctx.fillText(name, x, 36);
+      ctx.fillStyle = COL['--muted']; ctx.font = `13.5px ${HAND}`; ctx.fillText(sub, x, 52);
     }
+    ctx.fillStyle = COL['--faint']; ctx.font = `14px ${HAND}`;
+    ctx.textAlign = 'left'; ctx.fillText('operator', g.label, 52);
+    ctx.textAlign = 'right'; ctx.fillText('runs in', g.tag, 52);
+    ctx.strokeStyle = rgba(COL['--sk-ink'], 0.22); ctx.lineWidth = 1.4; ctx.setLineDash([4, 6]);
+    for (const x of [g.xC, g.xS]) { ctx.beginPath(); ctx.moveTo(x, TOP - 2); ctx.lineTo(x, H - BOT + 4); ctx.stroke(); }
+    ctx.setLineDash([]);
+    if (under) under();                                // values in flight pass under the operators
     for (let i = 0; i < N; i++) {
       const nd = nodes[i], y = yOf(i);
-      ctx.textAlign = 'left'; ctx.font = '500 13px "Geist", system-ui, sans-serif'; ctx.fillStyle = COL['--ink'];
-      ctx.fillText(D.ops[i], g.label, y);
-      ctx.textAlign = 'right'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace';
-      if (nd.m < 0) {                                              // the client's input
-        ctx.fillStyle = rgba(COL['--brand'], 0.07); ctx.strokeStyle = COL['--ink']; ctx.lineWidth = 1.3;
-        rr(g.xC - 12, y - 10, 24, 20, 6); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = COL['--ink']; ctx.textAlign = 'center'; ctx.font = '500 12px "Geist Mono", ui-monospace, monospace'; ctx.fillText('x', g.xC, y + 0.5);
+      if (i === hover) { ctx.fillStyle = rgba(COL['--brand'], 0.07); rr(4, y - ROW / 2 + 2, W - 8, ROW - 4, 9); ctx.fill(); }
+      // a highlighter stroke behind each operator the last change moved
+      ctx.font = `17px ${HAND}`;
+      if (changedAt[i] !== undefined) {
+        const age = (now - changedAt[i]) / 1000, a = reduce ? 0.75 : 0.75 * Math.max(0, 1 - Math.max(0, age - 1.4) / 1.8);
+        if (a > 0) {
+          const w = ctx.measureText(D.ops[i]).width;
+          ctx.fillStyle = rgba(COL['--sk-hl'], a); ctx.beginPath();
+          ctx.moveTo(g.label - 5, y - 5); ctx.lineTo(g.label + w + 5, y - 7); ctx.lineTo(g.label + w + 7, y + 6); ctx.lineTo(g.label - 3, y + 8); ctx.closePath(); ctx.fill();
+        }
+      }
+      ctx.textAlign = 'left'; ctx.fillStyle = COL['--sk-ink']; ctx.fillText(D.ops[i], g.label, y + 1);
+      if (nd.m < 0) {                                              // the client's input, and what the client does with it
         const mpc = p.dom[0] === 'M';
-        ctx.textAlign = 'right'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace';
-        ctx.fillStyle = mpc ? COL['--mpc'] : COL['--he']; ctx.fillText(mpc ? 'MPC' : 'HE', g.tag, y);
+        ring(g.xC, y, 11, 97, COL['--sk-in']);
+        ctx.fillStyle = COL['--sk-ink']; ctx.textAlign = 'center'; ctx.font = `17px ${HAND}`; ctx.fillText('x', g.xC, y);
+        const long = mpc ? 'splits it into two shares' : 'encrypts it for the server', short = mpc ? 'shares it' : 'encrypts it';
+        ctx.font = `14.5px ${HAND}`; ctx.textAlign = 'left'; ctx.fillStyle = mpc ? COL['--mpc'] : COL['--he'];
+        ctx.fillText(ctx.measureText(long).width <= g.xS - g.xC - 30 ? long : short, g.xC + 18, y + 1);
+        tag(mpc, y);
         continue;
       }
-      const m = Math.max(0, Math.min(1, nd.m)), col = mix(COL['--he'], COL['--mpc'], m);
-      if (m > 0.02) {                                              // a share on each lane, joined
-        ctx.strokeStyle = rgba(COL['--mpc'], 0.5 * m); ctx.lineWidth = 1.2; ctx.setLineDash([3, 4]);
-        ctx.beginPath(); ctx.moveTo(g.xC + 8, y); ctx.lineTo(g.xS - 9, y); ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = rgba(COL['--mpc'], m); ctx.beginPath(); ctx.arc(g.xC, y, 6, 0, 7); ctx.fill();
-      }
-      if (m < 0.98) { ctx.strokeStyle = rgba(COL['--he'], 0.22 * (1 - m)); ctx.lineWidth = 4; rr(g.xS - 9, y - 9, 18, 18, 6 + 3 * m); ctx.stroke(); }
-      ctx.fillStyle = col; rr(g.xS - 6, y - 6, 12, 12, 3 + 3 * m); ctx.fill();   // a ciphertext square turns into a share dot
-      ctx.textAlign = 'right'; ctx.font = '600 11px "Geist Mono", ui-monospace, monospace';
-      ctx.fillStyle = nd.t > 0.5 ? COL['--mpc'] : COL['--he']; ctx.fillText(nd.t > 0.5 ? 'MPC' : 'HE', g.tag, y);
+      const m = Math.max(0, Math.min(1, nd.m)), x0 = g.xS - 16 - (g.xS - g.xC) * m, x1 = g.xS + 16;
+      sketch(x0, y - 9.5, x1 - x0, 19, 8, i * 131 + 7, mix(COL['--sk-he'], COL['--sk-mpc'], m));
+      lock(g.xS, y, 1 - Math.min(1, m / 0.55));
+      const sa = Math.max(0, (m - 0.45) / 0.55);
+      shield(g.xC, y, sa); shield(g.xS, y, sa);
+      tag(nd.t > 0.5, y);
+    }
+    // conversions sit between the lanes, bootstraps beside the server lane, on the boundary above their operator
+    for (const a of p.act) {
+      const yb = TOP + a[0] * ROW;
+      if (a[1] === 'c') badge((g.xC + g.xS) / 2, yb, 'swap', a[0] * 17 + 3); else badge(g.xS + 36, yb, 'refresh', a[0] * 17 + 5);
     }
   }
   // a particle is one value moving down the chain; it is drawn once per lane it occupies
+  function dot(x, y, r, c) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.strokeStyle = COL['--sk-ink']; ctx.lineWidth = 1.2; ctx.stroke(); }
   function drawParticle(pt) {
     const k = Math.floor(pt.t), f = pt.t - k;
     if (k >= N - 1) return;
@@ -1159,110 +1340,263 @@ window.CFStart = (() => {
     const pairs = A.length === B.length ? A.map((a, j) => [a, B[j]]) : A.length < B.length ? B.map((b) => [A[0], b]) : A.map((a) => [a, B[0]]);
     const asMPC = f < 0.5 ? (k === 0 ? null : A.length === 2) : B.length === 2;
     const xs = pairs.map(([a, b]) => xL(a) + (xL(b) - xL(a)) * e);
-    if (asMPC && xs.length === 2) { ctx.strokeStyle = rgba(COL['--mpc'], 0.35); ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(xs[0], y); ctx.lineTo(xs[1], y); ctx.stroke(); ctx.setLineDash([]); }
+    if (asMPC && xs.length === 2) { ctx.strokeStyle = rgba(COL['--mpc'], 0.45); ctx.lineWidth = 1.2; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(xs[0], y); ctx.lineTo(xs[1], y); ctx.stroke(); ctx.setLineDash([]); }
     for (const x of xs) {
-      if (asMPC === null) { ctx.fillStyle = COL['--ink']; ctx.beginPath(); ctx.arc(x, y, 3.2, 0, 7); ctx.fill(); }
-      else if (asMPC) { ctx.fillStyle = COL['--mpc']; ctx.beginPath(); ctx.arc(x, y, 3.6, 0, 7); ctx.fill(); }
-      else { ctx.fillStyle = COL['--he']; rr(x - 4.5, y - 4.5, 9, 9, 2.5); ctx.fill(); ctx.strokeStyle = rgba(COL['--he'], 0.28); ctx.lineWidth = 3; rr(x - 6.5, y - 6.5, 13, 13, 4); ctx.stroke(); }
+      if (asMPC === null) dot(x, y, 3.6, COL['--sk-in']);
+      else if (asMPC) dot(x, y, 3.8, COL['--sk-mpc']);
+      else { ctx.fillStyle = COL['--sk-he']; rr(x - 4.5, y - 4.5, 9, 9, 2.5); ctx.fill(); ctx.strokeStyle = COL['--sk-ink']; ctx.lineWidth = 1.2; ctx.stroke(); }
     }
   }
+  const drawParts = () => parts.forEach(drawParticle);
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
     for (const nd of nodes) nd.m += (nd.t - nd.m) * Math.min(1, dt * 7);
-    if (now > spawnAt) { parts.push({ t: 0 }); spawnAt = now + 520; }
+    if (now > spawnAt) { parts.push({ t: 0 }); spawnAt = now + 560; }
     for (const pt of parts) pt.t += dt * 1.1;
     parts = parts.filter((pt) => pt.t < N - 1);
-    drawStatic(); parts.forEach(drawParticle);
+    drawStatic(now, drawParts);
   }
   function still() {                                    // reduced motion: one value per segment, no animation
     for (const nd of nodes) nd.m = nd.t;
-    parts = D.ops.slice(0, -1).map((_, k) => ({ t: k + 0.3 }));
-    drawStatic(); parts.forEach(drawParticle);
+    parts = D.ops.slice(0, -1).map((_, k) => ({ t: k + 0.5 }));
+    drawStatic(undefined, drawParts);
   }
   let running = false, visible = true;
   function loop(t) { if (!visible || reduce) { running = false; return; } frame(t); requestAnimationFrame(loop); }
   function kick() { if (!running && visible && !reduce) { running = true; last = performance.now(); requestAnimationFrame(loop); } }
+  const redraw = () => { if (reduce) still(); else if (!running) drawStatic(undefined, drawParts); };
   if ('IntersectionObserver' in window) new IntersectionObserver((es) => { visible = es[0].isIntersecting; kick(); }).observe(cv);
-  cv.addEventListener('mousemove', (ev) => {
-    const r = cv.getBoundingClientRect(), i = Math.floor((ev.clientY - r.top - TOP) / ROW);
-    if (i < 0 || i >= N) { tip.hidden = true; return; }
+  // hover an operator, or tap it on a phone: where it runs, what happened before it, and where it is in the code
+  function opInfo(i) {
     const p = plan(), mpc = p.dom[i] === 'M';
-    const what = i === 0 ? (mpc ? 'the client secret-shares its input' : 'the client encrypts its input')
-                         : (mpc ? 'MPC: one share per party' : 'HE: a ciphertext on the server');
-    const before = p.act.filter((a) => a[0] === i).map((a) => a[1] === 'c' ? `converted ${a[2]} → ${a[3]} before it` : 'bootstrapped before it');
-    showTip(`<b>${D.ops[i]}</b> · ${what}${before.length ? '<br>' + before.join('<br>') : ''}<br><span>${D.src[i]}</span>`, ev);
-  });
-  cv.addEventListener('mouseleave', () => { tip.hidden = true; });
+    const what = i === 0 ? (mpc ? 'The client splits its input into two secret shares, one for each party.' : 'The client encrypts its input and sends it to the server.')
+                         : (mpc ? 'MPC: the client and the server compute it together, each on a secret share.' : 'HE: the server computes it alone, on encrypted data.');
+    const before = p.act.filter((a) => a[0] === i).map((a) => a[1] === 'c' ? `Converted ${a[2]} → ${a[3]} before it.` : 'The ciphertext is refreshed (bootstrapped) before it.');
+    return `<b>${D.ops[i]}</b><br>${what}${before.length ? '<br>' + before.join('<br>') : ''}<br><span>${D.src[i]}</span>`;
+  }
+  function point(ev) {
+    const r = cv.getBoundingClientRect(), y = ev.clientY - r.top - TOP, i = y >= 0 && y < N * ROW ? Math.floor(y / ROW) : -1;
+    if (i !== hover) { hover = i; redraw(); }
+    if (i < 0) { tip.hidden = true; return; }
+    showTip(opInfo(i), ev);
+  }
+  cv.addEventListener('mousemove', point);
+  cv.addEventListener('click', point);
+  cv.addEventListener('mouseleave', () => { hover = -1; tip.hidden = true; redraw(); });
+  document.addEventListener('pointerdown', (ev) => {
+    if (ev.target === cv) return;
+    tip.hidden = true;
+    if (hover >= 0) { hover = -1; redraw(); }
+  }, { passive: true });
 
-  // ---- controls, numbers, chart
+  // ---- the legend: the sheet's own marks
+  const svgLock = (x) => `<g transform="translate(${x - 7.5} 2.5) scale(0.94)"><path d="${ICON.shackle}" fill="none" stroke="var(--sk-ink)" stroke-width="1.8" stroke-linecap="round"/><path d="${ICON.lock}" fill="var(--sk-ink)"/></g>`;
+  const svgShield = (x) => `<g transform="translate(${x - 7} 3) scale(0.875)"><path d="${ICON.shield}" fill="rgba(255,255,255,0.6)" stroke="var(--sk-ink)" stroke-width="1.7" stroke-linejoin="round"/></g>`;
+  const svgBadge = (name) => `<svg viewBox="0 0 28 20" aria-hidden="true"><rect x="1.5" y="1.5" width="25" height="17" rx="6" fill="var(--paper)" stroke="var(--sk-ink)" stroke-width="1.6"/><g transform="translate(7 3)" fill="none" stroke="var(--sk-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${ICON[name]}" transform="scale(0.875)"/></g></svg>`;
+  $('keys').innerHTML = [
+    [`<svg viewBox="0 0 34 20" aria-hidden="true"><rect x="2" y="2" width="30" height="16" rx="6" fill="var(--sk-he)" stroke="var(--sk-ink)" stroke-width="1.6"/>${svgLock(17)}</svg>`, '<b class="d-he">HE</b>: encrypted, the server alone'],
+    [`<svg viewBox="0 0 52 20" aria-hidden="true"><rect x="2" y="2" width="48" height="16" rx="6" fill="var(--sk-mpc)" stroke="var(--sk-ink)" stroke-width="1.6"/>${svgShield(14)}${svgShield(38)}</svg>`, '<b class="d-mpc">MPC</b>: secret-shared, both parties'],
+    [svgBadge('swap'), 'convert'],
+    [svgBadge('refresh'), 'refresh (bootstrap)'],
+  ].map(([s, t]) => `<span>${s}<span>${t}</span></span>`).join('');
+
+  // ---- controls: the server, the network (a slider, or a sweep through every bandwidth), and what the plan says
   function seg() {
     const el = $('seg-hw'); el.innerHTML = '';
     for (const [k, v] of Object.entries(D.hardware)) {
       const b = document.createElement('button');
       b.type = 'button'; b.textContent = v + ' server'; b.setAttribute('aria-pressed', String(k === state.hw));
-      b.addEventListener('click', () => { state.hw = k; save(); render(); });
+      b.addEventListener('click', () => { stopSweep(); state.hw = k; save(); render(); });
       el.appendChild(b);
     }
   }
+  const sweepBtn = $('sweep');
+  let sweepT = null;
+  function stopSweep() {
+    if (sweepT) { clearInterval(sweepT); sweepT = null; }
+    sweepBtn.setAttribute('aria-pressed', 'false'); sweepBtn.textContent = '▶ Sweep';
+  }
+  sweepBtn.addEventListener('click', () => {
+    if (sweepT) { stopSweep(); return; }
+    state.bw = 0; save(); render();
+    sweepBtn.setAttribute('aria-pressed', 'true'); sweepBtn.textContent = '■ Stop';
+    sweepT = setInterval(() => {
+      if (state.bw >= D.bandwidths.length - 1) { stopSweep(); return; }
+      state.bw += 1; save(); render();
+    }, 1800);
+  });
+  const names = (list) => {                            // "Softmax, Attn·V and both Adds"
+    const c = new Map(); list.forEach((n) => c.set(n, (c.get(n) || 0) + 1));
+    const u = [...c].map(([n, k]) => k === 2 ? `both ${n}s` : k > 2 ? `${k} × ${n}` : n);
+    return u.length > 1 ? u.slice(0, -1).join(', ') + ' and ' + u[u.length - 1] : u[0];
+  };
+  function track() {                                   // what the last change of server or network moved
+    const p = plan(), key = state.hw + '|' + state.bw;
+    if (key === prevKey) return;
+    if (prevKey !== null) {
+      const now = performance.now(), to = { H: [], M: [] };
+      changedAt = [];
+      for (let i = 0; i < N; i++) if (p.dom[i] !== prevDom[i]) { changedAt[i] = now; to[p.dom[i]].push(i === 0 ? 'the input' : D.ops[i]); }
+      const group = (list) => {                        // a few names, or a count when most of the block moved
+        const ops = list.filter((n) => n !== 'the input'), input = ops.length < list.length;
+        if (ops.length === N - 1) return input ? 'everything' : 'every operator';
+        const named = ops.length > 3 ? `${ops.length} operators` : ops.length ? names(ops) : '';
+        return input ? (named ? `the input and ${named}` : 'the input') : named;
+      };
+      const moves = [to.M.length ? `${group(to.M)} moved to MPC` : '', to.H.length ? `${group(to.H)} moved to HE` : ''].filter(Boolean);
+      note = moves.length ? `Changed: ${moves.join('; ')}.` : 'The same placement as before; only the latency changes.';
+    }
+    prevKey = key; prevDom = p.dom;
+  }
+  function say() {
+    const p = plan(), n = N - 1, nM = [...p.dom].slice(1).filter((d) => d === 'M').length, nH = n - nM;
+    const nC = p.act.filter((a) => a[1] === 'c').length, nB = p.act.filter((a) => a[1] === 'b').length;
+    const he = '<b class="d-he">HE</b>', mpc = '<b class="d-mpc">MPC</b>', count = (k, w) => `${k} ${w}${k === 1 ? '' : 's'}`;
+    let s = `<b>${D.hardware[state.hw]} server, ${bwText(D.bandwidths[state.bw])}:</b> `;
+    if (!nM) s += `all ${n} operators run encrypted on the server (${he})`;
+    else if (!nH) s += `all ${n} operators run jointly with the client (${mpc})`;
+    else s += `${count(nM, 'operator')} ${nM === 1 ? 'runs' : 'run'} jointly with the client (${mpc}) and ${nH} encrypted on the server (${he})`;
+    const extra = [nC ? count(nC, 'conversion') : '', nB ? count(nB, 'bootstrap') : ''].filter(Boolean);
+    s += extra.length ? `, with ${extra.join(' and ')}.` : ', so nothing is converted.';
+    $('plan-say').innerHTML = s + (note ? ` <span class="chg">${note}</span>` : '');
+  }
   function kpis() {
-    const r = plan();
+    const r = plan(), one = r.one / r.cf, alone = r.oneName === 'all-HE' ? 'HE' : 'MPC';
     $('kpis').innerHTML = [
-      ['lead', fmtS(r.cf), 'CipherFlow, whole model'],
-      ['', (r.hyb / r.cf).toFixed(1) + '×', `faster than the best static hybrid (${r.hybName})`],
-      ['', (r.one / r.cf).toFixed(2) + '×', `vs. the best single primitive (${r.oneName})`],
+      ['lead', fmtS(r.cf), 'the whole model, all 12 blocks'],
+      ['', (r.hyb / r.cf).toFixed(1) + '×', `faster than the best fixed HE/MPC split (${r.hybName})`],
+      ['', one.toFixed(2) + '×', one < 1.005 ? `vs. everything in ${alone}: one method is best here, and CipherFlow picks it`
+                                             : `faster than running everything in ${alone}`],
     ].map(([c, v, k]) => `<div class="kpi"><span class="kv ${c}">${v}</span><span class="kl">${k}</span></div>`).join('');
     const p = plan();
     $('plan-sr').textContent = `${D.hardware[state.hw]} server at ${bwText(D.bandwidths[state.bw])}: ` +
       D.ops.slice(1).map((o, i) => `${o} ${p.dom[i + 1] === 'M' ? 'MPC' : 'HE'}`).join(', ') + `. Whole model ${fmtS(r.cf)}.`;
   }
-  function chart() {
-    const rows = D.plans[state.hw];
-    $('chart-sub').textContent = `${D.hardware[state.hw]} server · RTT 40 ms · log scale`;
-    const narrow = ($('chart').clientWidth || 600) < 520;
-    const Wc = narrow ? 420 : 620, Hc = 280, L = 62, R = narrow ? 14 : 138, T = 14, B = 32;
-    const series = [
-      { key: 'cf', name: 'CipherFlow', color: 'var(--brand)', dash: '', w: 2.8 },
-      { key: 'hyb', name: 'Best static hybrid', color: 'var(--series)', dash: '', w: 2 },
-      { key: 'one', name: 'Best single primitive', color: 'var(--series)', dash: '5 4', w: 2 },
-    ];
-    const vals = rows.flatMap((r) => [r.cf, r.hyb, r.one]);
-    const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...vals) / 1000))), hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...vals) / 1000)));
+
+  // ---- line charts against bandwidth, log or linear scale: the chosen bandwidth is shaded; hover for values, click to choose
+  const narrowOf = (el) => (el.clientWidth || 600) < 520;
+  function lineChart(el, { rows, series, lo, hi, ticks, fmt, aria, tipOf, Hc = 280, scale = 'log' }) {
+    const narrow = narrowOf(el);
+    const Wc = narrow ? 420 : 620, L = 62, R = narrow ? 14 : 138, T = 14, B = 32;
     const X = (i) => L + i * (Wc - L - R) / (rows.length - 1);
-    const Y = (ms) => T + (Math.log10(hi) - Math.log10(ms / 1000)) / (Math.log10(hi) - Math.log10(lo)) * (Hc - T - B);
-    let s = `<svg viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="Estimated latency of the whole model against bandwidth, log scale">`;
-    for (let e = Math.log10(lo); e <= Math.log10(hi) + 1e-9; e++) {
-      const v = Math.pow(10, e), y = Y(v * 1000);
-      s += `<line x1="${L}" x2="${Wc - R}" y1="${y}" y2="${y}" stroke="var(--rule)"/>`;
-      s += `<text x="${L - 8}" y="${y + 4}" text-anchor="end">${v.toLocaleString('en-US')} s</text>`;
+    const f = scale === 'log' ? Math.log10 : (v) => v;
+    const Y = (v) => T + (f(hi) - f(v)) / (f(hi) - f(lo)) * (Hc - T - B);
+    let s = `<svg viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="${aria}">`;
+    for (const v of ticks) {
+      const y = Y(v);
+      s += `<line x1="${L}" x2="${Wc - R}" y1="${y}" y2="${y}" stroke="var(--rule)"/><text x="${L - 8}" y="${y + 4}" text-anchor="end">${fmt(v)}</text>`;
     }
     rows.forEach((r, i) => { s += `<text x="${X(i)}" y="${Hc - 10}" text-anchor="middle">${D.bandwidths[i].replace('bps', '')}</text>`; });
     s += `<rect x="${X(state.bw) - 14}" y="${T}" width="28" height="${Hc - T - B}" rx="6" fill="var(--wash-2)"/>`;
+    let notes = '';
     for (const se of series) {
-      s += `<polyline points="${rows.map((r, i) => `${X(i)},${Y(r[se.key])}`).join(' ')}" fill="none" stroke="${se.color}" stroke-width="${se.w}" stroke-dasharray="${se.dash}" stroke-linejoin="round" stroke-linecap="round"/>`;
-      rows.forEach((r, i) => { s += `<circle cx="${X(i)}" cy="${Y(r[se.key])}" r="${i === state.bw ? 5.2 : 3.2}" fill="${se.color}" stroke="var(--paper)" stroke-width="2"/>`; });
+      s += `<polyline points="${rows.map((r, i) => `${X(i)},${Y(se.val(r))}`).join(' ')}" fill="none" stroke="${se.color}" stroke-width="${se.w}" stroke-dasharray="${se.dash || ''}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      rows.forEach((r, i) => {
+        const big = i === state.bw;
+        s += se.ring ? `<circle cx="${X(i)}" cy="${Y(se.val(r))}" r="${big ? 6.6 : 5}" fill="var(--paper)" stroke="${se.color}" stroke-width="1.8"/>`
+                     : `<circle cx="${X(i)}" cy="${Y(se.val(r))}" r="${big ? 5.2 : 3.2}" fill="${se.color}" stroke="var(--paper)" stroke-width="2"/>`;
+      });
+      if (se.note) rows.forEach((r, i) => {                  // a value written by its point, above it unless at the top
+        const n = se.note(r, i), y = Y(se.val(r));
+        if (n) notes += `<text class="pt" x="${X(i)}" y="${y - 12 > T + 6 ? y - 12 : y + 20}" text-anchor="middle">${n}</text>`;
+      });
     }
-    if (!narrow) {
-      const ends = series.map((se) => ({ se, y: Y(rows[rows.length - 1][se.key]) })).sort((a, b) => a.y - b.y);
+    s += notes;
+    if (!narrow) {                                     // names at the line ends, pushed apart, kept inside the plot
+      const ends = series.map((se) => ({ se, y: Y(se.val(rows[rows.length - 1])) })).sort((a, b) => a.y - b.y);
       for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 15) ends[i].y = ends[i - 1].y + 15;
+      const over = ends[ends.length - 1].y - (Hc - B + 4);
+      if (over > 0) ends.forEach((e) => { e.y -= over; });
       for (const e of ends) s += `<text class="lab" x="${Wc - R + 12}" y="${e.y + 4}">${e.se.name}</text>`;
     }
     const step = (Wc - L - R) / (rows.length - 1);
     rows.forEach((r, i) => { s += `<rect class="hit" data-i="${i}" x="${X(i) - step / 2}" y="${T}" width="${step}" height="${Hc - T - B}" fill="transparent" style="cursor:pointer"/>`; });
-    $('chart').innerHTML = s + '</svg>';
-    $('chart').querySelectorAll('.hit').forEach((h) => {
-      const i = +h.dataset.i, r = rows[i];
-      h.addEventListener('mousemove', (ev) => showTip(`<b>${bwText(D.bandwidths[i])}</b><br>CipherFlow ${fmtS(r.cf)}<br>Best static hybrid ${fmtS(r.hyb)} (${r.hybName})<br>Best single primitive ${fmtS(r.one)} (${r.oneName})`, ev));
+    el.innerHTML = s + '</svg>';
+    el.dataset.narrow = String(narrow);
+    el.querySelectorAll('.hit').forEach((h) => {
+      const i = +h.dataset.i;
+      h.addEventListener('mousemove', (ev) => showTip(tipOf(rows[i], i), ev));
       h.addEventListener('mouseleave', () => { tip.hidden = true; });
-      h.addEventListener('click', () => { state.bw = i; save(); render(); });
+      h.addEventListener('click', () => { stopSweep(); state.bw = i; save(); render(); });
     });
   }
-  function render(instant) {
-    seg(); setTargets(instant);
-    $('bw').value = state.bw; $('bw-val').textContent = bwText(D.bandwidths[state.bw]);
-    kpis(); chart();
-    if (reduce) still(); else if (!running) { drawStatic(); parts.forEach(drawParticle); }
+  function chart() {
+    const rows = D.plans[state.hw], vals = rows.flatMap((r) => [r.cf, r.hyb, r.one]).map((ms) => ms / 1000);
+    const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...vals)))), hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...vals))));
+    const ticks = []; for (let e = Math.log10(lo); e <= Math.log10(hi) + 1e-9; e++) ticks.push(Math.pow(10, e));
+    $('chart-sub').textContent = `${D.hardware[state.hw]} server · RTT 40 ms · log scale`;
+    lineChart($('chart'), {
+      rows, lo, hi, ticks, fmt: (v) => v.toLocaleString('en-US') + ' s',
+      aria: 'Estimated latency of the whole model against bandwidth, log scale',
+      series: [
+        { name: 'CipherFlow', color: 'var(--brand)', w: 2.8, val: (r) => r.cf / 1000 },
+        { name: 'Best static hybrid', color: 'var(--series)', w: 2, val: (r) => r.hyb / 1000 },
+        { name: 'Best single primitive', color: 'var(--series)', dash: '5 4', w: 2, val: (r) => r.one / 1000 },
+      ],
+      tipOf: (r, i) => `<b>${bwText(D.bandwidths[i])}</b><br>CipherFlow ${fmtS(r.cf)}<br>Best static hybrid ${fmtS(r.hyb)} (${r.hybName})<br>Best single primitive ${fmtS(r.one)} (${r.oneName})`,
+    });
   }
-  $('bw').addEventListener('input', (e) => { state.bw = +e.target.value; save(); render(); });
+  // the comparison, one planner at a time on its own scale: EncFormer's gap spans 2-24x (log), CostSphere's a few percent
+  // (a zoomed linear axis, with each gap written by its point)
+  function vsChart() {
+    if (!D.compare) { $('vs').hidden = true; return; }
+    const rows = D.compare.plans[state.hw], hw = D.hardware[state.hw];
+    const times = (v) => v < 1.0005 ? 'the same latency (1.00×)' : v.toFixed(v < 10 ? 2 : 1) + '×';
+    const pct = (v) => `${v >= 1 ? '+' : '−'}${Math.abs((v - 1) * 100).toFixed(1)}%`;
+    const cf = { name: 'CipherFlow', color: 'var(--brand)', w: 2.8, val: () => 1 };
+    const key = {
+      cf: '<line x1="1" y1="4" x2="21" y2="4" stroke="var(--brand)" stroke-width="2.6"/>',
+      cs: '<line x1="1" y1="4" x2="21" y2="4" stroke="var(--series)" stroke-width="2"/><circle cx="11" cy="4" r="3.1" fill="var(--paper)" stroke="var(--series)" stroke-width="1.6"/>',
+      enc: '<line x1="1" y1="4" x2="21" y2="4" stroke="var(--series)" stroke-width="2" stroke-dasharray="5 4"/>',
+    };
+    const pick = $('vs-pick'); pick.innerHTML = '';
+    for (const [k, name] of [['enc', 'EncFormer'], ['cs', 'CostSphere']]) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = name; b.setAttribute('aria-pressed', String(k === state.vs));
+      b.addEventListener('click', () => { state.vs = k; save(); vsChart(); });
+      pick.appendChild(b);
+    }
+    $('vs-legend').innerHTML = [['cf', 'CipherFlow (1×)'], [state.vs, state.vs === 'cs' ? 'CostSphere' : 'EncFormer']]
+      .map(([k, n]) => `<span><svg>${key[k]}</svg>${n}</span>`).join('');
+    if (state.vs === 'cs') {
+      const vals = Object.values(D.compare.plans).flat().map((r) => r.cs / r.cf);       // one axis for both servers
+      const lo = Math.min(0.99, Math.floor((Math.min(...vals) - 0.005) * 100) / 100);
+      const hi = Math.max(1.06, Math.ceil((Math.max(...vals) + 0.01) * 50) / 50);
+      const ticks = []; for (let k = Math.ceil(lo * 50); k <= Math.round(hi * 50); k++) ticks.push(k / 50);
+      $('vs-sub').textContent = `${hw} server · RTT 40 ms · zoomed linear scale`;
+      $('vs-note').textContent = 'The axis is zoomed: here CostSphere stays within 5% of CipherFlow. Where it finds CipherFlow\'s plan, its rings sit on ' +
+        'CipherFlow\'s line; where the plan mixes HE and MPC, CipherFlow is faster, because it also models residual joins and exact CKKS levels.';
+      lineChart($('vs-chart'), {
+        rows, Hc: 250, scale: 'linear', lo, hi, ticks, fmt: (v) => v.toFixed(2) + '×',
+        aria: 'CostSphere\'s latency relative to CipherFlow against bandwidth, zoomed linear scale',
+        series: [{ name: 'CostSphere', color: 'var(--series)', w: 2, ring: true, val: (r) => r.cs / r.cf,
+                   note: (r) => Math.abs(r.cs / r.cf - 1) >= 0.005 ? pct(r.cs / r.cf) : '' }, cf],
+        tipOf: (r, i) => {
+          const v = r.cs / r.cf, best = r.csBest / r.cf;
+          return `<b>${bwText(D.bandwidths[i])}</b> · ${hw} server<br>CostSphere: ${times(v)}${v >= 1.0005 ? ` CipherFlow's latency (${pct(v)})` : ''}` +
+            (Math.abs(best - v) > 0.0005 ? `<br>CostSphere with its best count: ${times(best)}` : '');
+        },
+      });
+    } else {
+      $('vs-sub').textContent = `${hw} server · RTT 40 ms · log scale`;
+      $('vs-note').textContent = 'Above 1×: slower than CipherFlow. EncFormer\'s split is the same on every network, so it falls furthest behind where the ' +
+        'best plan uses one method throughout: all-MPC on a CPU server with a fast network, all-HE on a GPU server with a slow one.';
+      lineChart($('vs-chart'), {
+        rows, Hc: 250, lo: 0.8, hi: 30, ticks: [1, 2, 5, 10, 20], fmt: (v) => v + '×',
+        aria: 'EncFormer\'s latency relative to CipherFlow against bandwidth, log scale',
+        series: [{ name: 'EncFormer', color: 'var(--series)', dash: '5 4', w: 2, val: (r) => r.enc / r.cf,
+                   note: (r, i) => i === state.bw ? (r.enc / r.cf).toFixed(1) + '×' : '' }, cf],
+        tipOf: (r, i) => `<b>${bwText(D.bandwidths[i])}</b> · ${hw} server<br>EncFormer: ${times(r.enc / r.cf)} CipherFlow's latency`,
+      });
+    }
+  }
+  function render(instant) {
+    track(); seg(); setTargets(instant);
+    $('bw').value = state.bw; $('bw-val').textContent = bwText(D.bandwidths[state.bw]);
+    kpis(); say(); chart(); vsChart();
+    redraw();
+  }
+  $('bw').addEventListener('input', (e) => { stopSweep(); state.bw = +e.target.value; save(); render(); });
 
   // ---- copy buttons: the visible source of a cell, or a picker command
   function copyPre(pre, btn) {
@@ -1319,7 +1653,7 @@ window.CFStart = (() => {
   }));
 
   // ---- pages: each nav link opens its own view; the URL's #anchor says which (section anchors still work)
-  const ROUTES = { home: 'home', results: 'home', explore: 'home', how: 'how', backends: 'how', start: 'start', demo: 'start',
+  const ROUTES = { home: 'home', results: 'home', vs: 'home', explore: 'home', how: 'how', backends: 'how', start: 'start', demo: 'start',
                    tutorials: 'tutorials', use: 'tutorials', extend: 'tutorials', roadmap: 'roadmap' };
   const NAMES = { how: 'How it works', start: 'Get started', tutorials: 'Tutorials', roadmap: 'Roadmap' };
   const views = [...document.querySelectorAll('[data-view]')], baseTitle = document.title;
@@ -1341,15 +1675,15 @@ window.CFStart = (() => {
   window.addEventListener('hashchange', route);
 
   colors(); layout(); render(true);
-  let lastNarrow = null;
   const ro = new ResizeObserver(() => {
-    layout();
-    if (reduce) still(); else if (!running) { drawStatic(); parts.forEach(drawParticle); }
-    const nn = $('chart').clientWidth < 520; if (nn !== lastNarrow) { lastNarrow = nn; chart(); }
+    layout(); redraw();
+    if (narrowOf($('chart')) !== ($('chart').dataset.narrow === 'true')) chart();
+    if (D.compare && narrowOf($('vs-chart')) !== ($('vs-chart').dataset.narrow === 'true')) vsChart();
   });
-  ro.observe(cv); ro.observe($('chart'));
-  const start = () => { colors(); if (reduce) still(); else { drawStatic(); kick(); } };
+  ro.observe(cv); ro.observe($('chart')); ro.observe($('vs-chart'));
+  const start = () => { colors(); if (reduce) still(); else { drawStatic(undefined, drawParts); kick(); } };
   route();
-  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(start, start);
+  const fonts = document.fonts ? Promise.all([document.fonts.load(`17px ${HAND}`), document.fonts.ready]) : Promise.resolve();
+  fonts.then(start, start);
 })();
 </script>
