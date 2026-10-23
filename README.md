@@ -135,6 +135,7 @@ Plans tag the operators that new primitives run, e.g. `Softmax [my-he-softmax]`.
 | [User guide](docs/user-guide.md) | installing; planning from Python and the command line; measuring the network; reading a plan; supported models; running a plan on real data; reproducing the paper |
 | [Backends and cost profiles](docs/backends.md) | the HE and MPC backends and security models; built-in profiles; measuring costs on your machine; checking a machine; known limitations |
 | [How CipherFlow works](docs/architecture.md) | the layers and their interfaces; MicroBench, state expansion and BlockFold; repository layout |
+| [Comparison with other planners](docs/comparison.md) | where CipherFlow sits among HE and MPC compilers; CostSphere and EncFormer re-implemented and compared on the same costs |
 | [API reference](cipherflow/README.md#api) | every function, argument and command, and the [plan format](cipherflow/README.md#plan-format) |
 | [Tutorial: adding new backend primitives](docs/tutorials/backend-primitives.md) | your own HE or MPC primitives, with runnable code |
 | [FAQ](docs/FAQ.md) | common questions and troubleshooting |

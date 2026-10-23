@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- netbench: `cipherflow netbench --serve` stops by itself after one measurement. The client tells the server when
+  it is done (a new request type; older servers ignore it, and servers keep running for older clients).
+  `--keep` keeps serving; `netbench.Server(once=..., on_measured=...)` in Python. Port probes and clients that
+  drop no longer print tracebacks on the server. The two-terminal recording shows the server stopping.
+- Comparison with other planners (`docs/comparison.md`, `python -m demo.compare.prior_planners`): CostSphere and
+  EncFormer re-implemented from their papers at CipherFlow's operator granularity, planned with the same measured
+  costs and scored by one evaluator. EncFormer's fixed split is 2–24× slower than CipherFlow; CostSphere is within
+  5%. In one setting CostSphere is 1.7% faster, because the planner prices the conversion into QKᵀ at the packed
+  Q/K/V shape; with edge-shape pricing CipherFlow is never slower (roadmap section 4). Tests: `tests/test_compare.py`.
 - README as a summary: About, Demo, Installation, Quick start, Supported models, Backends, Adding new backend
   primitives, a Documentation index, Status. The details moved to `docs/user-guide.md` (installing, planning,
   the network, reading a plan, supported models, real data, reproducing the paper), `docs/backends.md`

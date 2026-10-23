@@ -53,6 +53,9 @@ CipherFlow works one level above them:
 Hybrid systems such as BumbleBee, BOLT and BLB fix the split between HE and MPC by rule. CipherFlow chooses it
 per operator, for each deployment.
 
+[Comparison with other planners](comparison.md) re-implements CostSphere and EncFormer, the two closest
+planners, and compares them with CipherFlow on the same costs.
+
 ## Installing
 
 ### How do I install it?
@@ -214,7 +217,9 @@ cipherflow compile --model bert --ip SERVER_IP      # on the client: measure, th
 ```
 
 The client measures the round-trip time and the bandwidth in each direction, and plans with the slower
-direction. In Python: `cf.Deployment.of("cpu", netbench.measure("SERVER_IP").network())`, after
+direction. The server then stops by itself; start it with `--keep` to measure several times.
+
+In Python: `cf.Deployment.of("cpu", netbench.measure("SERVER_IP").network())`, after
 `from cipherflow import netbench`.
 
 ### Can I measure costs on my own machine?
@@ -396,7 +401,7 @@ marks those nodes `cost_source="scaled"`, and `strict=True` turns the warning in
 
 ### `cipherflow netbench --serve` fails with "Address already in use"
 
-Another program, often an earlier `netbench --serve`, holds port 7787. Stop it, or use another port on both
+Another program, often an earlier `netbench --serve --keep`, holds port 7787. Stop it, or use another port on both
 sides: `--serve --port 7800` on the server, and `--ip SERVER_IP:7800` on the client.
 
 ### The client cannot reach the server

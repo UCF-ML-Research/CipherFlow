@@ -67,7 +67,7 @@ operator it names (`#1 -> #2`: from operator 1 to operator 2).
 | two terminals, one host | `cipherflow netbench --serve` | `python -m demo.plan_pytorch_model --ip 127.0.0.1` |
 | two machines | `cipherflow netbench --serve` (port 7787 open) | `python -m demo.plan_pytorch_model --ip SERVER_IP` |
 
-![Two terminals: the server runs cipherflow netbench --serve; the client runs python -m demo.plan_pytorch_model --ip 127.0.0.1, which measures the RTT and the bandwidth each way to the server, then prints the plan for that network operator by operator](../docs/assets/demo_network_measured.gif)
+![Two terminals: the server runs cipherflow netbench --serve; the client runs python -m demo.plan_pytorch_model --ip 127.0.0.1, which measures the RTT and the bandwidth each way to the server; the server then prints that it was measured and stops, and the client prints the plan for that network operator by operator](../docs/assets/demo_network_measured.gif)
 
 The client measures:
 - the round-trip time, as the median of one-byte ping-pongs;
@@ -80,6 +80,8 @@ Things to keep in mind:
 - On one host the measurement is of loopback (tens of Gbps, about 0.02 ms), not of a real deployment.
 - For a single TCP stream on a long, fast link, `--net-streams N` can measure closer to what the MPC backends
   reach over their many connections.
+- The server stops by itself once the client's measurement is done, and prints `measured by CLIENT` and
+  `server stopped`. Start it with `--keep` to measure several times; Ctrl-C then stops it.
 - The server only echoes or discards data and has no authentication. Run it only while measuring, and bind it
   with `--host` where needed.
 
@@ -113,7 +115,20 @@ python -m demo.web.build_page      # -> docs/planner/index.html (template.html) 
 
 [`extensions/`](extensions) shows how to extend the backend layer and the operators:
 - `python -m demo.extensions.new_he_primitive` plugs a new HE primitive into the planner;
+- `python -m demo.extensions.primitive_backend` declares an HE library and an MPC protocol by their basic
+  operations and plans with them;
 - `python -m demo.extensions.private_rag` plans a new workload, the retrieval step of private RAG.
+
+## Comparing with other planners
+
+[`compare/`](compare) re-implements CostSphere and EncFormer from their papers and compares them with CipherFlow
+on the same costs:
+
+```bash
+python -m demo.compare.prior_planners --quick      # BERT-base, four networks, about 2 minutes
+```
+
+[docs/comparison.md](../docs/comparison.md) gives the method and the results.
 
 ## Files
 
@@ -126,5 +141,6 @@ python -m demo.web.build_page      # -> docs/planner/index.html (template.html) 
 | `web/demo_data.json` | the precomputed plans (generated) |
 | `web/site_template.html` | the website: one BERT-base block re-planned as the bandwidth changes, the figure, the demo, quick start, backends, roadmap |
 | `web/build_page.py` | writes `docs/planner/index.html` and `docs/index.html` (plus `web/cipherflow_demo.html`, an untracked artifact body) |
-| `extensions/` | extension demos: a new HE primitive, private RAG retrieval |
+| `extensions/` | extension demos: a new HE primitive, a backend from its basic operations, private RAG retrieval |
+| `compare/` | CostSphere and EncFormer re-implemented from their papers, against CipherFlow |
 | `make_terminal_gifs.py` | re-renders the terminal recordings above (`docs/assets/demo_network_*.gif`) from real runs of the commands (needs Pillow; only the pacing is staged) |

@@ -4,7 +4,8 @@
 
 writes docs/assets/demo_network_given.gif (one terminal: the network given with --network) and
 docs/assets/demo_network_measured.gif (two terminals: `cipherflow netbench --serve`, then the
-client plans with the network it measures to it; both on this host, so the link is loopback).
+client plans with the network it measures to it, and the server stops; both on this host, so the
+link is loopback).
 The text in the frames is the commands' actual output (stderr, i.e. warnings, left out); only the
 pacing -- typing, and output appearing line by line -- is staged.
 """
@@ -146,10 +147,12 @@ def measured():
         banner = srv.stdout.readline()
         time.sleep(0.5)
         out = wrap(run(client_cmd.split()[1:]))
+        after = srv.communicate(timeout=30)[0]     # the server stops by itself once the client is done
     finally:
-        srv.terminate()
-        srv.wait(timeout=10)
-    server = Pane("terminal 1 — server: cipherflow netbench --serve", 4, ("server", "~/CipherFlow"))
+        if srv.poll() is None:
+            srv.terminate()
+            srv.wait(timeout=10)
+    server = Pane("terminal 1 — server: cipherflow netbench --serve", 6, ("server", "~/CipherFlow"))
     client = Pane("terminal 2 — client: plans with the network measured to the server", 30,
                   ("client", "~/CipherFlow"))
     rec = Recorder([server, client])
@@ -165,6 +168,9 @@ def measured():
     rec.type(client, client_cmd)
     rec.snap(900)
     rec.output(client, out[:2], per_line=1600)        # the measurement (RTT, then 2 s each way)
+    rec.output(server, wrap(after), per_line=500)    # "measured by ...", "server stopped"
+    server.lines.append(("cmd", ""))                 # the server's shell prompt is back
+    rec.snap(600)
     rec.output(client, out[2:], pause_after=3, pause=3200)
     client.lines.append(("cmd", ""))
     rec.snap(9000)

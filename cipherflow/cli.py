@@ -124,13 +124,18 @@ def _cmd_profile(a) -> int:
 def _cmd_netbench(a) -> int:
     from . import netbench
     if a.serve:
-        srv = netbench.Server(a.host, a.port)
+        srv = netbench.Server(a.host, a.port, once=not a.keep,
+                              on_measured=lambda client: print(f"measured by {client}", flush=True))
         print(f"netbench server on {srv.host}:{srv.port}; on the client: cipherflow netbench --ip THIS_HOST:{srv.port} "
-              f"(or cipherflow compile ... --ip THIS_HOST:{srv.port}). Ctrl-C stops.", flush=True)
+              f"(or cipherflow compile ... --ip THIS_HOST:{srv.port}). "
+              + ("Ctrl-C stops." if a.keep else "It stops after one measurement (--keep to serve more); Ctrl-C stops it now."),
+              flush=True)
         try:
             srv.serve()
         except KeyboardInterrupt:
             pass
+        else:
+            print("server stopped", flush=True)
         return 0
     if not a.peer:
         print("cipherflow netbench: give --serve (server side) or --peer HOST[:PORT] (client side)", file=sys.stderr)
@@ -218,7 +223,8 @@ def main(argv=None) -> int:
     m.add_argument("--dry-run", action="store_true", help="only report what is missing from the cache")
     m.set_defaults(func=_cmd_profile)
     n = sub.add_parser("netbench", help="measure the network between the two parties (bandwidth, RTT)")
-    n.add_argument("--serve", action="store_true", help="server side: wait for measurements")
+    n.add_argument("--serve", action="store_true", help="server side: wait for a measurement, then stop")
+    n.add_argument("--keep", action="store_true", help="with --serve: keep serving after a measurement (Ctrl-C stops)")
     n.add_argument("--peer", "--ip", dest="peer", default=None, metavar="HOST[:PORT]", help="client side: measure to HOST")
     n.add_argument("--host", default="0.0.0.0", help="with --serve: address to listen on")
     n.add_argument("--port", type=int, default=7787)

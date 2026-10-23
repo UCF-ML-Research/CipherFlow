@@ -1,5 +1,7 @@
 """Network measurement between the two parties (cipherflow netbench), and planning with it."""
 import json
+import socket
+import threading
 
 import pytest
 
@@ -50,3 +52,47 @@ def test_cli_plans_with_the_measured_network(server, tmp_path, capsys):
                  "--network", option, "-o", str(tmp_path / "same.json")]) == 0
     same = json.loads((tmp_path / "same.json").read_text())
     assert same["cost"] == plan["cost"]
+
+
+def test_the_server_stops_after_one_measurement():
+    seen = []
+    srv = netbench.Server("127.0.0.1", 0, once=True, on_measured=seen.append)
+    t = threading.Thread(target=srv.serve, daemon=True)
+    t.start()
+    netbench.measure(f"127.0.0.1:{srv.port}", seconds=0.1, rounds=3)
+    t.join(timeout=10)
+    assert not t.is_alive()
+    assert seen == srv.clients == ["127.0.0.1"]
+    with pytest.raises(ConnectionError, match="netbench --serve"):
+        netbench.measure(f"127.0.0.1:{srv.port}", seconds=0.1, rounds=2, timeout=2)
+
+
+def test_a_kept_server_serves_several_measurements():
+    srv = netbench.Server("127.0.0.1", 0).start()
+    try:
+        for _ in range(2):
+            netbench.measure(f"127.0.0.1:{srv.port}", seconds=0.1, rounds=2)
+        assert srv.clients == ["127.0.0.1", "127.0.0.1"]
+    finally:
+        srv.close()
+
+
+def test_cli_server_stops_when_the_client_is_done(capsys):
+    with socket.socket() as s:                       # a free port
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    rc = []
+    t = threading.Thread(target=lambda: rc.append(main(["netbench", "--serve", "--host", "127.0.0.1",
+                                                         "--port", str(port)])), daemon=True)
+    t.start()
+    for _ in range(50):                              # wait for the server to listen
+        try:
+            socket.create_connection(("127.0.0.1", port), timeout=0.2).close()
+            break
+        except OSError:
+            threading.Event().wait(0.1)
+    assert main(["netbench", "--ip", f"127.0.0.1:{port}", "--seconds", "0.1", "--rounds", "3"]) == 0
+    t.join(timeout=10)
+    assert not t.is_alive() and rc == [0]
+    out = capsys.readouterr().out
+    assert "stops after one measurement" in out and "measured by 127.0.0.1" in out and "server stopped" in out

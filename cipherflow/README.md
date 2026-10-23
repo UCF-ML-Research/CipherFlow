@@ -163,7 +163,7 @@ cipherflow explain plan.json
 cipherflow explain plan.json --steps                    # operator by operator
 
 # measure the network to the other party instead of giving --network
-cipherflow netbench --serve                             # on the server (another terminal or machine)
+cipherflow netbench --serve                             # on the server; stops after one measurement (--keep: more)
 cipherflow netbench --ip SERVER_IP                      # on the client: RTT and bandwidth each way
 cipherflow compile --model bert --ip SERVER_IP -o plan.json   # measure, then plan with it
 

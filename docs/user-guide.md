@@ -81,7 +81,8 @@ The client measures two things:
 - the bandwidth in each direction, by bulk TCP transfer.
 
 It plans with the slower direction and records the measurement in the plan. The server listens on TCP port
-7787; to use another, start it with `--port PORT` and give the client `--ip SERVER_IP:PORT`.
+7787; to use another, start it with `--port PORT` and give the client `--ip SERVER_IP:PORT`. The server stops
+by itself once the client's measurement is done; start it with `--keep` to measure several times.
 
 ## Reading the plan
 

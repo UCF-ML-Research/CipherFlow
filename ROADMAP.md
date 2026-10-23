@@ -134,6 +134,7 @@ State-expanded planning over domains and CKKS levels, with residual regions fold
 - [x] Nested residual regions; V as its own edge; each action records its edge (v0.3.0)
 - [x] Value contracts from a calibration keep operators out of HE where an approximation would not hold (v0.3.0)
 - [x] Static placements as baselines (BumbleBee-, BOLT- and BLB-style rules, all-HE, all-MPC)
+- [ ] Conversions priced at the shape of the edge they cross, as plans are scored (today the consumer's input shape: for QKᵀ the packed Q/K/V, three times the hidden state; see [docs/comparison.md](docs/comparison.md))
 - [ ] Graphs beyond a chain of two-branch residual regions (cross-attention, encoder–decoder)
 - [ ] Stateful models: separate prefill and decode plans with the KV cache as state
 
@@ -197,6 +198,7 @@ PyTorch and planned.
 - [x] Demo input as PyTorch code and output as the plan operator by operator, with a JSON download (v0.4.0)
 - [x] Demo folder (`demo/`): models, a script, the page builder, terminal recordings (v0.4.0)
 - [x] Extension demos (`demo/extensions`): a new HE primitive in BERT-base; private RAG retrieval as a new workload (v0.5.0)
+- [x] Comparison with CostSphere and EncFormer, re-implemented from their papers (`demo/compare`, [docs/comparison.md](docs/comparison.md)) (unreleased)
 - [ ] More extension demos: a router (a classifier head and an argmax that picks a model); a database task (comparisons and aggregation over encrypted or shared records)
 - [x] Design notes: hardened conversion (`native/openfhe/CONVERSION.md`), wide-range kernels (`native/openfhe/NONLINEAR.md`), planner optimality (`compiler/state_expanded/OPTIMALITY.md`), cost provenance (`compiler/state_expanded/profiles/DATA_PROVENANCE.md`)
 - [ ] Demo page with the measured OpenFHE + SCI profiles (today: the paper's profiles)
