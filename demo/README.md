@@ -118,7 +118,9 @@ python -m demo.web.build_page      # -> docs/planner/index.html (template.html) 
 - `python -m demo.extensions.new_he_primitive` plugs a new HE primitive into the planner;
 - `python -m demo.extensions.primitive_backend` declares an HE library and an MPC protocol by their basic
   operations and plans with them;
-- `python -m demo.extensions.private_rag` plans a new workload, the retrieval step of private RAG.
+- `python -m demo.extensions.private_rag` plans a new workload, the retrieval step of private RAG;
+- `python -m demo.extensions.private_rag_end_to_end` runs it end to end with a real model and real documents
+  (e5-base-v2, SciFact), and checks the plan on 300 real queries.
 
 ## Comparing with other planners
 

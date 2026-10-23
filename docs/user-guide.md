@@ -157,6 +157,10 @@ plan = cf.compile(graph, cf.Deployment.of("cpu", "1Gbps/40ms"), calibration=cal)
 `python -m cipherflow.runtime.glue --tasks sst2,mrpc,rte,stsb` measures the GLUE accuracy of calibrated plans
 this way.
 
+For a model with operators of an [extension](tutorials/backend-primitives.md), pass `extensions=` to
+`calibrate`, `emulate` and `Emulator`. `python -m demo.extensions.private_rag_end_to_end` checks a private RAG
+retrieval plan this way on 300 real queries.
+
 ## Reproducing the paper
 
 ```python

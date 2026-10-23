@@ -1,11 +1,14 @@
 """Render the demo's terminal sessions as animated GIFs, from real runs of the commands.
 
     python demo/make_terminal_gifs.py          # from the repository root; needs Pillow
+    python demo/make_terminal_gifs.py rag      # one of them: given, measured, rag
 
-writes docs/assets/demo_network_given.gif (one terminal: the network given with --network) and
+writes docs/assets/demo_network_given.gif (one terminal: the network given with --network),
 docs/assets/demo_network_measured.gif (two terminals: `cipherflow netbench --serve`, then the
 client plans with the network it measures to it, and the server stops; both on this host, so the
-link is loopback).
+link is loopback) and docs/assets/demo_private_rag.gif (private RAG retrieval end to end: the
+application calibrated, planned and emulated on SciFact's 300 test queries; the run takes about
+4 minutes and needs transformers and datasets).
 The text in the frames is the commands' actual output (stderr, i.e. warnings, left out); only the
 pacing -- typing, and output appearing line by line -- is staged.
 """
@@ -32,8 +35,9 @@ PALETTE = Image.new("P", (1, 1))
 PALETTE.putpalette([v for col in C.values() for v in col] + [0, 0, 0] * (256 - len(C)))
 
 
-def run(args, timeout=600):
-    env = dict(os.environ, PYTHONWARNINGS="ignore", OMP_NUM_THREADS=os.environ.get("OMP_NUM_THREADS", "4"))
+def run(args, timeout=600, threads=None):
+    env = dict(os.environ, PYTHONWARNINGS="ignore",
+               OMP_NUM_THREADS=str(threads) if threads else os.environ.get("OMP_NUM_THREADS", "4"))
     r = subprocess.run([sys.executable, *args], cwd=REPO, env=env, capture_output=True, text=True, timeout=timeout)
     if r.returncode:
         raise RuntimeError(f"{args} failed:\n{r.stderr[-2000:]}")
@@ -177,6 +181,38 @@ def measured():
     rec.save(OUT / "demo_network_measured.gif")
 
 
+def rag():
+    cmd = "python -m demo.extensions.private_rag_end_to_end --uncalibrated"
+    out = wrap(run(cmd.split()[1:], timeout=3600, threads=os.cpu_count()))
+    pane = Pane("terminal — CipherFlow demo: private RAG retrieval, end to end", 36, ("user", "~/CipherFlow"))
+    rec = Recorder([pane])
+    rec.type(pane, cmd)
+    rec.snap(1500)                                   # loading the model and SciFact
+    pane.cursor = False
+    pending, table = 0, False
+    for row in out:
+        pane.lines.append(("out", row))
+        pending += 1
+        text = row.strip()
+        if row.startswith("["):                      # a step starts: the real run spends seconds to minutes here
+            rec.snap(1500)
+            table = row.startswith("[5/")
+        elif text.startswith(("calibrated:", "uncalibrated:")):
+            rec.snap(900)                            # the emulation's progress, with the real elapsed time
+        elif table:
+            rec.snap(160)                            # the result, line by line
+        elif pending >= 3:
+            rec.snap(70)                             # the plan scrolls by, three lines a frame
+        else:
+            continue
+        pending = 0
+    pane.cursor = True
+    pane.lines.append(("cmd", ""))
+    rec.snap(12000)
+    rec.save(OUT / "demo_private_rag.gif")
+
+
 if __name__ == "__main__":
-    given()
-    measured()
+    chosen = sys.argv[1:] or ["given", "measured", "rag"]
+    for name in chosen:
+        {"given": given, "measured": measured, "rag": rag}[name]()

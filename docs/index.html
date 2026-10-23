@@ -384,6 +384,7 @@ h3 { margin: 0; font: 600 19px/1.3 var(--display); letter-spacing: -0.01em; }
 .runit .rl { align-self: stretch; display: flex; align-items: center; padding: 0 14px; background: var(--wash); border-right: 1px solid var(--rule); font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
 .runit pre { flex: 1; min-width: 0; padding: 11px 84px 11px 14px; }
 .runit .copy { top: 50%; transform: translateY(-50%); }
+.ppanel .term { max-width: 1004px; }                 /* the recording at its own size, never blown up */
 .ppanel .sum { font-size: 15px; color: var(--ink-2); max-width: 74ch; }
 .limits { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline; font-size: 14px; color: var(--muted); border-top: 1px solid var(--rule-2); padding-top: 18px; }
 .limits p { max-width: 70ch; }
@@ -943,36 +944,33 @@ print(plan.explain())</pre><div class="cell-out"><span class="lab">Output</span>
         <p class="sum">Each operator becomes calls of your operations, with the CKKS levels they use and bootstraps inside a kernel that needs more levels than the budget. With these illustrative costs, the plan runs 143 operators on <code>my-ckks</code> and one LayerNorm on <code>my-2pc</code>.</p>
       </div>
       <div class="ppanel" role="tabpanel" id="panel-c" aria-labelledby="path-c" hidden>
-        <div class="pout runit"><span class="rl">Run the demo</span><pre id="run-c">python -m demo.extensions.private_rag</pre><button class="copy" type="button" data-copy="run-c">Copy</button></div>
-        <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src"><span class="k">from</span> torch <span class="k">import</span> nn
+        <div class="pout runit"><span class="rl">Run the demo</span><pre id="run-c">python -m demo.extensions.private_rag_end_to_end --uncalibrated</pre><button class="copy" type="button" data-copy="run-c">Copy</button></div>
+        <figure class="term"><img src="assets/demo_private_rag.gif" width="1004" height="727" loading="lazy" alt="Terminal: python -m demo.extensions.private_rag_end_to_end --uncalibrated traces e5-base-v2 with the new operators MeanPool, DocScores and TopK, calibrates on 256 training claims, plans for a CPU server at 100 Mbps / 20 ms, and emulates the plan on SciFact's 300 test claims. The calibrated plan returns the plaintext model's top-10 for 298 of them; the plan made without the calibration returns none."></figure>
+        <div class="cell"><div class="cell-bar"><span class="lang">Python</span><button class="copy" type="button">Copy</button></div><pre class="src"><span class="k">from</span> demo.extensions.private_rag <span class="k">import</span> MeanPool, DocScores, TopK, rag_extension
 
-<span class="k">class</span> TopK(nn.Module):                                <span class="c"># scores -&gt; indices of the k largest</span>
-    <span class="k">def</span> __init__(self, k):
+<span class="k">class</span> Retriever(nn.Module):                   <span class="c"># the application: e5-base-v2's encoder, then the retrieval</span>
+    <span class="k">def</span> __init__(self, encoder, docs, k):
         super().__init__()
-        self.k = k
-    <span class="k">def</span> forward(self, scores):
-        <span class="k">return</span> torch.topk(scores, self.k, dim=-1).indices
+        self.encoder, self.pool, self.scores, self.topk = encoder, MeanPool(), DocScores(docs), TopK(k)
+    <span class="k">def</span> forward(self, x):                     <span class="c"># x: the claim's token embeddings, from the client</span>
+        <span class="k">return</span> self.topk(self.scores(self.pool(self.encoder(x)[0])))
 
-<span class="k">class</span> Ranker(nn.Module):
-    <span class="k">def</span> __init__(self):
-        super().__init__()
-        self.encoder, self.head, self.topk = bert(2), nn.Linear(768, 768), TopK(4)
-    <span class="k">def</span> forward(self, x):
-        <span class="k">return</span> self.topk(self.head(self.encoder(x)))
-
-topk = cf.Extension(<span class="s">"my-topk"</span>).operator(TopK, <span class="s">"TopK"</span>)
-topk.primitive(<span class="s">"TopK"</span>, <span class="s">"MPC"</span>, cost=cf.Cost(local_ms=120, comm_bytes=8_000_000, comm_rounds=40))
-ranker = cf.models.from_torch(Ranker(), torch.zeros(1, 128, 768), extensions=[topk])
-plan = cf.compile(ranker, deployment, he=<span class="s">"openfhe-fast"</span>, mpc=<span class="s">"sci"</span>, extensions=[topk])
-print(plan.explain(steps=<span class="k">True</span>))</pre><div class="cell-out"><span class="lab">Output</span><pre>  latency 4258.1 s  (operators 3121.7 s, conversions 292.6 s, bootstraps 843.9 s)
-  placement: 23 HE / 3 MPC operators, 5 conversions, 10 bootstraps, 2.76 GiB online communication
-<span class="d-gap">…</span>
-    24  LayerNorm              <span class="d-he">HE</span>     4 -&gt; 1     encoder.blocks.1.ln2
-<span class="d-act">          bootstrap at level 1  (#24 -&gt; #25)  52.74 s</span>
-    25  Out_Projection         <span class="d-he">HE</span>     8 -&gt; 7     head
-<span class="d-act">          convert HE -&gt; MPC  [1, 128, 768]  (#25 -&gt; #26)  8.83 s</span>
-    26  TopK [my-topk]         <span class="d-mpc">MPC</span>               topk</pre></div></div>
-        <p class="sum"><code>from_torch</code> keeps <code>TopK</code> as one operator. It has only an MPC kernel, since CKKS has no comparison, so the plan converts to MPC before it.</p>
+rag = rag_extension()                         <span class="c"># the three operators, a kernel per domain, their costs</span>
+retriever = Retriever(e5.encoder, doc_embeddings, k=10)              <span class="c"># SciFact's 5,183 abstracts</span>
+graph = cf.models.from_torch(retriever, x, extensions=[rag])                     <span class="c"># 1. trace</span>
+cal   = cf.runtime.calibrate(retriever, training_claims, extensions=[rag])       <span class="c"># 2. calibrate</span>
+plan  = cf.compile(graph, cf.Deployment.of(<span class="s">"cpu"</span>, <span class="s">"100Mbps/20ms"</span>),
+                   extensions=[rag], calibration=cal)                           <span class="c"># 3. compile</span>
+em    = cf.runtime.Emulator(plan, retriever, extensions=[rag])                   <span class="c"># 4. emulate: em(claim).output</span></pre><div class="cell-out"><span class="lab">Output, 300 test claims</span><pre>                                            calibrated                uncalibrated
+  same top-10, in the same order            283/300 (94.3%)           0/300 (0.0%)
+  same top-10 documents                     298/300 (99.3%)           0/300 (0.0%)
+  documents in common, on average           99.9%                     0.1%
+  nDCG@10 (plaintext 0.7194)                0.7196                    0.0000
+  recall@10 (plaintext 0.8465)              0.8465                    0.0000
+  HE inputs outside their kernels' ranges   none                      <span class="d-mpc">GeLU x12, Residual_Add x12</span>
+  plan check                                passes                    passes
+  latency per query (estimate)              11757 s                   10410 s</pre></div></div>
+        <p class="sum">The retrieval's steps are PyTorch modules that CipherFlow traces as new operators: the document scores run in HE, the top-k in MPC. Calibrated on real claims, the private plan returns the plaintext model's top-10 for 298 of SciFact's 300 test claims. Planned without the calibration, HE GeLU leaves its range and the retrieval returns none of them. The demo needs <code>transformers</code> and <code>datasets</code>, and downloads e5-base-v2 and SciFact the first time.</p>
       </div>
       <div class="limits">
         <p>Plans use the costs and levels you declare, as given. CipherFlow does not check an extension's correctness, precision or security, and does not execute extensions yet.</p>

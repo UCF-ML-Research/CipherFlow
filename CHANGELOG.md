@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Private RAG retrieval, end to end (`python -m demo.extensions.private_rag_end_to_end`): e5-base-v2 encodes
+  the client's query, and the server's index is SciFact's 5,183 abstracts. The application is traced with its
+  extension, calibrated on 256 training queries, compiled, and emulated on the 300 test queries. On a CPU server
+  at 100 Mbps / 20 ms the private top-10 equals the plaintext model's for 298 of them (283 in the same order),
+  with nDCG@10 0.7196 against 0.7194 in plaintext; `--uncalibrated` shows the plan made without the calibration
+  returning none of them (HE GeLU outside its range). `cf.runtime.calibrate`, `emulate` and `Emulator` take
+  `extensions=`: extension operators run as their PyTorch modules in the planned domain, and integer outputs
+  such as top-k indices stay integers in MPC. A terminal recording of the run (`docs/assets/demo_private_rag.gif`,
+  `python demo/make_terminal_gifs.py rag`) is in `demo/extensions/README.md` and on the website, whose
+  Application card now runs this demo.
 - Website: the comparison with CostSphere and EncFormer under the results, as latency relative to CipherFlow
   against bandwidth (BERT-base, RTT 40 ms, CPU or GPU as chosen above), one planner at a time: EncFormer on a
   log scale, CostSphere on a zoomed linear scale with each gap written by its point. `python -m

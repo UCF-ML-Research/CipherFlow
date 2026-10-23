@@ -80,7 +80,8 @@ CKKS levels each kernel consumes.
 - [ ] Code generation: the lowered kernels as programs that call the backend's primitives
 - [ ] Conversion protocols for primitive backends (today the profile's conversions are kept)
 - [ ] Extension operators in MicroBench: measured, not declared, costs and levels
-- [ ] Extension operators in the emulator: checked on real data and calibrated like the built-in kernels, so that a plan keeps them to the value ranges their approximations hold on
+- [x] Extension operators in the emulator and in calibration: they run as their PyTorch modules in the planned domain (fixed point in MPC, exactly in HE, the plan's conversions and bootstraps on their edges), and `calibrate` records their value ranges (unreleased)
+- [ ] Extension kernels' own approximations in the emulator, with the value ranges they hold on, so that a plan keeps them to those ranges
 - [ ] Security models for extensions: an extension states the model it assumes (`2pc`, `2pc-dealer`), and `security=` selects it like the built-in backends
 - [ ] Extension primitives executed under encryption, with the runtime of section 6
 - [ ] Extensions from the command line (`cipherflow compile --extension FILE.py:NAME`)
@@ -96,8 +97,8 @@ Limits of extensions today, lifted by the open items above:
   cost models, not code that runs.
 - **Conversions.** HE↔MPC conversions keep the costs of the profile planned with (e.g. OpenFHE + SCI), also
   for primitive backends.
-- **Execution.** Extensions are planned, not executed: the emulator and MicroBench know only the built-in
-  operators.
+- **Execution.** Extensions are planned, not executed under encryption. The emulator runs extension operators
+  as their PyTorch code, without their kernels' own approximations; MicroBench does not measure them.
 
 ### MPC
 
@@ -199,6 +200,7 @@ PyTorch and planned.
 - [x] Demo folder (`demo/`): models, a script, the page builder, terminal recordings (v0.4.0)
 - [x] Extension demos (`demo/extensions`): a new HE primitive in BERT-base; private RAG retrieval as a new workload (v0.5.0)
 - [x] Comparison with CostSphere and EncFormer, re-implemented from their papers (`demo/compare`, [docs/comparison.md](docs/comparison.md)) (unreleased)
+- [x] Private RAG retrieval end to end: e5-base-v2 and SciFact's 5,183 abstracts, the plan calibrated and emulated on the 300 test queries (`demo/extensions/private_rag_end_to_end.py`) (unreleased)
 - [ ] More extension demos: a router (a classifier head and an argmax that picks a model); a database task (comparisons and aggregation over encrypted or shared records)
 - [x] Design notes: hardened conversion (`native/openfhe/CONVERSION.md`), wide-range kernels (`native/openfhe/NONLINEAR.md`), planner optimality (`compiler/state_expanded/OPTIMALITY.md`), cost provenance (`compiler/state_expanded/profiles/DATA_PROVENANCE.md`)
 - [ ] Demo page with the measured OpenFHE + SCI profiles (today: the paper's profiles)

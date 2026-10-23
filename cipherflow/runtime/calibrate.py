@@ -51,9 +51,9 @@ class _Observe(fx.Interpreter):
 
 
 def calibrate(module, inputs: Iterable, *, concrete_args=None, qkv_projection: bool = True,
-              model: Optional[str] = None) -> Calibration:
+              model: Optional[str] = None, extensions=()) -> Calibration:
     """`inputs`: an iterable of example inputs (tensors or tuples), e.g. the hidden states of real
-    sentences. Node ids match cf.models.from_torch(module, ...)."""
+    sentences. Node ids match cf.models.from_torch(module, ..., extensions=extensions)."""
     m = copy.deepcopy(module).double().eval()
     stats: Dict[str, Dict[str, float]] = {}
     traces = {}
@@ -64,7 +64,8 @@ def calibrate(module, inputs: Iterable, *, concrete_args=None, qkv_projection: b
             xs = tuple(t.double() if isinstance(t, torch.Tensor) and t.is_floating_point() else t for t in xs)
             key = tuple(tuple(t.shape) if isinstance(t, torch.Tensor) else None for t in xs)
             if key not in traces:
-                traces[key] = trace_torch(m, xs, concrete_args=concrete_args, qkv_projection=qkv_projection)
+                traces[key] = trace_torch(m, xs, concrete_args=concrete_args, qkv_projection=qkv_projection,
+                                           extensions=extensions)
             tr = traces[key]
             run_args = list(xs) + list(tr.run_args[len(xs):])
             _Observe(tr, stats).run(*run_args)

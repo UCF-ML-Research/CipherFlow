@@ -144,6 +144,55 @@ CipherFlow places each operator. Here the document scores run in HE, and top-k r
 The costs are estimates scaled from the profile's measured operators (`rag_extension()` states each one).
 Replace them with measurements of your kernels and protocols.
 
+## Private RAG retrieval, end to end
+
+```bash
+python -m demo.extensions.private_rag_end_to_end                  # --queries 300 --network 100Mbps/20ms --out rag.json
+python -m demo.extensions.private_rag_end_to_end --uncalibrated   # also the plan made without step 2
+```
+
+![Terminal: python -m demo.extensions.private_rag_end_to_end --uncalibrated traces e5-base-v2 with MeanPool, DocScores and TopK, calibrates on 256 training claims, plans for a CPU server at 100 Mbps / 20 ms, and emulates the plan on SciFact's 300 test claims; the calibrated plan returns the plaintext model's top-10 for 298 of them, the plan made without the calibration for none](../../docs/assets/demo_private_rag.gif)
+
+The same application with real parts, checked on real queries:
+- **the model** is e5-base-v2 (`intfloat/e5-base-v2`), a BERT-base retrieval model with mean pooling;
+- **the server's documents** are the 5,183 abstracts of SciFact (BEIR), embedded by the server in plaintext;
+- **the client's queries** are SciFact's 300 test claims, labeled with the abstracts that support or refute them.
+
+It needs `"transformers<5"` and `datasets`, and downloads the model and the dataset the first time. The steps:
+1. **the application**: the encoder, then `MeanPool`, `DocScores` and `TopK` with the costs of
+   `rag_extension()`, traced with `cf.models.from_torch(..., extensions=[rag])`;
+2. **calibrate** on 256 training queries: `cf.runtime.calibrate(retriever, queries, extensions=[rag])`;
+3. **compile** for the deployment, with the calibration;
+4. **emulate** the plan on every test query: `cf.runtime.Emulator(plan, retriever, extensions=[rag])`;
+5. **compare** the private top-10 with the plaintext model's, and score both against the labels.
+
+On a CPU server at 100 Mbps / 20 ms, with `--uncalibrated` (about 4 minutes, after the server's index is
+built once):
+
+```
+                                            calibrated                uncalibrated
+  same top-10, in the same order            283/300 (94.3%)           0/300 (0.0%)
+  same top-10 documents                     298/300 (99.3%)           0/300 (0.0%)
+  documents in common, on average           99.9%                     0.1%
+  nDCG@10 (plaintext 0.7194)                0.7196                    0.0000
+  recall@10 (plaintext 0.8465)              0.8465                    0.0000
+  HE inputs outside their kernels' ranges   none                      GeLU x12, Residual_Add x12
+  plan check                                passes                    passes
+  latency per query (estimate)              11757 s                   10410 s
+  online communication (estimate)           58.4 GiB                  31.2 GiB
+```
+
+- **With the calibration**, the private retrieval returns the same documents as the plaintext model for 298 of
+  the 300 queries. Where it differs, near-equal scores swap after fixed-point rounding and the conversions'
+  noise. The calibration rules 10 Softmax operators out of HE, GeLU moves to MPC, and the plan uses OpenFHE's
+  precise bootstrapping; the document scores still run in HE and the top-k in MPC.
+- **Without it**, the plan runs GeLU in HE on e5's real activations, which leave the HE kernel's range, and the
+  private retrieval returns none of the plaintext model's documents. The plan check cannot catch this: the
+  plan is consistent, the values are not.
+
+The latencies and communication are the profile's estimates, with the retrieval operators priced by
+`rag_extension()`.
+
 Other workloads follow the same pattern. A router (a classifier head and an argmax that picks a model) or a
 database task (comparisons and aggregations over encrypted or shared records) needs:
 1. its operators as PyTorch modules;
@@ -152,7 +201,9 @@ database task (comparisons and aggregations over encrypted or shared records) ne
 
 ## Limits
 
-- Extensions are planned, not executed. `cipherflow.runtime` emulates the built-in operators only.
+- Extensions are planned, not executed under encryption. `cipherflow.runtime` emulates an extension's
+  operators as their PyTorch modules in the planned domain (pass `extensions=` to `calibrate`, `emulate` and
+  `Emulator`); the approximations of an extension's own kernels are not modeled.
 - `profile="auto"` (MicroBench) does not measure extension operators. Use a built-in or saved profile; the
   extension prices its own operators.
 - Graphs must still be a chain of two-branch residual regions (`cf.check_graph`).

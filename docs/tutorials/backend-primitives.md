@@ -147,10 +147,29 @@ Compare `plan.cost["total_ms"]` and `plan.counts()` with the built-in plan to se
 - `python -m demo.extensions.primitive_backend` (2b);
 - `python -m demo.extensions.private_rag` (2c).
 
+## Step 4: check it on real data
+
+`cipherflow.runtime` runs a plan on real inputs at plaintext speed, each operator in its planned domain (see
+[Running a plan on real data](../user-guide.md#running-a-plan-on-real-data)). Pass your extension, so that the
+model traces to the plan's graph:
+
+```python
+cal  = cf.runtime.calibrate(model, real_inputs, extensions=[ext])     # value ranges on real data
+plan = cf.compile(graph, deployment, extensions=[ext], calibration=cal)
+res  = cf.runtime.emulate(plan, model, x, extensions=[ext])
+print(res.summary())
+```
+
+A new operator runs as its PyTorch module in the domain the plan gives it: in fixed point in MPC, exactly in HE,
+with the plan's conversions and bootstraps on its edges. `python -m demo.extensions.private_rag_end_to_end` does
+this for private RAG retrieval with a real model (e5-base-v2) and real documents (SciFact): the private top-10
+equals the plaintext model's for 298 of the 300 test queries.
+
 ## Limits
 
-CipherFlow plans with the costs and levels you declare, as given. It does not check your primitives'
-correctness, precision or security, and it plans extensions without executing them.
+CipherFlow plans with the costs and levels you declare, as given. The emulator runs a new operator as its
+PyTorch code, not your kernels' own approximations; CipherFlow does not check your primitives' precision or
+security, and does not execute extensions under encryption.
 [ROADMAP.md](../../ROADMAP.md#extensions) lists these limits and the work that lifts them.
 
 See the [API reference](../../cipherflow/README.md#extensions) for every argument.

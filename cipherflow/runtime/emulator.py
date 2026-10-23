@@ -11,6 +11,11 @@ consumer's domain, and in HE to at least the level the consumer starts at; every
 to an edge. Then the traced model runs in float64, operator by operator, each in its planned domain,
 with each edge's actions applied to the values crossing it, so V reaches Attn*V the way the plan
 routes it.
+
+Operators of an extension (cf.Extension.operator) run as their PyTorch module, in the domain the plan
+gives them: fixed point in MPC, exactly in HE like the built-in linear operators, with the plan's
+conversions and bootstraps on their edges. Pass the extensions, so that the model traces to the
+plan's graph. The extension's own approximations, if its kernels have any, are not modeled.
 """
 from __future__ import annotations
 
@@ -95,12 +100,17 @@ class EmulationResult:
     applied: Dict[str, int] = field(default_factory=dict)              # conversions / bootstraps executed
 
     @property
+    def exact(self) -> bool:
+        """The output equals the plaintext model's, e.g. the indices an extension's top-k returns."""
+        return bool(torch.equal(self.output, self.reference))
+
+    @property
     def max_abs_err(self) -> float:
-        return float((self.output - self.reference).abs().max())
+        return float((self.output.double() - self.reference.double()).abs().max())
 
     @property
     def rel_err(self) -> float:
-        return float((self.output - self.reference).norm() / self.reference.norm())
+        return float((self.output.double() - self.reference.double()).norm() / self.reference.double().norm())
 
     def out_of_range(self) -> Dict[str, Dict[str, Any]]:
         return {k: v for k, v in self.nodes.items()
@@ -108,7 +118,13 @@ class EmulationResult:
                 or not v.get("conversion_in_bound", True) or v.get("sums_outside", 0) > 0}
 
     def summary(self) -> str:
-        lines = [f"output vs plaintext: max |err| {self.max_abs_err:.3g}, relative {self.rel_err:.3g}",
+        if self.output.is_floating_point():
+            first = f"output vs plaintext: max |err| {self.max_abs_err:.3g}, relative {self.rel_err:.3g}"
+        else:
+            differ = int((self.output != self.reference).sum()) if self.output.shape == self.reference.shape else -1
+            first = ("output equals the plaintext model's" if self.exact else
+                     f"output differs from the plaintext model's in {differ} of {self.reference.numel()} entries")
+        lines = [first,
                  f"conversions {self.applied.get('conversions', 0)}, bootstraps {self.applied.get('bootstraps', 0)}"
                  f" executed (plan: {self.checks['conversions']} / {self.checks['bootstraps']})"]
         lines += [f"plan check: {p}" for p in self.checks["problems"]]
@@ -208,7 +224,8 @@ class _Run(fx.Interpreter):
 
     def _compute(self, n, op, dom, owner, args, kwargs):
         if dom == "MPC":
-            return nm.fixed_point(self._call(n, args, kwargs), self.frac)
+            out = self._call(n, args, kwargs)             # indices (e.g. an extension's top-k) stay integers
+            return nm.fixed_point(out, self.frac) if out.is_floating_point() else out
         if op in ("Linear", "MatMul", "Residual_Add"):
             return self._call(n, args, kwargs)
         x = args[0]
@@ -252,8 +269,8 @@ class Emulator:
     """
 
     def __init__(self, plan, module, *, concrete_args=None, seed: int = 0,
-                 he_numerics: Optional[nm.HENumerics] = None, mpc_frac_bits: Optional[int] = None):
-        self.plan, self.concrete_args = plan, concrete_args
+                 he_numerics: Optional[nm.HENumerics] = None, mpc_frac_bits: Optional[int] = None, extensions=()):
+        self.plan, self.concrete_args, self.extensions = plan, concrete_args, tuple(extensions)
         self.module = copy.deepcopy(module).double().eval()
         self.qkv = any(n.op_type == "Linear_QKV" for n in plan.nodes)
         self.he = he_numerics or nm.HE_NUMERICS.get(plan.he_backend or "openfhe-fast", nm.HE_NUMERICS["openfhe-fast"])
@@ -269,7 +286,7 @@ class Emulator:
         key = tuple(tuple(x.shape) if isinstance(x, torch.Tensor) else None for x in inputs)
         if key not in self._traces:
             self._traces[key] = trace_torch(self.module, inputs, concrete_args=self.concrete_args,
-                                            qkv_projection=self.qkv)
+                                            qkv_projection=self.qkv, extensions=self.extensions)
             if self._checks is None:
                 self._checks = check_plan(self.plan, self._traces[key].graph)
         tr = self._traces[key]
@@ -284,10 +301,12 @@ class Emulator:
 
 
 def emulate(plan, module, example_inputs, *, concrete_args=None, seed: int = 0,
-            he_numerics: Optional[nm.HENumerics] = None, mpc_frac_bits: Optional[int] = None) -> EmulationResult:
+            he_numerics: Optional[nm.HENumerics] = None, mpc_frac_bits: Optional[int] = None,
+            extensions=()) -> EmulationResult:
     """Run `module` on `example_inputs` as `plan` places it (see the module docstring).
     he_numerics / mpc_frac_bits override the backends' numerical models (e.g. the bootstrapping
     noise measured on another machine: dataclasses.replace(HE_NUMERICS["openfhe-fast"], bootstrap_sigma=...)).
+    For a model with extension operators, pass the extensions it was traced with.
     For many inputs, use Emulator (it reuses the traced model)."""
     return Emulator(plan, module, concrete_args=concrete_args, seed=seed, he_numerics=he_numerics,
-                    mpc_frac_bits=mpc_frac_bits)(example_inputs)
+                    mpc_frac_bits=mpc_frac_bits, extensions=extensions)(example_inputs)

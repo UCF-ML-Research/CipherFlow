@@ -84,3 +84,24 @@ def test_extension_declarations_are_checked(bert2):
     bad = cf.Extension("bad").primitive("GeLU", "HE", cost=like("NoSuchOp", "HE", lambda n, r: 1.0))
     with pytest.raises(cf.UnsupportedOperator, match="no HE record of NoSuchOp"):
         _compile(bert2, extensions=[bad])
+
+
+def test_extension_operators_are_calibrated_and_emulated():
+    from cipherflow import runtime
+    torch.manual_seed(0)
+    rag = private_rag.rag_extension()
+    model = private_rag.Retriever(n_docs=256, k=4, blocks=1).eval()
+    x = torch.randn(1, 128, 768)
+    with pytest.raises(cf.UnsupportedModel, match="cipherflow.Extension"):
+        runtime.calibrate(model, [x])                            # without the extension: unknown operations
+    cal = runtime.calibrate(model, [x], extensions=[rag])
+    assert {"pool", "scores", "topk"} <= set(cal.nodes)
+    graph = cf.models.from_torch(model, x, extensions=[rag])
+    plan = _compile(graph, dep=cf.Deployment.of("cpu", "100Mbps/20ms"), extensions=[rag], calibration=cal)
+    dom = {n.op_type: n.domain for n in plan.nodes}
+    assert dom["TopK"] == "MPC" and dom["DocScores"] == "HE"   # a conversion to MPC before the top-k
+    res = runtime.emulate(plan, model, x, extensions=[rag])
+    assert res.checks["problems"] == []
+    assert res.applied == {"conversions": res.checks["conversions"], "bootstraps": res.checks["bootstraps"]}
+    assert res.output.dtype == torch.int64 and res.output.shape == (1, 4)    # indices stay integers in MPC
+    assert res.exact and "equals the plaintext model's" in res.summary()
